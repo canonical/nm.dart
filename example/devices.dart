@@ -6,7 +6,7 @@ void main() async {
   var client = NetworkManagerClient(systemBus);
   await client.connect();
   for (var device in client.devices) {
-    print('${device.deviceType} ${device.hwAddress} ${device.state} ');
+    print('${device.deviceType} ${device.hwAddress} ${device.state}');
   }
   await systemBus.close();
 }

@@ -51,75 +51,6 @@ enum DeviceType {
   vrf
 }
 
-class _NetworkManagerObject extends DBusRemoteObject {
-  final Map<String, Map<String, DBusValue>> interfacesAndProperties;
-
-  /// Gets a cached property.
-  DBusValue getCachedProperty(String interface, String name) {
-    var properties = interfacesAndProperties[interface];
-    if (properties == null) {
-      return null;
-    }
-    return properties[name];
-  }
-
-  /// Gets a cached boolean property, or returns null if not present or not the correct type.
-  bool getBooleanProperty(String interface, String name) {
-    var value = getCachedProperty(interface, name);
-    if (value == null) {
-      return null;
-    }
-    if (value.signature != DBusSignature('b')) {
-      return null;
-    }
-    return (value as DBusBoolean).value;
-  }
-
-  /// Gets a cached unsigned 32 bit integer property, or returns null if not present or not the correct type.
-  int getUint32Property(String interface, String name) {
-    var value = getCachedProperty(interface, name);
-    if (value == null) {
-      return null;
-    }
-    if (value.signature != DBusSignature('u')) {
-      return null;
-    }
-    return (value as DBusUint32).value;
-  }
-
-  /// Gets a cached string property, or returns null if not present or not the correct type.
-  String getStringProperty(String interface, String name) {
-    var value = getCachedProperty(interface, name);
-    if (value == null) {
-      return null;
-    }
-    if (value.signature != DBusSignature('s')) {
-      return null;
-    }
-    return (value as DBusString).value;
-  }
-
-  /// Gets a cached object path array property, or returns null if not present or not the correct type.
-  List<DBusObjectPath> getObjectPathArrayProperty(
-      String interface, String name) {
-    var value = getCachedProperty(interface, name);
-    if (value == null) {
-      return null;
-    }
-    if (value.signature != DBusSignature('ao')) {
-      return null;
-    }
-    return (value as DBusArray)
-        .children
-        .map((e) => (e as DBusObjectPath))
-        .toList();
-  }
-
-  _NetworkManagerObject(
-      DBusClient client, DBusObjectPath path, this.interfacesAndProperties)
-      : super(client, 'org.freedesktop.NetworkManager', path) {}
-}
-
 class NetworkManagerDevice {
   final _NetworkManagerObject _object;
 
@@ -257,6 +188,112 @@ class NetworkManagerDevice {
       'org.freedesktop.NetworkManager.Device', 'HwAddress');
 }
 
+class NetworkManagerActiveConnection {
+  final _NetworkManagerObject _object;
+
+  NetworkManagerActiveConnection(this._object) {}
+
+  String get id => _object.getStringProperty(
+      'org.freedesktop.NetworkManager.Connection.Active', 'Id');
+  String get uuid => _object.getStringProperty(
+      'org.freedesktop.NetworkManager.Connection.Active', 'Uuid');
+  String get type => _object.getStringProperty(
+      'org.freedesktop.NetworkManager.Connection.Active', 'type');
+  int get state => _object.getUint32Property(
+      'org.freedesktop.NetworkManager.Connection.Active',
+      'State'); // FIXME: enum
+  int get stateFlags => _object.getUint32Property(
+      'org.freedesktop.NetworkManager.Connection.Active',
+      'StateFlags'); // FIXME: enum
+  bool get default4 => _object.getBooleanProperty(
+      'org.freedesktop.NetworkManager.Connection.Active', 'Default');
+  bool get default6 => _object.getBooleanProperty(
+      'org.freedesktop.NetworkManager.Connection.Active', 'Default6');
+  bool get vpn => _object.getBooleanProperty(
+      'org.freedesktop.NetworkManager.Connection.Active', 'Vpn');
+}
+
+class _NetworkManagerObject extends DBusRemoteObject {
+  final Map<String, Map<String, DBusValue>> interfacesAndProperties;
+
+  /// Gets a cached property.
+  DBusValue getCachedProperty(String interface, String name) {
+    var properties = interfacesAndProperties[interface];
+    if (properties == null) {
+      return null;
+    }
+    return properties[name];
+  }
+
+  /// Gets a cached boolean property, or returns null if not present or not the correct type.
+  bool getBooleanProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('b')) {
+      return null;
+    }
+    return (value as DBusBoolean).value;
+  }
+
+  /// Gets a cached unsigned 32 bit integer property, or returns null if not present or not the correct type.
+  int getUint32Property(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('u')) {
+      return null;
+    }
+    return (value as DBusUint32).value;
+  }
+
+  /// Gets a cached string property, or returns null if not present or not the correct type.
+  String getStringProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('s')) {
+      return null;
+    }
+    return (value as DBusString).value;
+  }
+
+  /// Gets a cached object path property, or returns null if not present or not the correct type.
+  DBusObjectPath getObjectPathProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('o')) {
+      return null;
+    }
+    return (value as DBusObjectPath);
+  }
+
+  /// Gets a cached object path array property, or returns null if not present or not the correct type.
+  List<DBusObjectPath> getObjectPathArrayProperty(
+      String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('ao')) {
+      return null;
+    }
+    return (value as DBusArray)
+        .children
+        .map((e) => (e as DBusObjectPath))
+        .toList();
+  }
+
+  _NetworkManagerObject(
+      DBusClient client, DBusObjectPath path, this.interfacesAndProperties)
+      : super(client, 'org.freedesktop.NetworkManager', path) {}
+}
+
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
   /// The bus this client is connected to.
@@ -352,6 +389,45 @@ class NetworkManagerClient {
     }
     return _manager.getBooleanProperty(
         'org.freedesktop.NetworkManager', 'WwanHardwareEnabled');
+  }
+
+  List<NetworkManagerActiveConnection> get activeConnections {
+    if (_manager == null) {
+      return null;
+    }
+    var connectionObjectPaths = _manager.getObjectPathArrayProperty(
+        'org.freedesktop.NetworkManager', 'ActiveConnections');
+    var connections = <NetworkManagerActiveConnection>[];
+    for (var objectPath in connectionObjectPaths) {
+      var connection = _objects[objectPath];
+      if (connection != null) {
+        connections.add(NetworkManagerActiveConnection(connection));
+      }
+    }
+
+    return connections;
+  }
+
+  NetworkManagerActiveConnection get primaryConnection {
+    if (_manager == null) {
+      return null;
+    }
+    var objectPath = _manager.getObjectPathProperty(
+        'org.freedesktop.NetworkManager', 'PrimaryConnection');
+    var connection = _objects[objectPath];
+    if (connection == null) {
+      return null;
+    }
+
+    return NetworkManagerActiveConnection(connection);
+  }
+
+  String get primaryConnectionType {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getStringProperty(
+        'org.freedesktop.NetworkManager', 'PrimaryConnectionType');
   }
 
   /// Gets the version of NetworkManager running.

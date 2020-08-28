@@ -189,9 +189,10 @@ class NetworkManagerDevice {
 }
 
 class NetworkManagerActiveConnection {
+  final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerActiveConnection(this._object) {}
+  NetworkManagerActiveConnection(this.client, this._object) {}
 
   String get id => _object.getStringProperty(
       'org.freedesktop.NetworkManager.Connection.Active', 'Id');
@@ -207,10 +208,80 @@ class NetworkManagerActiveConnection {
       'StateFlags'); // FIXME: enum
   bool get default4 => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Connection.Active', 'Default');
+  NetworkManagerIP4Config get ip4Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Connection.Active', 'Ip4Config');
+    var config = client._objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerIP4Config(config);
+  }
+
+  //NetworkManagerDHCP4Config get dhcp4Config {}
   bool get default6 => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Connection.Active', 'Default6');
+  NetworkManagerIP6Config get ip6Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Connection.Active', 'Ip6Config');
+    var config = client._objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerIP6Config(config);
+  }
+
+  //NetworkManagerDHCP6Config get dhcp6Config {}
   bool get vpn => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Connection.Active', 'Vpn');
+}
+
+class NetworkManagerIP4Config {
+  final _NetworkManagerObject _object;
+
+  NetworkManagerIP4Config(this._object) {}
+
+  List<Map<String, dynamic>> get addressData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'AddressData');
+  String get gateway => _object.getStringProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'Gateway');
+  List<Map<String, dynamic>> get routeData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'RouteData');
+  List<Map<String, dynamic>> get nameServerData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'NameServerData');
+  List<String> get domains => _object.getStringArrayProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'Domains');
+  List<String> get searches => _object.getStringArrayProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'Searches');
+  List<String> get dnsOptions => _object.getStringArrayProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'DnsOptions');
+  int get dnsPriority => _object.getInt32Property(
+      'org.freedesktop.NetworkManager.IP4Config', 'DnsPriority');
+  List<Map<String, dynamic>> get winsServerData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP4Config', 'WinsServerData');
+}
+
+class NetworkManagerIP6Config {
+  final _NetworkManagerObject _object;
+
+  NetworkManagerIP6Config(this._object) {}
+
+  List<Map<String, dynamic>> get addressData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'AddressData');
+  String get gateway => _object.getStringProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'Gateway');
+  List<Map<String, dynamic>> get routeData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'RouteData');
+  List<Map<String, dynamic>> get nameServerData => _object.getDataListProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'NameServerData');
+  List<String> get domains => _object.getStringArrayProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'Domains');
+  List<String> get searches => _object.getStringArrayProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'Searches');
+  List<String> get dnsOptions => _object.getStringArrayProperty(
+      'org.freedesktop.NetworkManager.IP6Config', 'DnsOptions');
+  int get dnsPriority => _object.getInt32Property(
+      'org.freedesktop.NetworkManager.IP6Config', 'DnsPriority');
 }
 
 class _NetworkManagerObject extends DBusRemoteObject {
@@ -237,6 +308,18 @@ class _NetworkManagerObject extends DBusRemoteObject {
     return (value as DBusBoolean).value;
   }
 
+  /// Gets a cached signed 32 bit integer property, or returns null if not present or not the correct type.
+  int getInt32Property(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('i')) {
+      return null;
+    }
+    return (value as DBusInt32).value;
+  }
+
   /// Gets a cached unsigned 32 bit integer property, or returns null if not present or not the correct type.
   int getUint32Property(String interface, String name) {
     var value = getCachedProperty(interface, name);
@@ -259,6 +342,21 @@ class _NetworkManagerObject extends DBusRemoteObject {
       return null;
     }
     return (value as DBusString).value;
+  }
+
+  /// Gets a cached string array property, or returns null if not present or not the correct type.
+  List<String> getStringArrayProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('as')) {
+      return null;
+    }
+    return (value as DBusArray)
+        .children
+        .map((e) => (e as DBusString).value)
+        .toList();
   }
 
   /// Gets a cached object path property, or returns null if not present or not the correct type.
@@ -286,6 +384,27 @@ class _NetworkManagerObject extends DBusRemoteObject {
     return (value as DBusArray)
         .children
         .map((e) => (e as DBusObjectPath))
+        .toList();
+  }
+
+  /// Gets a cached list of data property, or returns null if not present or not the correct type.
+  List<Map<String, dynamic>> getDataListProperty(
+      String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('aa{sv}')) {
+      return null;
+    }
+    Map<String, dynamic> convertData(DBusValue value) {
+      return (value as DBusDict).children.map((key, value) => MapEntry(
+          (key as DBusString).value, (value as DBusVariant).value.toNative()));
+    }
+
+    return (value as DBusArray)
+        .children
+        .map((value) => convertData(value))
         .toList();
   }
 
@@ -401,7 +520,7 @@ class NetworkManagerClient {
     for (var objectPath in connectionObjectPaths) {
       var connection = _objects[objectPath];
       if (connection != null) {
-        connections.add(NetworkManagerActiveConnection(connection));
+        connections.add(NetworkManagerActiveConnection(this, connection));
       }
     }
 
@@ -419,7 +538,7 @@ class NetworkManagerClient {
       return null;
     }
 
-    return NetworkManagerActiveConnection(connection);
+    return NetworkManagerActiveConnection(this, connection);
   }
 
   String get primaryConnectionType {

@@ -1,10 +1,10 @@
-name: network_manager
+name: networkmanager
 version: 0.0.0-dev.1
 
 description:
   Provides a client to connect to NetworkManager - the service that manages network connections on Linux.
 
-homepage: https://github.com/canonical/network_manager.dart
+homepage: https://github.com/canonical/networkmanager.dart
 
 environment:
   sdk: '>=2.7.2 <3.0.0'

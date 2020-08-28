@@ -1,6 +1,57 @@
 import 'package:dbus/dbus.dart';
 
-class NetworkManagerSettings {}
+class _NetworkManagerObject extends DBusRemoteObject {
+  final Map<String, Map<String, DBusValue>> interfacesAndProperties;
+
+  /// Gets a cached property.
+  DBusValue getCachedProperty(String interface, String name) {
+    var properties = interfacesAndProperties[interface];
+    if (properties == null) {
+      return null;
+    }
+    return properties[name];
+  }
+
+  /// Gets a cached boolean property, or returns null if not present or not the correct type.
+  bool getBoolProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('b')) {
+      return null;
+    }
+    return (value as DBusBoolean).value;
+  }
+
+  /// Gets a cached string property, or returns null if not present or not the correct type.
+  String getStringProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('s')) {
+      return null;
+    }
+    return (value as DBusString).value;
+  }
+
+  _NetworkManagerObject(
+      DBusClient client, DBusObjectPath path, this.interfacesAndProperties)
+      : super(client, 'org.freedesktop.NetworkManager', path) {}
+}
+
+class NetworkManagerSettings extends _NetworkManagerObject {
+  NetworkManagerSettings(DBusClient client, DBusObjectPath path,
+      Map<String, Map<String, DBusValue>> interfacesAndProperties)
+      : super(client, path, interfacesAndProperties) {}
+}
+
+class NetworkManagerDevice extends _NetworkManagerObject {
+  NetworkManagerDevice(DBusClient client, DBusObjectPath path,
+      Map<String, Map<String, DBusValue>> interfacesAndProperties)
+      : super(client, path, interfacesAndProperties) {}
+}
 
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
@@ -11,29 +62,14 @@ class NetworkManagerClient {
   DBusRemoteObject _root;
 
   // Objects exported on the bus.
-  final _objects = <DBusObjectPath, DBusRemoteObject>{};
+  final _objects = <DBusObjectPath, _NetworkManagerObject>{};
 
   /// Creates a new NetworkManager client connected to the system D-Bus.
   NetworkManagerClient(DBusClient this.systemBus);
 
-  /// Gets the version of NetworkManager running.
-  Future<String> get version async {
-    var main = await _getMain();
-    var value =
-        await main.getProperty('org.freedesktop.NetworkManager', 'Version');
-    return (value as DBusString).value;
-  }
-
-  /// Gets the hostname
-  Future<String> get hostname async {
-    var settings = await _getSettings();
-    var value = await settings.getProperty(
-        'org.freedesktop.NetworkManager.Settings', 'Hostname');
-    return (value as DBusString).value;
-  }
-
   /// Connects to the NetworkManager D-Bus objects.
-  void _connect() async {
+  /// Must be called before accessing methods and properties.
+  void connect() async {
     // Already connected
     if (_root != null) {
       return;
@@ -43,23 +79,35 @@ class NetworkManagerClient {
     _root = DBusRemoteObject(systemBus, 'org.freedesktop.NetworkManager',
         DBusObjectPath('/org/freedesktop'));
     var objects = await _root.getManagedObjects();
-    objects.forEach((objectPath, interfaces) {
-      _objects[objectPath] = DBusRemoteObject(
-          systemBus, 'org.freedesktop.NetworkManager', objectPath);
+    objects.forEach((objectPath, interfacesAndProperties) {
+      _objects[objectPath] =
+          _NetworkManagerObject(systemBus, objectPath, interfacesAndProperties);
     });
   }
 
-  /// Gets a remote object.
-  Future<DBusRemoteObject> _getObject(DBusObjectPath objectPath) async {
-    await _connect();
-    return _objects[objectPath];
+  /// Gets the version of NetworkManager running.
+  String get version {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getStringProperty(
+        'org.freedesktop.NetworkManager', 'Version');
   }
 
-  /// Gets the main object.
-  Future<DBusRemoteObject> _getMain() async =>
-      _getObject(DBusObjectPath('/org/freedesktop/NetworkManager'));
+  /// Gets the hostname
+  String get hostname {
+    if (_settings == null) {
+      return null;
+    }
+    return _settings.getStringProperty(
+        'org.freedesktop.NetworkManager.Settings', 'Hostname');
+  }
+
+  /// Gets the manager object.
+  _NetworkManagerObject get _manager =>
+      _objects[DBusObjectPath('/org/freedesktop/NetworkManager')];
 
   /// Gets the settings object.
-  Future<DBusRemoteObject> _getSettings() async =>
-      _getObject(DBusObjectPath('/org/freedesktop/NetworkManager/Settings'));
+  _NetworkManagerObject get _settings =>
+      _objects[DBusObjectPath('/org/freedesktop/NetworkManager/Settings')];
 }

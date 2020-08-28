@@ -1,5 +1,7 @@
 import 'package:dbus/dbus.dart';
 
+enum ConnectivityState { unknown, none, portal, limited, full }
+
 class _NetworkManagerObject extends DBusRemoteObject {
   final Map<String, Map<String, DBusValue>> interfacesAndProperties;
 
@@ -22,6 +24,18 @@ class _NetworkManagerObject extends DBusRemoteObject {
       return null;
     }
     return (value as DBusBoolean).value;
+  }
+
+  /// Gets a cached unsigned 32 bit integer property, or returns null if not present or not the correct type.
+  int getUint32Property(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('u')) {
+      return null;
+    }
+    return (value as DBusUint32).value;
   }
 
   /// Gets a cached string property, or returns null if not present or not the correct type.
@@ -85,6 +99,46 @@ class NetworkManagerClient {
     });
   }
 
+  bool get networkingEnabled {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getBoolProperty(
+        'org.freedesktop.NetworkManager', 'NetworkingEnabled');
+  }
+
+  bool get wirelessEnabled {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getBoolProperty(
+        'org.freedesktop.NetworkManager', 'WirelessEnabled');
+  }
+
+  bool get wirelessHardwareEnabled {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getBoolProperty(
+        'org.freedesktop.NetworkManager', 'WirelessHardwareEnabled');
+  }
+
+  bool get wwanEnabled {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getBoolProperty(
+        'org.freedesktop.NetworkManager', 'WwanEnabled');
+  }
+
+  bool get wwanHardwareEnabled {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getBoolProperty(
+        'org.freedesktop.NetworkManager', 'WwanHardwareEnabled');
+  }
+
   /// Gets the version of NetworkManager running.
   String get version {
     if (_manager == null) {
@@ -92,6 +146,27 @@ class NetworkManagerClient {
     }
     return _manager.getStringProperty(
         'org.freedesktop.NetworkManager', 'Version');
+  }
+
+  ConnectivityState get connectivity {
+    var value = _manager.getUint32Property(
+        'org.freedesktop.NetworkManager', 'Connectivity');
+    if (value == 1) {
+      return ConnectivityState.none;
+    } else if (value == 2) {
+      return ConnectivityState.portal;
+    } else if (value == 3) {
+      return ConnectivityState.limited;
+    } else if (value == 4) {
+      return ConnectivityState.full;
+    } else {
+      return ConnectivityState.unknown;
+    }
+  }
+
+  bool get connectivityCheckEnabled {
+    return _manager.getBoolProperty(
+        'org.freedesktop.NetworkManager', 'ConnectivityCheckEnabled');
   }
 
   /// Gets the hostname

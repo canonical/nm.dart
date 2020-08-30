@@ -52,9 +52,10 @@ enum DeviceType {
 }
 
 class NetworkManagerDevice {
+  final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerDevice(this._object) {}
+  NetworkManagerDevice(this.client, this._object) {}
 
   String get udi =>
       _object.getStringProperty('org.freedesktop.NetworkManager.Device', 'Udi');
@@ -102,6 +103,39 @@ class NetworkManagerDevice {
     }
   }
 
+  // FIXME: StateReason
+  NetworkManagerActiveConnection get activeConnection {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Device', 'ActiveConnection');
+    return client._getActiveConnection(objectPath);
+  }
+
+  NetworkManagerIP4Config get ip4Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Device', 'Ip4Config');
+    return client._getIP4Config(objectPath);
+  }
+
+  NetworkManagerDHCP4Config get dhcp4Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Device', 'DHCP4Config');
+    return client._getDHCP4Config(objectPath);
+  }
+
+  NetworkManagerIP6Config get ip6Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Device', 'Ip6Config');
+    return client._getIP6Config(objectPath);
+  }
+
+  NetworkManagerDHCP6Config get dhcp6Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Device', 'DHCP6Config');
+    return client._getDHCP6Config(objectPath);
+  }
+
+  bool get managed => _object.getBooleanProperty(
+      'org.freedesktop.NetworkManager.Device', 'Managed');
   bool get autoconnect => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Device', 'Autoconnect');
   bool get firmwareMissing => _object.getBooleanProperty(
@@ -174,14 +208,18 @@ class NetworkManagerDevice {
     }
   }
 
+  // FIXME: AvailableConnections
   String get physicalPortId => _object.getStringProperty(
       'org.freedesktop.NetworkManager.Device', 'PhysicalPortId');
   int get mtu =>
       _object.getUint32Property('org.freedesktop.NetworkManager.Device', 'Mtu');
   int get metered => _object.getUint32Property(
       'org.freedesktop.NetworkManager.Device', 'Metered'); // FIXME: enum
+  // FIXME: LldpNeighbors
   bool get real => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Device', 'Real');
+  // FIXME: Ip4Connectivity
+  // FIXME: Ip6Connectivity
   int get interfaceFlags => _object.getUint32Property(
       'org.freedesktop.NetworkManager.Device', 'InterfaceFlags'); // FIXME: enum
   String get hwAddress => _object.getStringProperty(
@@ -211,27 +249,29 @@ class NetworkManagerActiveConnection {
   NetworkManagerIP4Config get ip4Config {
     var objectPath = _object.getObjectPathProperty(
         'org.freedesktop.NetworkManager.Connection.Active', 'Ip4Config');
-    var config = client._objects[objectPath];
-    if (config == null) {
-      return null;
-    }
-    return NetworkManagerIP4Config(config);
+    return client._getIP4Config(objectPath);
   }
 
-  //NetworkManagerDHCP4Config get dhcp4Config {}
+  NetworkManagerDHCP4Config get dhcp4Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Connection.Active', 'DHCP4Config');
+    return client._getDHCP4Config(objectPath);
+  }
+
   bool get default6 => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Connection.Active', 'Default6');
   NetworkManagerIP6Config get ip6Config {
     var objectPath = _object.getObjectPathProperty(
         'org.freedesktop.NetworkManager.Connection.Active', 'Ip6Config');
-    var config = client._objects[objectPath];
-    if (config == null) {
-      return null;
-    }
-    return NetworkManagerIP6Config(config);
+    return client._getIP6Config(objectPath);
   }
 
-  //NetworkManagerDHCP6Config get dhcp6Config {}
+  NetworkManagerDHCP6Config get dhcp6Config {
+    var objectPath = _object.getObjectPathProperty(
+        'org.freedesktop.NetworkManager.Connection.Active', 'DHCP6Config');
+    return client._getDHCP6Config(objectPath);
+  }
+
   bool get vpn => _object.getBooleanProperty(
       'org.freedesktop.NetworkManager.Connection.Active', 'Vpn');
 }
@@ -261,6 +301,12 @@ class NetworkManagerIP4Config {
       'org.freedesktop.NetworkManager.IP4Config', 'WinsServerData');
 }
 
+class NetworkManagerDHCP4Config {
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDHCP4Config(this._object) {}
+}
+
 class NetworkManagerIP6Config {
   final _NetworkManagerObject _object;
 
@@ -282,6 +328,12 @@ class NetworkManagerIP6Config {
       'org.freedesktop.NetworkManager.IP6Config', 'DnsOptions');
   int get dnsPriority => _object.getInt32Property(
       'org.freedesktop.NetworkManager.IP6Config', 'DnsPriority');
+}
+
+class NetworkManagerDHCP6Config {
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDHCP6Config(this._object) {}
 }
 
 class _NetworkManagerObject extends DBusRemoteObject {
@@ -463,7 +515,7 @@ class NetworkManagerClient {
     for (var objectPath in deviceObjectPaths) {
       var device = _objects[objectPath];
       if (device != null) {
-        devices.add(NetworkManagerDevice(device));
+        devices.add(NetworkManagerDevice(this, device));
       }
     }
 
@@ -595,4 +647,60 @@ class NetworkManagerClient {
   /// Gets the settings object.
   _NetworkManagerObject get _settings =>
       _objects[DBusObjectPath('/org/freedesktop/NetworkManager/Settings')];
+
+  NetworkManagerActiveConnection _getActiveConnection(
+      DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerActiveConnection(this, config);
+  }
+
+  NetworkManagerIP4Config _getIP4Config(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerIP4Config(config);
+  }
+
+  NetworkManagerDHCP4Config _getDHCP4Config(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerDHCP4Config(config);
+  }
+
+  NetworkManagerIP6Config _getIP6Config(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerIP6Config(config);
+  }
+
+  NetworkManagerDHCP6Config _getDHCP6Config(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerDHCP6Config(config);
+  }
 }

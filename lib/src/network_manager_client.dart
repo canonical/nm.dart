@@ -59,10 +59,14 @@ class NetworkManagerDevice {
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
+  final NetworkManagerDeviceGeneric generic;
+  final NetworkManagerDeviceStatistics statistics;
   final NetworkManagerDeviceWireless wireless;
 
   NetworkManagerDevice(this.client, this._object)
-      : wireless = NetworkManagerDeviceWireless(client, _object);
+      : generic = NetworkManagerDeviceGeneric(_object),
+        statistics = NetworkManagerDeviceStatistics(_object),
+        wireless = NetworkManagerDeviceWireless(client, _object);
 
   String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
   String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
@@ -224,6 +228,34 @@ class NetworkManagerDevice {
       deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
   String get hwAddress =>
       _object.getStringProperty(deviceInterfaceName, 'HwAddress');
+}
+
+class NetworkManagerDeviceGeneric {
+  final String genericDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Generic';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceGeneric(this._object);
+
+  String get typeDescription =>
+      _object.getStringProperty(genericDeviceInterfaceName, 'TypeDescription');
+}
+
+class NetworkManagerDeviceStatistics {
+  final String statisticsDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Statistics';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceStatistics(this._object);
+
+  int get refreshRateMs =>
+      _object.getUint32Property(statisticsDeviceInterfaceName, 'RefreshRateMs');
+  int get txBytes =>
+      _object.getUint64Property(statisticsDeviceInterfaceName, 'TxBytes');
+  int get rxBytes =>
+      _object.getUint64Property(statisticsDeviceInterfaceName, 'RxBytes');
 }
 
 class NetworkManagerDeviceWireless {
@@ -526,6 +558,18 @@ class _NetworkManagerObject extends DBusRemoteObject {
       return null;
     }
     return (value as DBusInt64).value;
+  }
+
+  /// Gets a cached unsigned 64 bit integer property, or returns null if not present or not the correct type.
+  int getUint64Property(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('t')) {
+      return null;
+    }
+    return (value as DBusUint64).value;
   }
 
   /// Gets a cached string property, or returns null if not present or not the correct type.

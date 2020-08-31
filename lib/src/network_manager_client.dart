@@ -57,6 +57,7 @@ class NetworkManagerDevice {
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
+  final NetworkManagerDeviceBluetooth bluetooth;
   final NetworkManagerDeviceGeneric generic;
   final NetworkManagerDeviceStatistics statistics;
   final NetworkManagerDeviceTun tun;
@@ -65,7 +66,8 @@ class NetworkManagerDevice {
   final NetworkManagerDeviceWireless wireless;
 
   NetworkManagerDevice(this.client, this._object)
-      : generic = NetworkManagerDeviceGeneric(_object),
+      : bluetooth = NetworkManagerDeviceBluetooth(_object),
+        generic = NetworkManagerDeviceGeneric(_object),
         statistics = NetworkManagerDeviceStatistics(_object),
         tun = NetworkManagerDeviceTun(_object),
         vlan = NetworkManagerDeviceVlan(client, _object),
@@ -232,6 +234,18 @@ class NetworkManagerDevice {
       deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
   String get hwAddress =>
       _object.getStringProperty(deviceInterfaceName, 'HwAddress');
+}
+
+class NetworkManagerDeviceBluetooth {
+  final String bluetoothDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Bluetooth';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceBluetooth(this._object);
+
+  int get btCapabilities =>
+      _object.getUint32Property(bluetoothDeviceInterfaceName, 'BtCapabilities');
 }
 
 class NetworkManagerDeviceGeneric {

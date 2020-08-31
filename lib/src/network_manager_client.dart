@@ -59,7 +59,10 @@ class NetworkManagerDevice {
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerDevice(this.client, this._object) {}
+  final NetworkManagerDeviceWireless wireless;
+
+  NetworkManagerDevice(this.client, this._object)
+      : wireless = NetworkManagerDeviceWireless(client, _object);
 
   String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
   String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
@@ -221,6 +224,16 @@ class NetworkManagerDevice {
       deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
   String get hwAddress =>
       _object.getStringProperty(deviceInterfaceName, 'HwAddress');
+}
+
+class NetworkManagerDeviceWireless {
+  final String wirelessDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Wireless';
+
+  final NetworkManagerClient client;
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceWireless(this.client, this._object);
 
   String get permHwAddress =>
       _object.getStringProperty(wirelessDeviceInterfaceName, 'PermHwAddress');

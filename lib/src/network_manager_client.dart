@@ -52,28 +52,26 @@ enum DeviceType {
 }
 
 class NetworkManagerDevice {
+  final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
+
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
   NetworkManagerDevice(this.client, this._object) {}
 
-  String get udi =>
-      _object.getStringProperty('org.freedesktop.NetworkManager.Device', 'Udi');
-  String get path => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'Path');
-  String get ipInterface => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'IpInterface');
-  String get driver => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'Driver');
-  String get driverVersion => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'DriverVersion');
-  String get firmwareVersion => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'FirmwareVersion');
+  String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
+  String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
+  String get ipInterface =>
+      _object.getStringProperty(deviceInterfaceName, 'IpInterface');
+  String get driver => _object.getStringProperty(deviceInterfaceName, 'Driver');
+  String get driverVersion =>
+      _object.getStringProperty(deviceInterfaceName, 'DriverVersion');
+  String get firmwareVersion =>
+      _object.getStringProperty(deviceInterfaceName, 'FirmwareVersion');
   int get capabilities => _object.getUint32Property(
-      'org.freedesktop.NetworkManager.Device', 'Capabilities'); // FIXME: enum
+      deviceInterfaceName, 'Capabilities'); // FIXME: enum
   DeviceState get state {
-    var value = _object.getUint32Property(
-        'org.freedesktop.NetworkManager.Device', 'State');
+    var value = _object.getUint32Property(deviceInterfaceName, 'State');
     if (value == 10) {
       return DeviceState.unmanaged;
     } else if (value == 20) {
@@ -105,46 +103,45 @@ class NetworkManagerDevice {
 
   // FIXME: StateReason
   NetworkManagerActiveConnection get activeConnection {
-    var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Device', 'ActiveConnection');
+    var objectPath =
+        _object.getObjectPathProperty(deviceInterfaceName, 'ActiveConnection');
     return client._getActiveConnection(objectPath);
   }
 
   NetworkManagerIP4Config get ip4Config {
-    var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Device', 'Ip4Config');
+    var objectPath =
+        _object.getObjectPathProperty(deviceInterfaceName, 'Ip4Config');
     return client._getIP4Config(objectPath);
   }
 
   NetworkManagerDHCP4Config get dhcp4Config {
-    var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Device', 'DHCP4Config');
+    var objectPath =
+        _object.getObjectPathProperty(deviceInterfaceName, 'DHCP4Config');
     return client._getDHCP4Config(objectPath);
   }
 
   NetworkManagerIP6Config get ip6Config {
-    var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Device', 'Ip6Config');
+    var objectPath =
+        _object.getObjectPathProperty(deviceInterfaceName, 'Ip6Config');
     return client._getIP6Config(objectPath);
   }
 
   NetworkManagerDHCP6Config get dhcp6Config {
-    var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Device', 'DHCP6Config');
+    var objectPath =
+        _object.getObjectPathProperty(deviceInterfaceName, 'DHCP6Config');
     return client._getDHCP6Config(objectPath);
   }
 
-  bool get managed => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Device', 'Managed');
-  bool get autoconnect => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Device', 'Autoconnect');
-  bool get firmwareMissing => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Device', 'FirmwareMissing');
-  bool get nmPluginMissing => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Device', 'NmPluginMissing');
+  bool get managed =>
+      _object.getBooleanProperty(deviceInterfaceName, 'Managed');
+  bool get autoconnect =>
+      _object.getBooleanProperty(deviceInterfaceName, 'Autoconnect');
+  bool get firmwareMissing =>
+      _object.getBooleanProperty(deviceInterfaceName, 'FirmwareMissing');
+  bool get nmPluginMissing =>
+      _object.getBooleanProperty(deviceInterfaceName, 'NmPluginMissing');
   DeviceType get deviceType {
-    var value = _object.getUint32Property(
-        'org.freedesktop.NetworkManager.Device', 'DeviceType');
+    var value = _object.getUint32Property(deviceInterfaceName, 'DeviceType');
     if (value == 1) {
       return DeviceType.ethernet;
     } else if (value == 2) {
@@ -209,96 +206,98 @@ class NetworkManagerDevice {
   }
 
   // FIXME: AvailableConnections
-  String get physicalPortId => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'PhysicalPortId');
-  int get mtu =>
-      _object.getUint32Property('org.freedesktop.NetworkManager.Device', 'Mtu');
-  int get metered => _object.getUint32Property(
-      'org.freedesktop.NetworkManager.Device', 'Metered'); // FIXME: enum
+  String get physicalPortId =>
+      _object.getStringProperty(deviceInterfaceName, 'PhysicalPortId');
+  int get mtu => _object.getUint32Property(deviceInterfaceName, 'Mtu');
+  int get metered =>
+      _object.getUint32Property(deviceInterfaceName, 'Metered'); // FIXME: enum
   // FIXME: LldpNeighbors
-  bool get real => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Device', 'Real');
+  bool get real => _object.getBooleanProperty(deviceInterfaceName, 'Real');
   // FIXME: Ip4Connectivity
   // FIXME: Ip6Connectivity
   int get interfaceFlags => _object.getUint32Property(
-      'org.freedesktop.NetworkManager.Device', 'InterfaceFlags'); // FIXME: enum
-  String get hwAddress => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Device', 'HwAddress');
+      deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
+  String get hwAddress =>
+      _object.getStringProperty(deviceInterfaceName, 'HwAddress');
 }
 
 class NetworkManagerActiveConnection {
+  final String activeConnectionInterfaceName =
+      'org.freedesktop.NetworkManager.Connection.Active';
+
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
   NetworkManagerActiveConnection(this.client, this._object) {}
 
-  String get id => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Connection.Active', 'Id');
-  String get uuid => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Connection.Active', 'Uuid');
-  String get type => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.Connection.Active', 'type');
+  String get id =>
+      _object.getStringProperty(activeConnectionInterfaceName, 'Id');
+  String get uuid =>
+      _object.getStringProperty(activeConnectionInterfaceName, 'Uuid');
+  String get type =>
+      _object.getStringProperty(activeConnectionInterfaceName, 'type');
   int get state => _object.getUint32Property(
-      'org.freedesktop.NetworkManager.Connection.Active',
-      'State'); // FIXME: enum
+      activeConnectionInterfaceName, 'State'); // FIXME: enum
   int get stateFlags => _object.getUint32Property(
-      'org.freedesktop.NetworkManager.Connection.Active',
-      'StateFlags'); // FIXME: enum
-  bool get default4 => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Connection.Active', 'Default');
+      activeConnectionInterfaceName, 'StateFlags'); // FIXME: enum
+  bool get default4 =>
+      _object.getBooleanProperty(activeConnectionInterfaceName, 'Default');
   NetworkManagerIP4Config get ip4Config {
     var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Connection.Active', 'Ip4Config');
+        activeConnectionInterfaceName, 'Ip4Config');
     return client._getIP4Config(objectPath);
   }
 
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Connection.Active', 'DHCP4Config');
+        activeConnectionInterfaceName, 'DHCP4Config');
     return client._getDHCP4Config(objectPath);
   }
 
-  bool get default6 => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Connection.Active', 'Default6');
+  bool get default6 =>
+      _object.getBooleanProperty(activeConnectionInterfaceName, 'Default6');
   NetworkManagerIP6Config get ip6Config {
     var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Connection.Active', 'Ip6Config');
+        activeConnectionInterfaceName, 'Ip6Config');
     return client._getIP6Config(objectPath);
   }
 
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath = _object.getObjectPathProperty(
-        'org.freedesktop.NetworkManager.Connection.Active', 'DHCP6Config');
+        activeConnectionInterfaceName, 'DHCP6Config');
     return client._getDHCP6Config(objectPath);
   }
 
-  bool get vpn => _object.getBooleanProperty(
-      'org.freedesktop.NetworkManager.Connection.Active', 'Vpn');
+  bool get vpn =>
+      _object.getBooleanProperty(activeConnectionInterfaceName, 'Vpn');
 }
 
 class NetworkManagerIP4Config {
+  final String ip4ConfigInterfaceName =
+      'org.freedesktop.NetworkManager.IP4Config';
+
   final _NetworkManagerObject _object;
 
   NetworkManagerIP4Config(this._object) {}
 
-  List<Map<String, dynamic>> get addressData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'AddressData');
-  String get gateway => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'Gateway');
-  List<Map<String, dynamic>> get routeData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'RouteData');
-  List<Map<String, dynamic>> get nameServerData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'NameServerData');
-  List<String> get domains => _object.getStringArrayProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'Domains');
-  List<String> get searches => _object.getStringArrayProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'Searches');
-  List<String> get dnsOptions => _object.getStringArrayProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'DnsOptions');
-  int get dnsPriority => _object.getInt32Property(
-      'org.freedesktop.NetworkManager.IP4Config', 'DnsPriority');
-  List<Map<String, dynamic>> get winsServerData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP4Config', 'WinsServerData');
+  List<Map<String, dynamic>> get addressData =>
+      _object.getDataListProperty(ip4ConfigInterfaceName, 'AddressData');
+  String get gateway =>
+      _object.getStringProperty(ip4ConfigInterfaceName, 'Gateway');
+  List<Map<String, dynamic>> get routeData =>
+      _object.getDataListProperty(ip4ConfigInterfaceName, 'RouteData');
+  List<Map<String, dynamic>> get nameServerData =>
+      _object.getDataListProperty(ip4ConfigInterfaceName, 'NameServerData');
+  List<String> get domains =>
+      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'Domains');
+  List<String> get searches =>
+      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'Searches');
+  List<String> get dnsOptions =>
+      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'DnsOptions');
+  int get dnsPriority =>
+      _object.getInt32Property(ip4ConfigInterfaceName, 'DnsPriority');
+  List<Map<String, dynamic>> get winsServerData =>
+      _object.getDataListProperty(ip4ConfigInterfaceName, 'WinsServerData');
 }
 
 class NetworkManagerDHCP4Config {
@@ -308,26 +307,29 @@ class NetworkManagerDHCP4Config {
 }
 
 class NetworkManagerIP6Config {
+  final String ip6ConfigInterfaceName =
+      'org.freedesktop.NetworkManager.IP6Config';
+
   final _NetworkManagerObject _object;
 
   NetworkManagerIP6Config(this._object) {}
 
-  List<Map<String, dynamic>> get addressData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'AddressData');
-  String get gateway => _object.getStringProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'Gateway');
-  List<Map<String, dynamic>> get routeData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'RouteData');
-  List<Map<String, dynamic>> get nameServerData => _object.getDataListProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'NameServerData');
-  List<String> get domains => _object.getStringArrayProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'Domains');
-  List<String> get searches => _object.getStringArrayProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'Searches');
-  List<String> get dnsOptions => _object.getStringArrayProperty(
-      'org.freedesktop.NetworkManager.IP6Config', 'DnsOptions');
-  int get dnsPriority => _object.getInt32Property(
-      'org.freedesktop.NetworkManager.IP6Config', 'DnsPriority');
+  List<Map<String, dynamic>> get addressData =>
+      _object.getDataListProperty(ip6ConfigInterfaceName, 'AddressData');
+  String get gateway =>
+      _object.getStringProperty(ip6ConfigInterfaceName, 'Gateway');
+  List<Map<String, dynamic>> get routeData =>
+      _object.getDataListProperty(ip6ConfigInterfaceName, 'RouteData');
+  List<Map<String, dynamic>> get nameServerData =>
+      _object.getDataListProperty(ip6ConfigInterfaceName, 'NameServerData');
+  List<String> get domains =>
+      _object.getStringArrayProperty(ip6ConfigInterfaceName, 'Domains');
+  List<String> get searches =>
+      _object.getStringArrayProperty(ip6ConfigInterfaceName, 'Searches');
+  List<String> get dnsOptions =>
+      _object.getStringArrayProperty(ip6ConfigInterfaceName, 'DnsOptions');
+  int get dnsPriority =>
+      _object.getInt32Property(ip6ConfigInterfaceName, 'DnsPriority');
 }
 
 class NetworkManagerDHCP6Config {
@@ -467,6 +469,10 @@ class _NetworkManagerObject extends DBusRemoteObject {
 
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
+  final String managerInterfaceName = 'org.freedesktop.NetworkManager';
+  final String settingsInterfaceName =
+      'org.freedesktop.NetworkManager.Settings';
+
   /// The bus this client is connected to.
   final DBusClient systemBus;
 
@@ -509,8 +515,8 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    var deviceObjectPaths = _manager.getObjectPathArrayProperty(
-        'org.freedesktop.NetworkManager', propertyName);
+    var deviceObjectPaths =
+        _manager.getObjectPathArrayProperty(managerInterfaceName, propertyName);
     var devices = List<NetworkManagerDevice>();
     for (var objectPath in deviceObjectPaths) {
       var device = _objects[objectPath];
@@ -527,15 +533,14 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-        'org.freedesktop.NetworkManager', 'NetworkingEnabled');
+        managerInterfaceName, 'NetworkingEnabled');
   }
 
   bool get wirelessEnabled {
     if (_manager == null) {
       return null;
     }
-    return _manager.getBooleanProperty(
-        'org.freedesktop.NetworkManager', 'WirelessEnabled');
+    return _manager.getBooleanProperty(managerInterfaceName, 'WirelessEnabled');
   }
 
   bool get wirelessHardwareEnabled {
@@ -543,15 +548,14 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-        'org.freedesktop.NetworkManager', 'WirelessHardwareEnabled');
+        managerInterfaceName, 'WirelessHardwareEnabled');
   }
 
   bool get wwanEnabled {
     if (_manager == null) {
       return null;
     }
-    return _manager.getBooleanProperty(
-        'org.freedesktop.NetworkManager', 'WwanEnabled');
+    return _manager.getBooleanProperty(managerInterfaceName, 'WwanEnabled');
   }
 
   bool get wwanHardwareEnabled {
@@ -559,7 +563,7 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-        'org.freedesktop.NetworkManager', 'WwanHardwareEnabled');
+        managerInterfaceName, 'WwanHardwareEnabled');
   }
 
   List<NetworkManagerActiveConnection> get activeConnections {
@@ -567,7 +571,7 @@ class NetworkManagerClient {
       return null;
     }
     var connectionObjectPaths = _manager.getObjectPathArrayProperty(
-        'org.freedesktop.NetworkManager', 'ActiveConnections');
+        managerInterfaceName, 'ActiveConnections');
     var connections = <NetworkManagerActiveConnection>[];
     for (var objectPath in connectionObjectPaths) {
       var connection = _objects[objectPath];
@@ -584,7 +588,7 @@ class NetworkManagerClient {
       return null;
     }
     var objectPath = _manager.getObjectPathProperty(
-        'org.freedesktop.NetworkManager', 'PrimaryConnection');
+        managerInterfaceName, 'PrimaryConnection');
     var connection = _objects[objectPath];
     if (connection == null) {
       return null;
@@ -598,7 +602,7 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getStringProperty(
-        'org.freedesktop.NetworkManager', 'PrimaryConnectionType');
+        managerInterfaceName, 'PrimaryConnectionType');
   }
 
   /// Gets the version of NetworkManager running.
@@ -606,13 +610,12 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    return _manager.getStringProperty(
-        'org.freedesktop.NetworkManager', 'Version');
+    return _manager.getStringProperty(managerInterfaceName, 'Version');
   }
 
   ConnectivityState get connectivity {
-    var value = _manager.getUint32Property(
-        'org.freedesktop.NetworkManager', 'Connectivity');
+    var value =
+        _manager.getUint32Property(managerInterfaceName, 'Connectivity');
     if (value == 1) {
       return ConnectivityState.none;
     } else if (value == 2) {
@@ -628,7 +631,7 @@ class NetworkManagerClient {
 
   bool get connectivityCheckEnabled {
     return _manager.getBooleanProperty(
-        'org.freedesktop.NetworkManager', 'ConnectivityCheckEnabled');
+        managerInterfaceName, 'ConnectivityCheckEnabled');
   }
 
   /// Gets the hostname
@@ -636,8 +639,7 @@ class NetworkManagerClient {
     if (_settings == null) {
       return null;
     }
-    return _settings.getStringProperty(
-        'org.freedesktop.NetworkManager.Settings', 'Hostname');
+    return _settings.getStringProperty(settingsInterfaceName, 'Hostname');
   }
 
   /// Gets the manager object.

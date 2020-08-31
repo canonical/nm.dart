@@ -301,9 +301,24 @@ class NetworkManagerIP4Config {
 }
 
 class NetworkManagerDHCP4Config {
+  final String dhcp4ConfigInterface =
+      'org.freedesktop.NetworkManager.DHCP4Config';
+
   final _NetworkManagerObject _object;
 
   NetworkManagerDHCP4Config(this._object) {}
+
+  Map<String, dynamic> get options {
+    var value = _object.getCachedProperty(dhcp4ConfigInterface, 'Options');
+    if (value == null) {
+      return {};
+    }
+    if (value.signature != DBusSignature('a{sv}')) {
+      return {};
+    }
+    return (value as DBusDict).children.map((key, value) => MapEntry(
+        (key as DBusString).value, (value as DBusVariant).value.toNative()));
+  }
 }
 
 class NetworkManagerIP6Config {
@@ -333,9 +348,24 @@ class NetworkManagerIP6Config {
 }
 
 class NetworkManagerDHCP6Config {
+  final String dhcp6ConfigInterface =
+      'org.freedesktop.NetworkManager.DHCP6Config';
+
   final _NetworkManagerObject _object;
 
   NetworkManagerDHCP6Config(this._object) {}
+
+  Map<String, dynamic> get options {
+    var value = _object.getCachedProperty(dhcp6ConfigInterface, 'Options');
+    if (value == null) {
+      return {};
+    }
+    if (value.signature != DBusSignature('a{sv}')) {
+      return {};
+    }
+    return (value as DBusDict).children.map((key, value) => MapEntry(
+        (key as DBusString).value, (value as DBusVariant).value.toNative()));
+  }
 }
 
 class _NetworkManagerObject extends DBusRemoteObject {

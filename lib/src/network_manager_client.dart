@@ -60,6 +60,7 @@ class NetworkManagerDevice {
   final NetworkManagerDeviceGeneric generic;
   final NetworkManagerDeviceStatistics statistics;
   final NetworkManagerDeviceTun tun;
+  final NetworkManagerDeviceVlan vlan;
   final NetworkManagerDeviceWired wired;
   final NetworkManagerDeviceWireless wireless;
 
@@ -67,6 +68,7 @@ class NetworkManagerDevice {
       : generic = NetworkManagerDeviceGeneric(_object),
         statistics = NetworkManagerDeviceStatistics(_object),
         tun = NetworkManagerDeviceTun(_object),
+        vlan = NetworkManagerDeviceVlan(client, _object),
         wired = NetworkManagerDeviceWired(_object),
         wireless = NetworkManagerDeviceWireless(client, _object);
 
@@ -277,6 +279,25 @@ class NetworkManagerDeviceTun {
       _object.getBooleanProperty(tunDeviceInterfaceName, 'VnetHdr');
   bool get multiQueue =>
       _object.getBooleanProperty(tunDeviceInterfaceName, 'MultiQueue');
+}
+
+class NetworkManagerDeviceVlan {
+  final String vlanDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Vlan';
+
+  final NetworkManagerClient client;
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceVlan(this.client, this._object);
+
+  NetworkManagerDevice get parent {
+    var objectPath =
+        _object.getObjectPathProperty(vlanDeviceInterfaceName, 'Parent');
+    return client._getDevice(objectPath);
+  }
+
+  int get vlanId =>
+      _object.getUint32Property(vlanDeviceInterfaceName, 'VlanId');
 }
 
 class NetworkManagerDeviceWired {
@@ -741,9 +762,9 @@ class NetworkManagerClient {
         _manager.getObjectPathArrayProperty(managerInterfaceName, propertyName);
     var devices = List<NetworkManagerDevice>();
     for (var objectPath in deviceObjectPaths) {
-      var device = _objects[objectPath];
+      var device = _getDevice(objectPath);
       if (device != null) {
-        devices.add(NetworkManagerDevice(this, device));
+        devices.add(device);
       }
     }
 
@@ -871,6 +892,17 @@ class NetworkManagerClient {
   /// Gets the settings object.
   _NetworkManagerObject get _settings =>
       _objects[DBusObjectPath('/org/freedesktop/NetworkManager/Settings')];
+
+  NetworkManagerDevice _getDevice(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerDevice(this, config);
+  }
 
   NetworkManagerActiveConnection _getActiveConnection(
       DBusObjectPath objectPath) {

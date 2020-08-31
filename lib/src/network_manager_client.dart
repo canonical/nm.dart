@@ -53,19 +53,19 @@ enum DeviceType {
 
 class NetworkManagerDevice {
   final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
-  final String wirelessDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Wireless';
 
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
   final NetworkManagerDeviceGeneric generic;
   final NetworkManagerDeviceStatistics statistics;
+  final NetworkManagerDeviceWired wired;
   final NetworkManagerDeviceWireless wireless;
 
   NetworkManagerDevice(this.client, this._object)
       : generic = NetworkManagerDeviceGeneric(_object),
         statistics = NetworkManagerDeviceStatistics(_object),
+        wired = NetworkManagerDeviceWired(client, _object),
         wireless = NetworkManagerDeviceWireless(client, _object);
 
   String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
@@ -256,6 +256,22 @@ class NetworkManagerDeviceStatistics {
       _object.getUint64Property(statisticsDeviceInterfaceName, 'TxBytes');
   int get rxBytes =>
       _object.getUint64Property(statisticsDeviceInterfaceName, 'RxBytes');
+}
+
+class NetworkManagerDeviceWired {
+  final String wiredDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Wired';
+
+  final NetworkManagerClient client;
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceWired(this.client, this._object);
+
+  String get permHwAddress =>
+      _object.getStringProperty(wiredDeviceInterfaceName, 'PermHwAddress');
+  int get speed => _object.getUint32Property(wiredDeviceInterfaceName, 'Speed');
+  List<String> get s390Subchannels => _object.getStringArrayProperty(
+      wiredDeviceInterfaceName, 'S390Subchannels');
 }
 
 class NetworkManagerDeviceWireless {

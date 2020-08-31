@@ -53,6 +53,8 @@ enum DeviceType {
 
 class NetworkManagerDevice {
   final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
+  final String wirelessDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Wireless';
 
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
@@ -219,6 +221,37 @@ class NetworkManagerDevice {
       deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
   String get hwAddress =>
       _object.getStringProperty(deviceInterfaceName, 'HwAddress');
+
+  String get permHwAddress =>
+      _object.getStringProperty(wirelessDeviceInterfaceName, 'PermHwAddress');
+  int get mode => _object.getUint32Property(
+      wirelessDeviceInterfaceName, 'Mode'); // FIXME: enum
+  int get bitrate =>
+      _object.getUint32Property(wirelessDeviceInterfaceName, 'Bitrate');
+  List<NetworkManagerAccessPoint> get accessPoints {
+    var objectPaths = _object.getObjectPathArrayProperty(
+        wirelessDeviceInterfaceName, 'AccessPoints');
+    var accessPoints = <NetworkManagerAccessPoint>[];
+    for (var objectPath in objectPaths) {
+      var accessPoint = client._getAccessPoint(objectPath);
+      if (accessPoint != null) {
+        accessPoints.add(accessPoint);
+      }
+    }
+
+    return accessPoints;
+  }
+
+  NetworkManagerAccessPoint get activeAccessPoint {
+    var objectPath = _object.getObjectPathProperty(
+        wirelessDeviceInterfaceName, 'ActiveAccessPoint');
+    return client._getAccessPoint(objectPath);
+  }
+
+  int get wirelessCapabilities => _object.getUint32Property(
+      wirelessDeviceInterfaceName, 'WirelessCapabilities'); // FIXME: enum
+  int get lastScan =>
+      _object.getInt64Property(wirelessDeviceInterfaceName, 'LastScan');
 }
 
 class NetworkManagerActiveConnection {
@@ -368,6 +401,48 @@ class NetworkManagerDHCP6Config {
   }
 }
 
+class NetworkManagerAccessPoint {
+  final String accessPointInterfaceName =
+      'org.freedesktop.NetworkManager.AccessPoint';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerAccessPoint(this._object) {}
+
+  int get flags => _object.getUint32Property(
+      accessPointInterfaceName, 'Flags'); // FIXME: enum
+  int get wpaFlags => _object.getUint32Property(
+      accessPointInterfaceName, 'WpaFlags'); // FIXME: enum
+  int get rsnFlags => _object.getUint32Property(
+      accessPointInterfaceName, 'RsnFlags'); // FIXME: enum
+  List<int> get ssid {
+    var value = _object.getCachedProperty(accessPointInterfaceName, 'Ssid');
+    if (value == null) {
+      return [];
+    }
+    if (value.signature != DBusSignature('ay')) {
+      return [];
+    }
+    return (value as DBusArray)
+        .children
+        .map((e) => (e as DBusByte).value)
+        .toList();
+  }
+
+  int get frequency =>
+      _object.getUint32Property(accessPointInterfaceName, 'Frequency');
+  String get hwAddress =>
+      _object.getStringProperty(accessPointInterfaceName, 'HwAddress');
+  int get mode => _object.getUint32Property(
+      accessPointInterfaceName, 'Mode'); // FIXME: enum
+  int get maxBitrate =>
+      _object.getUint32Property(accessPointInterfaceName, 'MaxBitrate');
+  int get strength =>
+      _object.getByteProperty(accessPointInterfaceName, 'Strength');
+  int get lastSeen =>
+      _object.getInt32Property(accessPointInterfaceName, 'LastSeen');
+}
+
 class _NetworkManagerObject extends DBusRemoteObject {
   final Map<String, Map<String, DBusValue>> interfacesAndProperties;
 
@@ -392,6 +467,18 @@ class _NetworkManagerObject extends DBusRemoteObject {
     return (value as DBusBoolean).value;
   }
 
+  /// Gets a cached unsigned 8 bit integer property, or returns null if not present or not the correct type.
+  int getByteProperty(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('y')) {
+      return null;
+    }
+    return (value as DBusByte).value;
+  }
+
   /// Gets a cached signed 32 bit integer property, or returns null if not present or not the correct type.
   int getInt32Property(String interface, String name) {
     var value = getCachedProperty(interface, name);
@@ -414,6 +501,18 @@ class _NetworkManagerObject extends DBusRemoteObject {
       return null;
     }
     return (value as DBusUint32).value;
+  }
+
+  /// Gets a cached signed 64 bit integer property, or returns null if not present or not the correct type.
+  int getInt64Property(String interface, String name) {
+    var value = getCachedProperty(interface, name);
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('x')) {
+      return null;
+    }
+    return (value as DBusInt64).value;
   }
 
   /// Gets a cached string property, or returns null if not present or not the correct type.
@@ -734,5 +833,16 @@ class NetworkManagerClient {
       return null;
     }
     return NetworkManagerDHCP6Config(config);
+  }
+
+  NetworkManagerAccessPoint _getAccessPoint(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerAccessPoint(config);
   }
 }

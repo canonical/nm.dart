@@ -59,13 +59,15 @@ class NetworkManagerDevice {
 
   final NetworkManagerDeviceGeneric generic;
   final NetworkManagerDeviceStatistics statistics;
+  final NetworkManagerDeviceTun tun;
   final NetworkManagerDeviceWired wired;
   final NetworkManagerDeviceWireless wireless;
 
   NetworkManagerDevice(this.client, this._object)
       : generic = NetworkManagerDeviceGeneric(_object),
         statistics = NetworkManagerDeviceStatistics(_object),
-        wired = NetworkManagerDeviceWired(client, _object),
+        tun = NetworkManagerDeviceTun(_object),
+        wired = NetworkManagerDeviceWired(_object),
         wireless = NetworkManagerDeviceWireless(client, _object);
 
   String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
@@ -258,14 +260,32 @@ class NetworkManagerDeviceStatistics {
       _object.getUint64Property(statisticsDeviceInterfaceName, 'RxBytes');
 }
 
+class NetworkManagerDeviceTun {
+  final String tunDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Tun';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceTun(this._object);
+
+  String get permHwAddress =>
+      _object.getStringProperty(tunDeviceInterfaceName, 'PermHwAddress');
+  int get owner => _object.getInt64Property(tunDeviceInterfaceName, 'Owner');
+  int get group => _object.getInt64Property(tunDeviceInterfaceName, 'Group');
+  bool get noPi => _object.getBooleanProperty(tunDeviceInterfaceName, 'NoPi');
+  bool get vnetHdr =>
+      _object.getBooleanProperty(tunDeviceInterfaceName, 'VnetHdr');
+  bool get multiQueue =>
+      _object.getBooleanProperty(tunDeviceInterfaceName, 'MultiQueue');
+}
+
 class NetworkManagerDeviceWired {
   final String wiredDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Wired';
 
-  final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerDeviceWired(this.client, this._object);
+  NetworkManagerDeviceWired(this._object);
 
   String get permHwAddress =>
       _object.getStringProperty(wiredDeviceInterfaceName, 'PermHwAddress');

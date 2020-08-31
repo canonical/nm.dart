@@ -95,6 +95,21 @@ class NetworkManagerSettingsConnection {
       _object.getStringProperty(settingsConnectionInterfaceName, 'Filename');
 }
 
+class NetworkManagerDnsManager {
+  final String dnsManagerInterfaceName =
+      'org.freedesktop.NetworkManager.DnsManager';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDnsManager(this._object);
+
+  String get mode => _object.getStringProperty(dnsManagerInterfaceName, 'Mode');
+  String get rcManager =>
+      _object.getStringProperty(dnsManagerInterfaceName, 'RcManager');
+  List<Map<String, dynamic>> get configuration =>
+      _object.getDataListProperty(dnsManagerInterfaceName, 'Configuration');
+}
+
 class NetworkManagerDevice {
   final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
 
@@ -945,6 +960,16 @@ class NetworkManagerClient {
       return null;
     }
     return NetworkManagerSettings(this, object);
+  }
+
+  /// Gets the DNS manager object.
+  NetworkManagerDnsManager get dnsManager {
+    var object =
+        _objects[DBusObjectPath('/org/freedesktop/NetworkManager/DnsManager')];
+    if (object == null) {
+      return null;
+    }
+    return NetworkManagerDnsManager(object);
   }
 
   NetworkManagerDevice _getDevice(DBusObjectPath objectPath) {

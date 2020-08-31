@@ -51,6 +51,50 @@ enum DeviceType {
   vrf
 }
 
+class NetworkManagerSettings {
+  final String settingsInterfaceName =
+      'org.freedesktop.NetworkManager.Settings';
+
+  final NetworkManagerClient client;
+  final _NetworkManagerObject _object;
+
+  NetworkManagerSettings(this.client, this._object);
+
+  List<NetworkManagerSettingsConnection> get connections {
+    var objectPaths = _object.getObjectPathArrayProperty(
+        settingsInterfaceName, 'Connections');
+    var connections = <NetworkManagerSettingsConnection>[];
+    for (var objectPath in objectPaths) {
+      var connection = client._getConnection(objectPath);
+      if (connection != null) {
+        connections.add(connection);
+      }
+    }
+    return connections;
+  }
+
+  String get hostname =>
+      _object.getStringProperty(settingsInterfaceName, 'Hostname');
+  bool get canModify =>
+      _object.getBooleanProperty(settingsInterfaceName, 'CanModify');
+}
+
+class NetworkManagerSettingsConnection {
+  final String settingsConnectionInterfaceName =
+      'org.freedesktop.NetworkManager.Settings.Connection';
+
+  final _NetworkManagerObject _object;
+
+  NetworkManagerSettingsConnection(this._object);
+
+  bool get unsaved =>
+      _object.getBooleanProperty(settingsConnectionInterfaceName, 'Unsaved');
+  int get flags => _object.getUint32Property(
+      settingsConnectionInterfaceName, 'Flags'); // FIXME: enum
+  String get filename =>
+      _object.getStringProperty(settingsConnectionInterfaceName, 'Filename');
+}
+
 class NetworkManagerDevice {
   final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
 
@@ -727,8 +771,6 @@ class _NetworkManagerObject extends DBusRemoteObject {
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
   final String managerInterfaceName = 'org.freedesktop.NetworkManager';
-  final String settingsInterfaceName =
-      'org.freedesktop.NetworkManager.Settings';
 
   /// The bus this client is connected to.
   final DBusClient systemBus;
@@ -891,21 +933,19 @@ class NetworkManagerClient {
         managerInterfaceName, 'ConnectivityCheckEnabled');
   }
 
-  /// Gets the hostname
-  String get hostname {
-    if (_settings == null) {
-      return null;
-    }
-    return _settings.getStringProperty(settingsInterfaceName, 'Hostname');
-  }
-
   /// Gets the manager object.
   _NetworkManagerObject get _manager =>
       _objects[DBusObjectPath('/org/freedesktop/NetworkManager')];
 
   /// Gets the settings object.
-  _NetworkManagerObject get _settings =>
-      _objects[DBusObjectPath('/org/freedesktop/NetworkManager/Settings')];
+  NetworkManagerSettings get settings {
+    var object =
+        _objects[DBusObjectPath('/org/freedesktop/NetworkManager/Settings')];
+    if (object == null) {
+      return null;
+    }
+    return NetworkManagerSettings(this, object);
+  }
 
   NetworkManagerDevice _getDevice(DBusObjectPath objectPath) {
     if (objectPath == null) {
@@ -916,6 +956,17 @@ class NetworkManagerClient {
       return null;
     }
     return NetworkManagerDevice(this, config);
+  }
+
+  NetworkManagerSettingsConnection _getConnection(DBusObjectPath objectPath) {
+    if (objectPath == null) {
+      return null;
+    }
+    var config = _objects[objectPath];
+    if (config == null) {
+      return null;
+    }
+    return NetworkManagerSettingsConnection(config);
   }
 
   NetworkManagerActiveConnection _getActiveConnection(

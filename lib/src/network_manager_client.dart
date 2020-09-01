@@ -479,6 +479,22 @@ class NetworkManagerDeviceWireless {
       wirelessDeviceInterfaceName, 'WirelessCapabilities'); // FIXME: enum
   int get lastScan =>
       _object.getInt64Property(wirelessDeviceInterfaceName, 'LastScan');
+
+  Future requestScan([Map<String, DBusValue> options = const {}]) async {
+    var args = [
+      DBusDict(
+          DBusSignature('s'),
+          DBusSignature('v'),
+          options.map(
+              (name, value) => MapEntry(DBusString(name), DBusVariant(value))))
+    ];
+    var result = await _object.callMethod(
+        wirelessDeviceInterfaceName, 'RequestScan', args);
+    var values = result.returnValues;
+    if (values.isNotEmpty) {
+      throw 'RequestScan returned invalid result: ${values}';
+    }
+  }
 }
 
 class NetworkManagerActiveConnection {

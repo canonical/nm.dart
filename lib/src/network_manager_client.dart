@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dbus/dbus.dart';
 
 enum ConnectivityState { unknown, none, portal, limited, full }
@@ -60,6 +62,11 @@ class NetworkManagerSettings {
 
   NetworkManagerSettings(this.client, this._object);
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[settingsInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   List<NetworkManagerSettingsConnection> get connections {
     var objectPaths = _object.getObjectPathArrayProperty(
         settingsInterfaceName, 'Connections');
@@ -87,6 +94,11 @@ class NetworkManagerSettingsConnection {
 
   NetworkManagerSettingsConnection(this._object);
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[settingsConnectionInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   bool get unsaved =>
       _object.getBooleanProperty(settingsConnectionInterfaceName, 'Unsaved');
   int get flags => _object.getUint32Property(
@@ -102,6 +114,11 @@ class NetworkManagerDnsManager {
   final _NetworkManagerObject _object;
 
   NetworkManagerDnsManager(this._object);
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[dnsManagerInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   String get mode => _object.getStringProperty(dnsManagerInterfaceName, 'Mode');
   String get rcManager =>
@@ -132,6 +149,11 @@ class NetworkManagerDevice {
         vlan = NetworkManagerDeviceVlan(client, _object),
         wired = NetworkManagerDeviceWired(_object),
         wireless = NetworkManagerDeviceWireless(client, _object);
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[deviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
   String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
@@ -303,6 +325,11 @@ class NetworkManagerDeviceBluetooth {
 
   NetworkManagerDeviceBluetooth(this._object);
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[bluetoothDeviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   int get btCapabilities =>
       _object.getUint32Property(bluetoothDeviceInterfaceName, 'BtCapabilities');
 }
@@ -315,6 +342,11 @@ class NetworkManagerDeviceGeneric {
 
   NetworkManagerDeviceGeneric(this._object);
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[genericDeviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   String get typeDescription =>
       _object.getStringProperty(genericDeviceInterfaceName, 'TypeDescription');
 }
@@ -326,6 +358,11 @@ class NetworkManagerDeviceStatistics {
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceStatistics(this._object);
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[statisticsDeviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   int get refreshRateMs =>
       _object.getUint32Property(statisticsDeviceInterfaceName, 'RefreshRateMs');
@@ -342,6 +379,11 @@ class NetworkManagerDeviceTun {
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceTun(this._object);
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[tunDeviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   String get permHwAddress =>
       _object.getStringProperty(tunDeviceInterfaceName, 'PermHwAddress');
@@ -362,6 +404,11 @@ class NetworkManagerDeviceVlan {
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceVlan(this.client, this._object);
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[vlanDeviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   NetworkManagerDevice get parent {
     var objectPath =
@@ -396,6 +443,11 @@ class NetworkManagerDeviceWireless {
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceWireless(this.client, this._object);
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[wirelessDeviceInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   String get permHwAddress =>
       _object.getStringProperty(wirelessDeviceInterfaceName, 'PermHwAddress');
@@ -437,6 +489,11 @@ class NetworkManagerActiveConnection {
   final _NetworkManagerObject _object;
 
   NetworkManagerActiveConnection(this.client, this._object) {}
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[activeConnectionInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   String get id =>
       _object.getStringProperty(activeConnectionInterfaceName, 'Id');
@@ -488,6 +545,11 @@ class NetworkManagerIP4Config {
 
   NetworkManagerIP4Config(this._object) {}
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[ip4ConfigInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   List<Map<String, dynamic>> get addressData =>
       _object.getDataListProperty(ip4ConfigInterfaceName, 'AddressData');
   String get gateway =>
@@ -509,15 +571,20 @@ class NetworkManagerIP4Config {
 }
 
 class NetworkManagerDHCP4Config {
-  final String dhcp4ConfigInterface =
+  final String dhcp4ConfigInterfaceName =
       'org.freedesktop.NetworkManager.DHCP4Config';
 
   final _NetworkManagerObject _object;
 
   NetworkManagerDHCP4Config(this._object) {}
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[dhcp4ConfigInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   Map<String, dynamic> get options {
-    var value = _object.getCachedProperty(dhcp4ConfigInterface, 'Options');
+    var value = _object.getCachedProperty(dhcp4ConfigInterfaceName, 'Options');
     if (value == null) {
       return {};
     }
@@ -536,6 +603,11 @@ class NetworkManagerIP6Config {
   final _NetworkManagerObject _object;
 
   NetworkManagerIP6Config(this._object) {}
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[ip6ConfigInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   List<Map<String, dynamic>> get addressData =>
       _object.getDataListProperty(ip6ConfigInterfaceName, 'AddressData');
@@ -556,15 +628,20 @@ class NetworkManagerIP6Config {
 }
 
 class NetworkManagerDHCP6Config {
-  final String dhcp6ConfigInterface =
+  final String dhcp6ConfigInterfaceName =
       'org.freedesktop.NetworkManager.DHCP6Config';
 
   final _NetworkManagerObject _object;
 
   NetworkManagerDHCP6Config(this._object) {}
 
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[dhcp6ConfigInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
+
   Map<String, dynamic> get options {
-    var value = _object.getCachedProperty(dhcp6ConfigInterface, 'Options');
+    var value = _object.getCachedProperty(dhcp6ConfigInterfaceName, 'Options');
     if (value == null) {
       return {};
     }
@@ -583,6 +660,11 @@ class NetworkManagerAccessPoint {
   final _NetworkManagerObject _object;
 
   NetworkManagerAccessPoint(this._object) {}
+
+  Stream<List<String>> get propertiesChangedStream {
+    return _object.interfaces[accessPointInterfaceName]
+        .propertiesChangedStreamController.stream;
+  }
 
   int get flags => _object.getUint32Property(
       accessPointInterfaceName, 'Flags'); // FIXME: enum
@@ -618,16 +700,40 @@ class NetworkManagerAccessPoint {
       _object.getInt32Property(accessPointInterfaceName, 'LastSeen');
 }
 
+class _NetworkManagerInterface {
+  final Map<String, DBusValue> properties;
+  final propertiesChangedStreamController =
+      StreamController<List<String>>.broadcast();
+
+  Stream<List<String>> get propertiesChangedStream =>
+      propertiesChangedStreamController.stream;
+
+  _NetworkManagerInterface(this.properties);
+
+  void updateProperties(Map<String, DBusValue> changedProperties) {
+    properties.addAll(changedProperties);
+    propertiesChangedStreamController.add(changedProperties.keys.toList());
+  }
+}
+
 class _NetworkManagerObject extends DBusRemoteObject {
-  final Map<String, Map<String, DBusValue>> interfacesAndProperties;
+  final interfaces = Map<String, _NetworkManagerInterface>();
+
+  void updateProperties(
+      String interfaceName, Map<String, DBusValue> changedProperties) {
+    var interface = interfaces[interfaceName];
+    if (interface != null) {
+      interface.updateProperties(changedProperties);
+    }
+  }
 
   /// Gets a cached property.
-  DBusValue getCachedProperty(String interface, String name) {
-    var properties = interfacesAndProperties[interface];
-    if (properties == null) {
+  DBusValue getCachedProperty(String interfaceName, String name) {
+    var interface = interfaces[interfaceName];
+    if (interface == null) {
       return null;
     }
-    return properties[name];
+    return interface.properties[name];
   }
 
   /// Gets a cached boolean property, or returns null if not present or not the correct type.
@@ -778,9 +884,13 @@ class _NetworkManagerObject extends DBusRemoteObject {
         .toList();
   }
 
-  _NetworkManagerObject(
-      DBusClient client, DBusObjectPath path, this.interfacesAndProperties)
-      : super(client, 'org.freedesktop.NetworkManager', path) {}
+  _NetworkManagerObject(DBusClient client, DBusObjectPath path,
+      Map<String, Map<String, DBusValue>> interfacesAndProperties)
+      : super(client, 'org.freedesktop.NetworkManager', path) {
+    interfacesAndProperties.forEach((interfaceName, properties) {
+      interfaces[interfaceName] = _NetworkManagerInterface(properties);
+    });
+  }
 }
 
 /// A client that connects to NetworkManager.
@@ -799,6 +909,14 @@ class NetworkManagerClient {
   /// Creates a new NetworkManager client connected to the system D-Bus.
   NetworkManagerClient(DBusClient this.systemBus);
 
+  Stream<List<String>> get propertiesChangedStream {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.interfaces['org.freedesktop.NetworkManager']
+        .propertiesChangedStreamController.stream;
+  }
+
   /// Connects to the NetworkManager D-Bus objects.
   /// Must be called before accessing methods and properties.
   void connect() async {
@@ -807,14 +925,32 @@ class NetworkManagerClient {
       return;
     }
 
-    // Find all the objects exported.
     _root = DBusRemoteObject(systemBus, 'org.freedesktop.NetworkManager',
         DBusObjectPath('/org/freedesktop'));
+
+    // Subscribe to changes
+    await _root.subscribeObjectManagerSignals(
+        propertiesChangedCallback: _handlePropertiesChanged);
+
+    // Find all the objects exported.
     var objects = await _root.getManagedObjects();
     objects.forEach((objectPath, interfacesAndProperties) {
       _objects[objectPath] =
           _NetworkManagerObject(systemBus, objectPath, interfacesAndProperties);
     });
+  }
+
+  _handlePropertiesChanged(
+      DBusObjectPath objectPath,
+      String interfaceName,
+      Map<String, DBusValue> changedProperties,
+      List<String> invalidatedProperties) {
+    var object = _objects[objectPath];
+    if (object == null) {
+      return;
+    }
+
+    object.updateProperties(interfaceName, changedProperties);
   }
 
   List<NetworkManagerDevice> get devices {

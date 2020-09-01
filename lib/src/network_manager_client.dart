@@ -719,6 +719,19 @@ class _NetworkManagerInterface {
 class _NetworkManagerObject extends DBusRemoteObject {
   final interfaces = Map<String, _NetworkManagerInterface>();
 
+  void updateInterfaces(
+      Map<String, Map<String, DBusValue>> interfacesAndProperties) {
+    interfacesAndProperties.forEach((interfaceName, properties) {
+      interfaces[interfaceName] = _NetworkManagerInterface(properties);
+    });
+  }
+
+  void removeInterfaces(List<String> interfaceNames) {
+    for (var interfaceName in interfaceNames) {
+      interfaces.remove(interfaceName);
+    }
+  }
+
   void updateProperties(
       String interfaceName, Map<String, DBusValue> changedProperties) {
     var interface = interfaces[interfaceName];
@@ -887,9 +900,7 @@ class _NetworkManagerObject extends DBusRemoteObject {
   _NetworkManagerObject(DBusClient client, DBusObjectPath path,
       Map<String, Map<String, DBusValue>> interfacesAndProperties)
       : super(client, 'org.freedesktop.NetworkManager', path) {
-    interfacesAndProperties.forEach((interfaceName, properties) {
-      interfaces[interfaceName] = _NetworkManagerInterface(properties);
-    });
+    updateInterfaces(interfacesAndProperties);
   }
 }
 
@@ -930,6 +941,8 @@ class NetworkManagerClient {
 
     // Subscribe to changes
     await _root.subscribeObjectManagerSignals(
+        interfacesAddedCallback: _handleInterfacesAdded,
+        interfacesRemovedCallback: _handleInterfacesRemoved,
         propertiesChangedCallback: _handlePropertiesChanged);
 
     // Find all the objects exported.
@@ -940,7 +953,26 @@ class NetworkManagerClient {
     });
   }
 
-  _handlePropertiesChanged(
+  void _handleInterfacesAdded(DBusObjectPath objectPath,
+      Map<String, Map<String, DBusValue>> interfacesAndProperties) {
+    var object = _objects[objectPath];
+    if (object != null) {
+      object.updateInterfaces(interfacesAndProperties);
+    } else {
+      _objects[objectPath] =
+          _NetworkManagerObject(systemBus, objectPath, interfacesAndProperties);
+    }
+  }
+
+  void _handleInterfacesRemoved(
+      DBusObjectPath objectPath, List<String> interfaceNames) {
+    var object = _objects[objectPath];
+    if (object != null) {
+      object.removeInterfaces(interfaceNames);
+    }
+  }
+
+  void _handlePropertiesChanged(
       DBusObjectPath objectPath,
       String interfaceName,
       Map<String, DBusValue> changedProperties,

@@ -504,7 +504,7 @@ class NetworkManagerActiveConnection {
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerActiveConnection(this.client, this._object) {}
+  NetworkManagerActiveConnection(this.client, this._object);
 
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[activeConnectionInterfaceName]
@@ -559,7 +559,7 @@ class NetworkManagerIP4Config {
 
   final _NetworkManagerObject _object;
 
-  NetworkManagerIP4Config(this._object) {}
+  NetworkManagerIP4Config(this._object);
 
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[ip4ConfigInterfaceName]
@@ -592,7 +592,7 @@ class NetworkManagerDHCP4Config {
 
   final _NetworkManagerObject _object;
 
-  NetworkManagerDHCP4Config(this._object) {}
+  NetworkManagerDHCP4Config(this._object);
 
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[dhcp4ConfigInterfaceName]
@@ -618,7 +618,7 @@ class NetworkManagerIP6Config {
 
   final _NetworkManagerObject _object;
 
-  NetworkManagerIP6Config(this._object) {}
+  NetworkManagerIP6Config(this._object);
 
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[ip6ConfigInterfaceName]
@@ -649,7 +649,7 @@ class NetworkManagerDHCP6Config {
 
   final _NetworkManagerObject _object;
 
-  NetworkManagerDHCP6Config(this._object) {}
+  NetworkManagerDHCP6Config(this._object);
 
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[dhcp6ConfigInterfaceName]
@@ -675,7 +675,7 @@ class NetworkManagerAccessPoint {
 
   final _NetworkManagerObject _object;
 
-  NetworkManagerAccessPoint(this._object) {}
+  NetworkManagerAccessPoint(this._object);
 
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[accessPointInterfaceName]
@@ -733,7 +733,7 @@ class _NetworkManagerInterface {
 }
 
 class _NetworkManagerObject extends DBusRemoteObject {
-  final interfaces = Map<String, _NetworkManagerInterface>();
+  final interfaces = <String, _NetworkManagerInterface>{};
 
   void updateInterfaces(
       Map<String, Map<String, DBusValue>> interfacesAndProperties) {
@@ -934,7 +934,7 @@ class NetworkManagerClient {
   final _objects = <DBusObjectPath, _NetworkManagerObject>{};
 
   /// Creates a new NetworkManager client connected to the system D-Bus.
-  NetworkManagerClient(DBusClient this.systemBus);
+  NetworkManagerClient(this.systemBus);
 
   Stream<List<String>> get propertiesChangedStream {
     if (_manager == null) {
@@ -1015,7 +1015,7 @@ class NetworkManagerClient {
     }
     var deviceObjectPaths =
         _manager.getObjectPathArrayProperty(managerInterfaceName, propertyName);
-    var devices = List<NetworkManagerDevice>();
+    var devices = <NetworkManagerDevice>[];
     for (var objectPath in deviceObjectPaths) {
       var device = _getDevice(objectPath);
       if (device != null) {

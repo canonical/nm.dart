@@ -933,6 +933,9 @@ class NetworkManagerClient {
   // Objects exported on the bus.
   final _objects = <DBusObjectPath, _NetworkManagerObject>{};
 
+  // Subscription to object manager signals.
+  StreamSubscription _objectManagerSubscription;
+
   /// Creates a new NetworkManager client connected to the system D-Bus.
   NetworkManagerClient(DBusClient this.systemBus);
 
@@ -956,10 +959,29 @@ class NetworkManagerClient {
         DBusObjectPath('/org/freedesktop'));
 
     // Subscribe to changes
-    await _root.subscribeObjectManagerSignals(
-        interfacesAddedCallback: _handleInterfacesAdded,
-        interfacesRemovedCallback: _handleInterfacesRemoved,
-        propertiesChangedCallback: _handlePropertiesChanged);
+    var signals = _root.subscribeObjectManagerSignals();
+    _objectManagerSubscription = signals.listen((signal) {
+      if (signal is DBusObjectManagerInterfacesAddedSignal) {
+        var object = _objects[signal.changedPath];
+        if (object != null) {
+          object.updateInterfaces(signal.interfacesAndProperties);
+        } else {
+          _objects[signal.changedPath] = _NetworkManagerObject(
+              systemBus, signal.changedPath, signal.interfacesAndProperties);
+        }
+      } else if (signal is DBusObjectManagerInterfacesRemovedSignal) {
+        var object = _objects[signal.changedPath];
+        if (object != null) {
+          object.removeInterfaces(signal.interfaces);
+        }
+      } else if (signal is DBusPropertiesChangedSignal) {
+        var object = _objects[signal.path];
+        if (object != null) {
+          object.updateProperties(
+              signal.propertiesInterface, signal.changedProperties);
+        }
+      }
+    });
 
     // Find all the objects exported.
     var objects = await _root.getManagedObjects();
@@ -967,38 +989,6 @@ class NetworkManagerClient {
       _objects[objectPath] =
           _NetworkManagerObject(systemBus, objectPath, interfacesAndProperties);
     });
-  }
-
-  void _handleInterfacesAdded(DBusObjectPath objectPath,
-      Map<String, Map<String, DBusValue>> interfacesAndProperties) {
-    var object = _objects[objectPath];
-    if (object != null) {
-      object.updateInterfaces(interfacesAndProperties);
-    } else {
-      _objects[objectPath] =
-          _NetworkManagerObject(systemBus, objectPath, interfacesAndProperties);
-    }
-  }
-
-  void _handleInterfacesRemoved(
-      DBusObjectPath objectPath, List<String> interfaceNames) {
-    var object = _objects[objectPath];
-    if (object != null) {
-      object.removeInterfaces(interfaceNames);
-    }
-  }
-
-  void _handlePropertiesChanged(
-      DBusObjectPath objectPath,
-      String interfaceName,
-      Map<String, DBusValue> changedProperties,
-      List<String> invalidatedProperties) {
-    var object = _objects[objectPath];
-    if (object == null) {
-      return;
-    }
-
-    object.updateProperties(interfaceName, changedProperties);
   }
 
   List<NetworkManagerDevice> get devices {
@@ -1154,6 +1144,14 @@ class NetworkManagerClient {
       return null;
     }
     return NetworkManagerDnsManager(object);
+  }
+
+  /// Terminates all active connections. If a client remains unclosed, the Dart process may not terminate.
+  void close() {
+    if (_objectManagerSubscription != null) {
+      _objectManagerSubscription.cancel();
+      _objectManagerSubscription = null;
+    }
   }
 
   NetworkManagerDevice _getDevice(DBusObjectPath objectPath) {

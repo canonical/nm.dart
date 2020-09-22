@@ -12,3 +12,7 @@ await client.connect();
 print('Running NetworkManager ${client.version}');
 await systemBus.close();
 ```
+
+## Contributing to networkmanager.dart
+
+We welcome contributions! See the [contribution guide](CONTRIBUTING.md) for more details.

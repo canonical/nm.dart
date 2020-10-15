@@ -1,5 +1,5 @@
 import 'package:dbus/dbus.dart';
-import 'package:networkmanager/networkmanager.dart';
+import 'package:nm/nm.dart';
 
 void main() async {
   var systemBus = DBusClient.system();

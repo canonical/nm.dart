@@ -2,9 +2,11 @@ import 'dart:async';
 
 import 'package:dbus/dbus.dart';
 
-enum ConnectivityState { unknown, none, portal, limited, full }
+/// Internet connectivity states.
+enum NetworkManagerConnectivityState { unknown, none, portal, limited, full }
 
-enum DeviceState {
+/// Device states.
+enum NetworkManagerDeviceState {
   unknown,
   unmanaged,
   unavailable,
@@ -20,7 +22,8 @@ enum DeviceState {
   failed
 }
 
-enum DeviceType {
+/// Device types.
+enum NetworkManagerDeviceType {
   unknown,
   ethernet,
   wifi,
@@ -53,6 +56,10 @@ enum DeviceType {
   vrf
 }
 
+/// Traffic limitations.
+enum NetworkManagerMetered { unknown, yes, no, guessYes, guessNo }
+
+/// Settings profile manager.
 class NetworkManagerSettings {
   final String settingsInterfaceName =
       'org.freedesktop.NetworkManager.Settings';
@@ -62,11 +69,13 @@ class NetworkManagerSettings {
 
   NetworkManagerSettings(this.client, this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[settingsInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
+  /// Saved connections.
   List<NetworkManagerSettingsConnection> get connections {
     var objectPaths = _object.getObjectPathArrayProperty(
         settingsInterfaceName, 'Connections');
@@ -80,12 +89,16 @@ class NetworkManagerSettings {
     return connections;
   }
 
+  /// The machine hostname.
   String get hostname =>
       _object.getStringProperty(settingsInterfaceName, 'Hostname');
+
+  /// True if connections can be added or modified.
   bool get canModify =>
       _object.getBooleanProperty(settingsInterfaceName, 'CanModify');
 }
 
+/// Settings for a connection.
 class NetworkManagerSettingsConnection {
   final String settingsConnectionInterfaceName =
       'org.freedesktop.NetworkManager.Settings.Connection';
@@ -94,15 +107,90 @@ class NetworkManagerSettingsConnection {
 
   NetworkManagerSettingsConnection(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[settingsConnectionInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
+  /// Updates the settings for this connection, writing them to persistent storage.
+  void update(Map<String, Map<String, DBusValue>> properties) async {
+    await _object.callMethod(settingsConnectionInterfaceName, 'Update', [
+      DBusDict(
+          DBusSignature('s'),
+          DBusSignature('a{sv}'),
+          properties.map((key, value) => MapEntry(
+              DBusString(key),
+              DBusDict(
+                  DBusSignature('s'),
+                  DBusSignature('v'),
+                  value.map(
+                      (k, v) => MapEntry(DBusString(k), DBusVariant(v)))))))
+    ]);
+  }
+
+  /// Updates the settings for this connection, not writing them to persistent storage.
+  void updateUnsaved(Map<String, Map<String, DBusValue>> properties) async {
+    await _object.callMethod(settingsConnectionInterfaceName, 'UpdateUnsaved', [
+      DBusDict(
+          DBusSignature('s'),
+          DBusSignature('a{sv}'),
+          properties.map((key, value) => MapEntry(
+              DBusString(key),
+              DBusDict(
+                  DBusSignature('s'),
+                  DBusSignature('v'),
+                  value.map(
+                      (k, v) => MapEntry(DBusString(k), DBusVariant(v)))))))
+    ]);
+  }
+
+  /// Deletes this network connection settings.
+  void delete() async {
+    await _object.callMethod(settingsConnectionInterfaceName, 'Delete', []);
+  }
+
+  /// Gets the settings belonging to this network connection.
+  Future<Map<String, Map<String, DBusValue>>> getSettings() async {
+    var result = await _object
+        .callMethod(settingsConnectionInterfaceName, 'GetSettings', []);
+    return (result.returnValues[0] as DBusDict).children.map((key, value) =>
+        MapEntry(
+            (key as DBusString).value,
+            (value as DBusDict).children.map((k, v) =>
+                MapEntry((k as DBusString).value, (v as DBusVariant).value))));
+  }
+
+  /// Gets the secrets belonging to this network connection.
+  Future<Map<String, Map<String, DBusValue>>> getSecrets(
+      [String settingName = '']) async {
+    var result = await _object.callMethod(settingsConnectionInterfaceName,
+        'GetSecrets', [DBusString(settingName)]);
+    return (result.returnValues[0] as DBusDict).children.map((key, value) =>
+        MapEntry(
+            (key as DBusString).value,
+            (value as DBusDict).children.map((k, v) =>
+                MapEntry((k as DBusString).value, (v as DBusVariant).value))));
+  }
+
+  /// Clears the secrets belonging to this network connection.
+  void clearSecrets() async =>
+      _object.callMethod(settingsConnectionInterfaceName, 'ClearSecrets', []);
+
+  /// Saves the connection settings to persistent storage.
+  void save() async =>
+      _object.callMethod(settingsConnectionInterfaceName, 'Save', []);
+
+  // FIXME: Update2
+
+  /// True if the settings have yet to be written to persistent storage.
   bool get unsaved =>
       _object.getBooleanProperty(settingsConnectionInterfaceName, 'Unsaved');
+
   int get flags => _object.getUint32Property(
       settingsConnectionInterfaceName, 'Flags'); // FIXME: enum
+
+  /// File that stores these settings.
   String get filename =>
       _object.getStringProperty(settingsConnectionInterfaceName, 'Filename');
 }
@@ -115,6 +203,7 @@ class NetworkManagerDnsManager {
 
   NetworkManagerDnsManager(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[dnsManagerInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -127,18 +216,32 @@ class NetworkManagerDnsManager {
       _object.getDataListProperty(dnsManagerInterfaceName, 'Configuration');
 }
 
+/// A device managed by NetworkManager.
 class NetworkManagerDevice {
   final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
 
   final NetworkManagerClient client;
   final _NetworkManagerObject _object;
 
+  /// Information for Bluetooth devices or null.
   final NetworkManagerDeviceBluetooth bluetooth;
+
+  /// Generic device information or null.
   final NetworkManagerDeviceGeneric generic;
+
+  /// Device statistics or null.
   final NetworkManagerDeviceStatistics statistics;
+
+  /// TUN device information or null.
   final NetworkManagerDeviceTun tun;
+
+  /// Information for VLAN devices or null.
   final NetworkManagerDeviceVlan vlan;
+
+  /// Information for wired devices (e.g. Ethernet) or null.
   final NetworkManagerDeviceWired wired;
+
+  /// Information for wireless devices (e.g WiFi) or null.
   final NetworkManagerDeviceWireless wireless;
 
   NetworkManagerDevice(this.client, this._object)
@@ -150,50 +253,72 @@ class NetworkManagerDevice {
         wired = NetworkManagerDeviceWired(_object),
         wireless = NetworkManagerDeviceWireless(client, _object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[deviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
+  /// Disconnects a device and prevents the device from automatically activating further connections without user intervention.
+  void disconnect() async =>
+      _object.callMethod(deviceInterfaceName, 'Disconnect', []);
+
+  /// Deletes a software device from NetworkManager and removes the interface from the system.
+  /// The method returns an error when called for a hardware device.
+  void delete() async => _object.callMethod(deviceInterfaceName, 'Delete', []);
+
+  /// UDI for this device.
   String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
+
+  /// Device filesystem path.
   String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
+
   String get ipInterface =>
       _object.getStringProperty(deviceInterfaceName, 'IpInterface');
+
+  /// The kernel driver this device is using.
   String get driver => _object.getStringProperty(deviceInterfaceName, 'Driver');
+
+  /// The version of the kernel driver this device is using.
   String get driverVersion =>
       _object.getStringProperty(deviceInterfaceName, 'DriverVersion');
+
+  /// The version of the firmware this device is using.
   String get firmwareVersion =>
       _object.getStringProperty(deviceInterfaceName, 'FirmwareVersion');
+
   int get capabilities => _object.getUint32Property(
       deviceInterfaceName, 'Capabilities'); // FIXME: enum
-  DeviceState get state {
+
+  /// The connection state of this device.
+  NetworkManagerDeviceState get state {
     var value = _object.getUint32Property(deviceInterfaceName, 'State');
     if (value == 10) {
-      return DeviceState.unmanaged;
+      return NetworkManagerDeviceState.unmanaged;
     } else if (value == 20) {
-      return DeviceState.unavailable;
+      return NetworkManagerDeviceState.unavailable;
     } else if (value == 30) {
-      return DeviceState.disconnected;
+      return NetworkManagerDeviceState.disconnected;
     } else if (value == 40) {
-      return DeviceState.prepare;
+      return NetworkManagerDeviceState.prepare;
     } else if (value == 50) {
-      return DeviceState.config;
+      return NetworkManagerDeviceState.config;
     } else if (value == 60) {
-      return DeviceState.need_auth;
+      return NetworkManagerDeviceState.need_auth;
     } else if (value == 70) {
-      return DeviceState.ip_config;
+      return NetworkManagerDeviceState.ip_config;
     } else if (value == 80) {
-      return DeviceState.ip_check;
+      return NetworkManagerDeviceState.ip_check;
     } else if (value == 90) {
-      return DeviceState.secondaries;
+      return NetworkManagerDeviceState.secondaries;
     } else if (value == 100) {
-      return DeviceState.activated;
+      return NetworkManagerDeviceState.activated;
     } else if (value == 110) {
-      return DeviceState.deactivating;
+      return NetworkManagerDeviceState.deactivating;
     } else if (value == 120) {
-      return DeviceState.failed;
+      return NetworkManagerDeviceState.failed;
     } else {
-      return DeviceState.unknown;
+      return NetworkManagerDeviceState.unknown;
     }
   }
 
@@ -204,119 +329,152 @@ class NetworkManagerDevice {
     return client._getActiveConnection(objectPath);
   }
 
+  /// IPv4 configuration for this device.
   NetworkManagerIP4Config get ip4Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'Ip4Config');
     return client._getIP4Config(objectPath);
   }
 
+  /// DHCPv4 configuration for this device.
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'DHCP4Config');
     return client._getDHCP4Config(objectPath);
   }
 
+  /// IPv6 configuration for this device.
   NetworkManagerIP6Config get ip6Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'Ip6Config');
     return client._getIP6Config(objectPath);
   }
 
+  /// DHCPv6 configuration for this device.
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'DHCP6Config');
     return client._getDHCP6Config(objectPath);
   }
 
+  /// True if this device is being managed by NetworkManager.
   bool get managed =>
       _object.getBooleanProperty(deviceInterfaceName, 'Managed');
+
+  /// Sets if this device is being managed by NetworkManager.
+  set managed(bool value) =>
+      _object.setProperty(deviceInterfaceName, 'Managed', DBusBoolean(value));
+
+  /// True if this device is allowed to automatically connect.
   bool get autoconnect =>
       _object.getBooleanProperty(deviceInterfaceName, 'Autoconnect');
+
+  /// Sets if this device is allowed to automatically connect.
+  set autoconnect(bool value) => _object.setProperty(
+      deviceInterfaceName, 'Autoconnect', DBusBoolean(value));
+
+  /// True if this device is missing firware required for it to operate.
   bool get firmwareMissing =>
       _object.getBooleanProperty(deviceInterfaceName, 'FirmwareMissing');
+
+  /// True if this device is missing a plugin or needs plugin configuration for it to operate.
   bool get nmPluginMissing =>
       _object.getBooleanProperty(deviceInterfaceName, 'NmPluginMissing');
-  DeviceType get deviceType {
-    var value = _object.getUint32Property(deviceInterfaceName, 'DeviceType');
+
+  /// The type of device.
+  NetworkManagerDeviceType get deviceType {
+    var value = _object.getUint32Property(
+        deviceInterfaceName, 'NetworkManagerDeviceType');
     if (value == 1) {
-      return DeviceType.ethernet;
+      return NetworkManagerDeviceType.ethernet;
     } else if (value == 2) {
-      return DeviceType.wifi;
+      return NetworkManagerDeviceType.wifi;
     } else if (value == 5) {
-      return DeviceType.bluetooth;
+      return NetworkManagerDeviceType.bluetooth;
     } else if (value == 6) {
-      return DeviceType.olpc_mesh;
+      return NetworkManagerDeviceType.olpc_mesh;
     } else if (value == 7) {
-      return DeviceType.wimax;
+      return NetworkManagerDeviceType.wimax;
     } else if (value == 8) {
-      return DeviceType.modem;
+      return NetworkManagerDeviceType.modem;
     } else if (value == 9) {
-      return DeviceType.infiniband;
+      return NetworkManagerDeviceType.infiniband;
     } else if (value == 10) {
-      return DeviceType.bond;
+      return NetworkManagerDeviceType.bond;
     } else if (value == 11) {
-      return DeviceType.vlan;
+      return NetworkManagerDeviceType.vlan;
     } else if (value == 12) {
-      return DeviceType.adsl;
+      return NetworkManagerDeviceType.adsl;
     } else if (value == 13) {
-      return DeviceType.bridge;
+      return NetworkManagerDeviceType.bridge;
     } else if (value == 14) {
-      return DeviceType.generic;
+      return NetworkManagerDeviceType.generic;
     } else if (value == 15) {
-      return DeviceType.team;
+      return NetworkManagerDeviceType.team;
     } else if (value == 16) {
-      return DeviceType.tun;
+      return NetworkManagerDeviceType.tun;
     } else if (value == 17) {
-      return DeviceType.ip_tunnel;
+      return NetworkManagerDeviceType.ip_tunnel;
     } else if (value == 18) {
-      return DeviceType.macvlan;
+      return NetworkManagerDeviceType.macvlan;
     } else if (value == 19) {
-      return DeviceType.vxlan;
+      return NetworkManagerDeviceType.vxlan;
     } else if (value == 20) {
-      return DeviceType.veth;
+      return NetworkManagerDeviceType.veth;
     } else if (value == 21) {
-      return DeviceType.macsec;
+      return NetworkManagerDeviceType.macsec;
     } else if (value == 22) {
-      return DeviceType.dummy;
+      return NetworkManagerDeviceType.dummy;
     } else if (value == 23) {
-      return DeviceType.ppp;
+      return NetworkManagerDeviceType.ppp;
     } else if (value == 24) {
-      return DeviceType.ovs_interface;
+      return NetworkManagerDeviceType.ovs_interface;
     } else if (value == 25) {
-      return DeviceType.ovs_port;
+      return NetworkManagerDeviceType.ovs_port;
     } else if (value == 26) {
-      return DeviceType.ovs_bridge;
+      return NetworkManagerDeviceType.ovs_bridge;
     } else if (value == 27) {
-      return DeviceType.wpan;
+      return NetworkManagerDeviceType.wpan;
     } else if (value == 28) {
-      return DeviceType._6lowpan;
+      return NetworkManagerDeviceType._6lowpan;
     } else if (value == 29) {
-      return DeviceType.wireguard;
+      return NetworkManagerDeviceType.wireguard;
     } else if (value == 30) {
-      return DeviceType.wifi_p2p;
+      return NetworkManagerDeviceType.wifi_p2p;
     } else if (value == 31) {
-      return DeviceType.vrf;
+      return NetworkManagerDeviceType.vrf;
     } else {
-      return DeviceType.unknown;
+      return NetworkManagerDeviceType.unknown;
     }
   }
 
   // FIXME: AvailableConnections
   String get physicalPortId =>
       _object.getStringProperty(deviceInterfaceName, 'PhysicalPortId');
+
+  /// The device MTU.
   int get mtu => _object.getUint32Property(deviceInterfaceName, 'Mtu');
-  int get metered =>
-      _object.getUint32Property(deviceInterfaceName, 'Metered'); // FIXME: enum
+
+  /// True if the device has traffic limitations.
+  NetworkManagerMetered get metered => NetworkManagerMetered
+      .values[_object.getUint32Property(deviceInterfaceName, 'Metered')];
+
   // FIXME: LldpNeighbors
   bool get real => _object.getBooleanProperty(deviceInterfaceName, 'Real');
+
   // FIXME: Ip4Connectivity
+
   // FIXME: Ip6Connectivity
+
   int get interfaceFlags => _object.getUint32Property(
       deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
+
+  /// Hardware address for this device.
   String get hwAddress =>
       _object.getStringProperty(deviceInterfaceName, 'HwAddress');
 }
 
+/// Information for Bluetooth devices.
 class NetworkManagerDeviceBluetooth {
   final String bluetoothDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Bluetooth';
@@ -325,6 +483,7 @@ class NetworkManagerDeviceBluetooth {
 
   NetworkManagerDeviceBluetooth(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[bluetoothDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -334,6 +493,7 @@ class NetworkManagerDeviceBluetooth {
       _object.getUint32Property(bluetoothDeviceInterfaceName, 'BtCapabilities');
 }
 
+/// Information for generic devices.
 class NetworkManagerDeviceGeneric {
   final String genericDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Generic';
@@ -342,6 +502,7 @@ class NetworkManagerDeviceGeneric {
 
   NetworkManagerDeviceGeneric(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[genericDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -351,6 +512,7 @@ class NetworkManagerDeviceGeneric {
       _object.getStringProperty(genericDeviceInterfaceName, 'TypeDescription');
 }
 
+/// Statistics for devices.
 class NetworkManagerDeviceStatistics {
   final String statisticsDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Statistics';
@@ -359,6 +521,7 @@ class NetworkManagerDeviceStatistics {
 
   NetworkManagerDeviceStatistics(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[statisticsDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -366,12 +529,17 @@ class NetworkManagerDeviceStatistics {
 
   int get refreshRateMs =>
       _object.getUint32Property(statisticsDeviceInterfaceName, 'RefreshRateMs');
+
+  /// How many bytes have been transmitted.
   int get txBytes =>
       _object.getUint64Property(statisticsDeviceInterfaceName, 'TxBytes');
+
+  /// How many bytes have been received.
   int get rxBytes =>
       _object.getUint64Property(statisticsDeviceInterfaceName, 'RxBytes');
 }
 
+/// Information for TUN devices.
 class NetworkManagerDeviceTun {
   final String tunDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Tun';
@@ -380,6 +548,7 @@ class NetworkManagerDeviceTun {
 
   NetworkManagerDeviceTun(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[tunDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -387,11 +556,16 @@ class NetworkManagerDeviceTun {
 
   String get permHwAddress =>
       _object.getStringProperty(tunDeviceInterfaceName, 'PermHwAddress');
+
   int get owner => _object.getInt64Property(tunDeviceInterfaceName, 'Owner');
+
   int get group => _object.getInt64Property(tunDeviceInterfaceName, 'Group');
+
   bool get noPi => _object.getBooleanProperty(tunDeviceInterfaceName, 'NoPi');
+
   bool get vnetHdr =>
       _object.getBooleanProperty(tunDeviceInterfaceName, 'VnetHdr');
+
   bool get multiQueue =>
       _object.getBooleanProperty(tunDeviceInterfaceName, 'MultiQueue');
 }
@@ -405,6 +579,7 @@ class NetworkManagerDeviceVlan {
 
   NetworkManagerDeviceVlan(this.client, this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[vlanDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -444,6 +619,7 @@ class NetworkManagerDeviceWireless {
 
   NetworkManagerDeviceWireless(this.client, this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[wirelessDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -506,6 +682,7 @@ class NetworkManagerActiveConnection {
 
   NetworkManagerActiveConnection(this.client, this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[activeConnectionInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -561,6 +738,7 @@ class NetworkManagerIP4Config {
 
   NetworkManagerIP4Config(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[ip4ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -594,6 +772,7 @@ class NetworkManagerDHCP4Config {
 
   NetworkManagerDHCP4Config(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[dhcp4ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -620,6 +799,7 @@ class NetworkManagerIP6Config {
 
   NetworkManagerIP6Config(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[ip6ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -651,6 +831,7 @@ class NetworkManagerDHCP6Config {
 
   NetworkManagerDHCP6Config(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[dhcp6ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -677,6 +858,7 @@ class NetworkManagerAccessPoint {
 
   NetworkManagerAccessPoint(this._object);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     return _object.interfaces[accessPointInterfaceName]
         .propertiesChangedStreamController.stream;
@@ -721,6 +903,7 @@ class _NetworkManagerInterface {
   final propertiesChangedStreamController =
       StreamController<List<String>>.broadcast();
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream =>
       propertiesChangedStreamController.stream;
 
@@ -939,6 +1122,7 @@ class NetworkManagerClient {
   /// Creates a new NetworkManager client connected to the system D-Bus.
   NetworkManagerClient(this.systemBus);
 
+  /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
     if (_manager == null) {
       return null;
@@ -991,10 +1175,14 @@ class NetworkManagerClient {
     });
   }
 
+  /// The list of realized network device.
+  /// Realized devices are those which have backing resources (eg from the kernel or a management daemon like ModemManager, teamd, etc).
   List<NetworkManagerDevice> get devices {
     return _getDevices('Devices');
   }
 
+  /// The list of both realized and un-realized network devices.
+  /// Un-realized devices are software devices which do not yet have backing resources, but for which backing resources can be created if the device is activated.
   List<NetworkManagerDevice> get allDevices {
     return _getDevices('AllDevices');
   }
@@ -1016,6 +1204,9 @@ class NetworkManagerClient {
     return devices;
   }
 
+  // FIXME: Checkpoints
+
+  /// True if networking is enabled.
   bool get networkingEnabled {
     if (_manager == null) {
       return null;
@@ -1024,6 +1215,7 @@ class NetworkManagerClient {
         managerInterfaceName, 'NetworkingEnabled');
   }
 
+  /// True if wireless network is enabled.
   bool get wirelessEnabled {
     if (_manager == null) {
       return null;
@@ -1031,6 +1223,15 @@ class NetworkManagerClient {
     return _manager.getBooleanProperty(managerInterfaceName, 'WirelessEnabled');
   }
 
+  /// Sets if wireless network is enabled.
+  set wirelessEnabled(bool value) {
+    if (_manager != null) {
+      _manager.setProperty(
+          managerInterfaceName, 'WirelessEnabled', DBusBoolean(value));
+    }
+  }
+
+  /// True if wireless network is enabled via a hardware switch.
   bool get wirelessHardwareEnabled {
     if (_manager == null) {
       return null;
@@ -1039,6 +1240,7 @@ class NetworkManagerClient {
         managerInterfaceName, 'WirelessHardwareEnabled');
   }
 
+  /// True if mobile broadband is enabled.
   bool get wwanEnabled {
     if (_manager == null) {
       return null;
@@ -1046,6 +1248,15 @@ class NetworkManagerClient {
     return _manager.getBooleanProperty(managerInterfaceName, 'WwanEnabled');
   }
 
+  /// Sets if mobile broadband is enabled.
+  set wwanEnabled(bool value) {
+    if (_manager != null) {
+      _manager.setProperty(
+          managerInterfaceName, 'WwanEnabled', DBusBoolean(value));
+    }
+  }
+
+  /// True if mobile broadband is enabled via a hardware switch.
   bool get wwanHardwareEnabled {
     if (_manager == null) {
       return null;
@@ -1054,6 +1265,7 @@ class NetworkManagerClient {
         managerInterfaceName, 'WwanHardwareEnabled');
   }
 
+  /// Currently active connections.
   List<NetworkManagerActiveConnection> get activeConnections {
     if (_manager == null) {
       return null;
@@ -1071,6 +1283,7 @@ class NetworkManagerClient {
     return connections;
   }
 
+  /// The primary connection being used to access the network.
   NetworkManagerActiveConnection get primaryConnection {
     if (_manager == null) {
       return null;
@@ -1085,6 +1298,7 @@ class NetworkManagerClient {
     return NetworkManagerActiveConnection(this, connection);
   }
 
+  /// The type of connection being used to access the network.
   String get primaryConnectionType {
     if (_manager == null) {
       return null;
@@ -1093,7 +1307,26 @@ class NetworkManagerClient {
         managerInterfaceName, 'PrimaryConnectionType');
   }
 
-  /// Gets the version of NetworkManager running.
+  /// True if the primary connection has traffic limitations.
+  NetworkManagerMetered get metered {
+    if (_manager == null) {
+      return null;
+    }
+    return NetworkManagerMetered
+        .values[_manager.getUint32Property(managerInterfaceName, 'Metered')];
+  }
+
+  // FIXME: ActivatingConnection
+
+  /// True is NetworkManager is still starting up.
+  bool get startup {
+    if (_manager == null) {
+      return null;
+    }
+    return _manager.getBooleanProperty(managerInterfaceName, 'Startup');
+  }
+
+  /// The version of NetworkManager running.
   String get version {
     if (_manager == null) {
       return null;
@@ -1101,28 +1334,49 @@ class NetworkManagerClient {
     return _manager.getStringProperty(managerInterfaceName, 'Version');
   }
 
-  ConnectivityState get connectivity {
+  // FIXME: Capabilities
+
+  /// The result of the last connectivity check.
+  NetworkManagerConnectivityState get connectivity {
     var value =
         _manager.getUint32Property(managerInterfaceName, 'Connectivity');
     if (value == 1) {
-      return ConnectivityState.none;
+      return NetworkManagerConnectivityState.none;
     } else if (value == 2) {
-      return ConnectivityState.portal;
+      return NetworkManagerConnectivityState.portal;
     } else if (value == 3) {
-      return ConnectivityState.limited;
+      return NetworkManagerConnectivityState.limited;
     } else if (value == 4) {
-      return ConnectivityState.full;
+      return NetworkManagerConnectivityState.full;
     } else {
-      return ConnectivityState.unknown;
+      return NetworkManagerConnectivityState.unknown;
     }
   }
 
+  /// True if connectivity checking is available.
+  bool get connectivityCheckAvailable {
+    return _manager.getBooleanProperty(
+        managerInterfaceName, 'ConnectivityCheckAvailable');
+  }
+
+  /// True if connectivity checking is enabled.
   bool get connectivityCheckEnabled {
     return _manager.getBooleanProperty(
         managerInterfaceName, 'ConnectivityCheckEnabled');
   }
 
-  /// Gets the manager object.
+  /// Sets if connectivity checking is enabled.
+  set connectivityCheckEnabled(bool value) => _manager.setProperty(
+      managerInterfaceName, 'ConnectivityCheckEnabled', DBusBoolean(value));
+
+  /// URI used for connectivity checking.
+  String get connectivityCheckUri {
+    return _manager.getStringProperty(
+        managerInterfaceName, 'ConnectivityCheckUri');
+  }
+
+  // FIXME: GlobalDnsConfiguration
+
   _NetworkManagerObject get _manager =>
       _objects[DBusObjectPath('/org/freedesktop/NetworkManager')];
 

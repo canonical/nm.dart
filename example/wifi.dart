@@ -9,8 +9,8 @@ void main() async {
   var client = NetworkManagerClient(systemBus);
   await client.connect();
 
-  var device =
-      client.devices.firstWhere((d) => d.deviceType == DeviceType.wifi);
+  var device = client.devices
+      .firstWhere((d) => d.deviceType == NetworkManagerDeviceType.wifi);
   if (device == null) {
     print('No WiFi devices found');
     return;

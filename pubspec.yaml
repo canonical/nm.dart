@@ -1,5 +1,5 @@
 name: nm
-version: 0.0.0-dev.1
+version: 0.0.0-dev.2
 
 description:
   Provides a client to connect to NetworkManager - the service that manages network connections on Linux.

@@ -384,7 +384,7 @@ class NetworkManagerDevice {
   /// The type of device.
   NetworkManagerDeviceType get deviceType {
     var value = _object.getUint32Property(
-        deviceInterfaceName, 'NetworkManagerDeviceType');
+        deviceInterfaceName, 'DeviceType');
     if (value == 1) {
       return NetworkManagerDeviceType.ethernet;
     } else if (value == 2) {

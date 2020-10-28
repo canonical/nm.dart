@@ -117,15 +117,19 @@ class NetworkManagerSettingsConnection {
   void update(Map<String, Map<String, DBusValue>> properties) async {
     await _object.callMethod(settingsConnectionInterfaceName, 'Update', [
       DBusDict(
-          DBusSignature('s'),
-          DBusSignature('a{sv}'),
-          properties.map((key, value) => MapEntry(
-              DBusString(key),
-              DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  value.map(
-                      (k, v) => MapEntry(DBusString(k), DBusVariant(v)))))))
+        DBusSignature('s'),
+        DBusSignature('a{sv}'),
+        properties.map(
+          (key, value) => MapEntry(
+            DBusString(key),
+            DBusDict(
+              DBusSignature('s'),
+              DBusSignature('v'),
+              value.map((k, v) => MapEntry(DBusString(k), DBusVariant(v))),
+            ),
+          ),
+        ),
+      )
     ]);
   }
 
@@ -133,20 +137,24 @@ class NetworkManagerSettingsConnection {
   void updateUnsaved(Map<String, Map<String, DBusValue>> properties) async {
     await _object.callMethod(settingsConnectionInterfaceName, 'UpdateUnsaved', [
       DBusDict(
-          DBusSignature('s'),
-          DBusSignature('a{sv}'),
-          properties.map((key, value) => MapEntry(
-              DBusString(key),
-              DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  value.map(
-                      (k, v) => MapEntry(DBusString(k), DBusVariant(v)))))))
+        DBusSignature('s'),
+        DBusSignature('a{sv}'),
+        properties.map(
+          (key, value) => MapEntry(
+            DBusString(key),
+            DBusDict(
+              DBusSignature('s'),
+              DBusSignature('v'),
+              value.map((k, v) => MapEntry(DBusString(k), DBusVariant(v))),
+            ),
+          ),
+        ),
+      )
     ]);
   }
 
   /// Deletes this network connection settings.
-  void delete() async {
+  Future<void> delete() async {
     await _object.callMethod(settingsConnectionInterfaceName, 'Delete', []);
   }
 
@@ -154,11 +162,13 @@ class NetworkManagerSettingsConnection {
   Future<Map<String, Map<String, DBusValue>>> getSettings() async {
     var result = await _object
         .callMethod(settingsConnectionInterfaceName, 'GetSettings', []);
-    return (result.returnValues[0] as DBusDict).children.map((key, value) =>
-        MapEntry(
+    return (result.returnValues[0] as DBusDict).children.map(
+          (key, value) => MapEntry(
             (key as DBusString).value,
             (value as DBusDict).children.map((k, v) =>
-                MapEntry((k as DBusString).value, (v as DBusVariant).value))));
+                MapEntry((k as DBusString).value, (v as DBusVariant).value)),
+          ),
+        );
   }
 
   /// Gets the secrets belonging to this network connection.
@@ -384,7 +394,9 @@ class NetworkManagerDevice {
   /// The type of device.
   NetworkManagerDeviceType get deviceType {
     var value = _object.getUint32Property(
-        deviceInterfaceName, 'DeviceType');
+      deviceInterfaceName,
+      'DeviceType',
+    );
     if (value == 1) {
       return NetworkManagerDeviceType.ethernet;
     } else if (value == 2) {
@@ -702,13 +714,17 @@ class NetworkManagerActiveConnection {
       _object.getBooleanProperty(activeConnectionInterfaceName, 'Default');
   NetworkManagerIP4Config get ip4Config {
     var objectPath = _object.getObjectPathProperty(
-        activeConnectionInterfaceName, 'Ip4Config');
+      activeConnectionInterfaceName,
+      'Ip4Config',
+    );
     return client._getIP4Config(objectPath);
   }
 
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath = _object.getObjectPathProperty(
-        activeConnectionInterfaceName, 'DHCP4Config');
+      activeConnectionInterfaceName,
+      'DHCP4Config',
+    );
     return client._getDHCP4Config(objectPath);
   }
 
@@ -716,18 +732,24 @@ class NetworkManagerActiveConnection {
       _object.getBooleanProperty(activeConnectionInterfaceName, 'Default6');
   NetworkManagerIP6Config get ip6Config {
     var objectPath = _object.getObjectPathProperty(
-        activeConnectionInterfaceName, 'Ip6Config');
+      activeConnectionInterfaceName,
+      'Ip6Config',
+    );
     return client._getIP6Config(objectPath);
   }
 
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath = _object.getObjectPathProperty(
-        activeConnectionInterfaceName, 'DHCP6Config');
+      activeConnectionInterfaceName,
+      'DHCP6Config',
+    );
     return client._getDHCP6Config(objectPath);
   }
 
-  bool get vpn =>
-      _object.getBooleanProperty(activeConnectionInterfaceName, 'Vpn');
+  bool get vpn => _object.getBooleanProperty(
+        activeConnectionInterfaceName,
+        'Vpn',
+      );
 }
 
 class NetworkManagerIP4Config {
@@ -1087,7 +1109,9 @@ class _NetworkManagerObject extends DBusRemoteObject {
     }
     Map<String, dynamic> convertData(DBusValue value) {
       return (value as DBusDict).children.map((key, value) => MapEntry(
-          (key as DBusString).value, (value as DBusVariant).value.toNative()));
+            (key as DBusString).value,
+            (value as DBusVariant).value.toNative(),
+          ));
     }
 
     return (value as DBusArray)
@@ -1133,14 +1157,17 @@ class NetworkManagerClient {
 
   /// Connects to the NetworkManager D-Bus objects.
   /// Must be called before accessing methods and properties.
-  void connect() async {
+  Future<void> connect() async {
     // Already connected
     if (_root != null) {
       return;
     }
 
-    _root = DBusRemoteObject(systemBus, 'org.freedesktop.NetworkManager',
-        DBusObjectPath('/org/freedesktop'));
+    _root = DBusRemoteObject(
+      systemBus,
+      'org.freedesktop.NetworkManager',
+      DBusObjectPath('/org/freedesktop'),
+    );
 
     // Subscribe to changes
     var signals = _root.subscribeObjectManagerSignals();
@@ -1212,7 +1239,9 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-        managerInterfaceName, 'NetworkingEnabled');
+      managerInterfaceName,
+      'NetworkingEnabled',
+    );
   }
 
   /// True if wireless network is enabled.
@@ -1227,7 +1256,10 @@ class NetworkManagerClient {
   set wirelessEnabled(bool value) {
     if (_manager != null) {
       _manager.setProperty(
-          managerInterfaceName, 'WirelessEnabled', DBusBoolean(value));
+        managerInterfaceName,
+        'WirelessEnabled',
+        DBusBoolean(value),
+      );
     }
   }
 
@@ -1252,7 +1284,10 @@ class NetworkManagerClient {
   set wwanEnabled(bool value) {
     if (_manager != null) {
       _manager.setProperty(
-          managerInterfaceName, 'WwanEnabled', DBusBoolean(value));
+        managerInterfaceName,
+        'WwanEnabled',
+        DBusBoolean(value),
+      );
     }
   }
 
@@ -1262,7 +1297,9 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-        managerInterfaceName, 'WwanHardwareEnabled');
+      managerInterfaceName,
+      'WwanHardwareEnabled',
+    );
   }
 
   /// Currently active connections.
@@ -1271,7 +1308,9 @@ class NetworkManagerClient {
       return null;
     }
     var connectionObjectPaths = _manager.getObjectPathArrayProperty(
-        managerInterfaceName, 'ActiveConnections');
+      managerInterfaceName,
+      'ActiveConnections',
+    );
     var connections = <NetworkManagerActiveConnection>[];
     for (var objectPath in connectionObjectPaths) {
       var connection = _objects[objectPath];
@@ -1304,7 +1343,9 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getStringProperty(
-        managerInterfaceName, 'PrimaryConnectionType');
+      managerInterfaceName,
+      'PrimaryConnectionType',
+    );
   }
 
   /// True if the primary connection has traffic limitations.
@@ -1356,23 +1397,32 @@ class NetworkManagerClient {
   /// True if connectivity checking is available.
   bool get connectivityCheckAvailable {
     return _manager.getBooleanProperty(
-        managerInterfaceName, 'ConnectivityCheckAvailable');
+      managerInterfaceName,
+      'ConnectivityCheckAvailable',
+    );
   }
 
   /// True if connectivity checking is enabled.
   bool get connectivityCheckEnabled {
     return _manager.getBooleanProperty(
-        managerInterfaceName, 'ConnectivityCheckEnabled');
+      managerInterfaceName,
+      'ConnectivityCheckEnabled',
+    );
   }
 
   /// Sets if connectivity checking is enabled.
   set connectivityCheckEnabled(bool value) => _manager.setProperty(
-      managerInterfaceName, 'ConnectivityCheckEnabled', DBusBoolean(value));
+        managerInterfaceName,
+        'ConnectivityCheckEnabled',
+        DBusBoolean(value),
+      );
 
   /// URI used for connectivity checking.
   String get connectivityCheckUri {
     return _manager.getStringProperty(
-        managerInterfaceName, 'ConnectivityCheckUri');
+      managerInterfaceName,
+      'ConnectivityCheckUri',
+    );
   }
 
   // FIXME: GlobalDnsConfiguration

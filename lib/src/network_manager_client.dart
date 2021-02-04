@@ -59,6 +59,148 @@ enum NetworkManagerDeviceType {
 /// Traffic limitations.
 enum NetworkManagerMetered { unknown, yes, no, guessYes, guessNo }
 
+/// State of a [NetworkManagerActiveConnection].
+enum NetworkManagerActiveConnectionState {
+  unknown,
+  activating,
+  activated,
+  deactivating,
+  deactivated
+}
+
+/// Flags describing a [NetworkManagerActiveConnectionState].
+enum NetworkManagerActivationStateFlag {
+  isMaster,
+  isSlave,
+  layer2Ready,
+  ip4Ready,
+  ip6Ready,
+  masterHasSlaves,
+  lifetimeBoundToProfileVisibility,
+  external
+}
+
+/// Flags for a [NetworkManagerSettingsConnection].
+enum NetworkManagerConnectionFlag {
+  unsaved,
+  networkManagerGenerated,
+  volatile,
+  external
+}
+
+/// Capabilities of a [NetworkManagerDevice].
+enum NetworkManagerDeviceCapability {
+  networkManagerSupported,
+  carrierDetect,
+  isSoftware,
+  singleRootIOVirtualization
+}
+
+/// Interface flags for a [NetworkManagerDevice].
+enum NetworkManagerDeviceInterfaceFlag { up, lowerUp, carrier }
+
+/// WiFi operating modes.
+enum NetworkManagerWifiMode { unknown, adhoc, infra, ap, mesh }
+
+NetworkManagerWifiMode _decodeWifiMode(int value) {
+  if (value == 1) {
+    return NetworkManagerWifiMode.adhoc;
+  } else if (value == 2) {
+    return NetworkManagerWifiMode.infra;
+  } else if (value == 3) {
+    return NetworkManagerWifiMode.ap;
+  } else if (value == 4) {
+    return NetworkManagerWifiMode.mesh;
+  } else {
+    return NetworkManagerWifiMode.unknown;
+  }
+}
+
+/// Wifi capabilities.
+enum NetworkManagerDeviceWifiCapability {
+  cipherWEP40,
+  cipherWEP104,
+  cipherTKIP,
+  cipherCCMP,
+  wpa,
+  rsn,
+  ap,
+  adhoc,
+  freqValid,
+  freq2GHz,
+  freq5GHz,
+  mesh,
+  ibssRsn
+}
+
+/// Flags for a [NetworkManagerAccessPoint].
+enum NetworkManagerWifiAcessPointFlag { privacy, wps, wpsPushButton, wpsPin }
+
+/// Security flags for a [NetworkManagerAccessPoint].
+enum NetworkManagerWifiAcessPointSecurityFlag {
+  pairWEP40,
+  pairWEP104,
+  pairTKIP,
+  pairCCMP,
+  groupWEP40,
+  groupWEP104,
+  groupTKIP,
+  groupCCMP,
+  keyManagementPSK,
+  keyManagement802_1X,
+  keyManagementSAE,
+  keyManagementOWE,
+  keyManagementOWE_TM
+}
+
+List<NetworkManagerWifiAcessPointSecurityFlag>
+    _decodeWifiAcessPointSecurityFlags(int value) {
+  var flags = <NetworkManagerWifiAcessPointSecurityFlag>[];
+  if ((value & 0x1) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairWEP40);
+  }
+  if ((value & 0x2) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairWEP104);
+  }
+  if ((value & 0x4) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairTKIP);
+  }
+  if ((value & 0x8) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairCCMP);
+  }
+  if ((value & 0x10) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupWEP40);
+  }
+  if ((value & 0x20) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupWEP104);
+  }
+  if ((value & 0x40) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupTKIP);
+  }
+  if ((value & 0x80) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupCCMP);
+  }
+  if ((value & 0x100) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementPSK);
+  }
+  if ((value & 0x200) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagement802_1X);
+  }
+  if ((value & 0x400) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementSAE);
+  }
+  if ((value & 0x800) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementOWE);
+  }
+  if ((value & 0x1000) != 0) {
+    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementOWE_TM);
+  }
+  return flags;
+}
+
+/// Capabilities of a [NetworkManagerDeviceBluetooth].
+enum NetworkManagerBluetoothCapability { dun, tun }
+
 /// Settings profile manager.
 class NetworkManagerSettings {
   final String settingsInterfaceName =
@@ -197,8 +339,25 @@ class NetworkManagerSettingsConnection {
   bool get unsaved =>
       _object.getBooleanProperty(settingsConnectionInterfaceName, 'Unsaved');
 
-  int get flags => _object.getUint32Property(
-      settingsConnectionInterfaceName, 'Flags'); // FIXME: enum
+  /// Flags associated with this connection.
+  List<NetworkManagerConnectionFlag> get flags {
+    var value =
+        _object.getUint32Property(settingsConnectionInterfaceName, 'Flags');
+    var flags = <NetworkManagerConnectionFlag>[];
+    if ((value & 0x01) != 0) {
+      flags.add(NetworkManagerConnectionFlag.unsaved);
+    }
+    if ((value & 0x02) != 0) {
+      flags.add(NetworkManagerConnectionFlag.networkManagerGenerated);
+    }
+    if ((value & 0x04) != 0) {
+      flags.add(NetworkManagerConnectionFlag.volatile);
+    }
+    if ((value & 0x08) != 0) {
+      flags.add(NetworkManagerConnectionFlag.external);
+    }
+    return flags;
+  }
 
   /// File that stores these settings.
   String get filename =>
@@ -297,8 +456,24 @@ class NetworkManagerDevice {
   String get firmwareVersion =>
       _object.getStringProperty(deviceInterfaceName, 'FirmwareVersion');
 
-  int get capabilities => _object.getUint32Property(
-      deviceInterfaceName, 'Capabilities'); // FIXME: enum
+  /// Capabilities of this device
+  List<NetworkManagerDeviceCapability> get capabilities {
+    var value = _object.getUint32Property(deviceInterfaceName, 'Capabilities');
+    var values = <NetworkManagerDeviceCapability>[];
+    if ((value & 0x01) != 0) {
+      values.add(NetworkManagerDeviceCapability.networkManagerSupported);
+    }
+    if ((value & 0x02) != 0) {
+      values.add(NetworkManagerDeviceCapability.carrierDetect);
+    }
+    if ((value & 0x03) != 0) {
+      values.add(NetworkManagerDeviceCapability.isSoftware);
+    }
+    if ((value & 0x04) != 0) {
+      values.add(NetworkManagerDeviceCapability.singleRootIOVirtualization);
+    }
+    return values;
+  }
 
   /// The connection state of this device.
   NetworkManagerDeviceState get state {
@@ -333,6 +508,8 @@ class NetworkManagerDevice {
   }
 
   // FIXME: StateReason
+
+  /// Connection that owns this device.
   NetworkManagerActiveConnection get activeConnection {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'ActiveConnection');
@@ -478,8 +655,22 @@ class NetworkManagerDevice {
 
   // FIXME: Ip6Connectivity
 
-  int get interfaceFlags => _object.getUint32Property(
-      deviceInterfaceName, 'InterfaceFlags'); // FIXME: enum
+  /// Flags for network interfaces.
+  List<NetworkManagerDeviceInterfaceFlag> get interfaceFlags {
+    var value =
+        _object.getUint32Property(deviceInterfaceName, 'InterfaceFlags');
+    var flags = <NetworkManagerDeviceInterfaceFlag>[];
+    if ((value & 0x01) != 0) {
+      flags.add(NetworkManagerDeviceInterfaceFlag.up);
+    }
+    if ((value & 0x02) != 0) {
+      flags.add(NetworkManagerDeviceInterfaceFlag.lowerUp);
+    }
+    if ((value & 0x10000) != 0) {
+      flags.add(NetworkManagerDeviceInterfaceFlag.carrier);
+    }
+    return flags;
+  }
 
   /// Hardware address for this device.
   String get hwAddress =>
@@ -501,8 +692,19 @@ class NetworkManagerDeviceBluetooth {
         .propertiesChangedStreamController.stream;
   }
 
-  int get btCapabilities =>
-      _object.getUint32Property(bluetoothDeviceInterfaceName, 'BtCapabilities');
+  /// Bluetooth capabilities of this device.
+  List<NetworkManagerBluetoothCapability> get btCapabilities {
+    var value = _object.getUint32Property(
+        bluetoothDeviceInterfaceName, 'BtCapabilities');
+    var flags = <NetworkManagerBluetoothCapability>[];
+    if ((value & 0x1) != 0) {
+      flags.add(NetworkManagerBluetoothCapability.dun);
+    }
+    if ((value & 0x2) != 0) {
+      flags.add(NetworkManagerBluetoothCapability.tun);
+    }
+    return flags;
+  }
 }
 
 /// Information for generic devices.
@@ -637,12 +839,21 @@ class NetworkManagerDeviceWireless {
         .propertiesChangedStreamController.stream;
   }
 
+  /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'
   String get permHwAddress =>
       _object.getStringProperty(wirelessDeviceInterfaceName, 'PermHwAddress');
-  int get mode => _object.getUint32Property(
-      wirelessDeviceInterfaceName, 'Mode'); // FIXME: enum
+
+  /// Operating mode of the device.
+  NetworkManagerWifiMode get mode {
+    var value = _object.getUint32Property(wirelessDeviceInterfaceName, 'Mode');
+    return _decodeWifiMode(value);
+  }
+
+  // Bitrate of currently in use, in kilobits/second.
   int get bitrate =>
       _object.getUint32Property(wirelessDeviceInterfaceName, 'Bitrate');
+
+  /// Access points available on this device.
   List<NetworkManagerAccessPoint> get accessPoints {
     var objectPaths = _object.getObjectPathArrayProperty(
         wirelessDeviceInterfaceName, 'AccessPoints');
@@ -657,17 +868,65 @@ class NetworkManagerDeviceWireless {
     return accessPoints;
   }
 
+  /// Access point currently in use.
   NetworkManagerAccessPoint get activeAccessPoint {
     var objectPath = _object.getObjectPathProperty(
         wirelessDeviceInterfaceName, 'ActiveAccessPoint');
     return client._getAccessPoint(objectPath);
   }
 
-  int get wirelessCapabilities => _object.getUint32Property(
-      wirelessDeviceInterfaceName, 'WirelessCapabilities'); // FIXME: enum
+  /// Device capabilities.
+  List<NetworkManagerDeviceWifiCapability> get wirelessCapabilities {
+    var value = _object.getUint32Property(
+        wirelessDeviceInterfaceName, 'WirelessCapabilities');
+    var flags = <NetworkManagerDeviceWifiCapability>[];
+    if ((value & 0x1) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.cipherWEP40);
+    }
+    if ((value & 0x2) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.cipherWEP104);
+    }
+    if ((value & 0x4) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.cipherTKIP);
+    }
+    if ((value & 0x8) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.cipherCCMP);
+    }
+    if ((value & 0x10) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.wpa);
+    }
+    if ((value & 0x20) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.rsn);
+    }
+    if ((value & 0x40) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.ap);
+    }
+    if ((value & 0x80) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.adhoc);
+    }
+    if ((value & 0x100) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.freqValid);
+    }
+    if ((value & 0x200) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.freq2GHz);
+    }
+    if ((value & 0x400) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.freq5GHz);
+    }
+    if ((value & 0x1000) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.mesh);
+    }
+    if ((value & 0x2000) != 0) {
+      flags.add(NetworkManagerDeviceWifiCapability.ibssRsn);
+    }
+    return flags;
+  }
+
+  /// Last time this device completed a network scan in milliseconds since boot. -1 if has never scanned for access points.
   int get lastScan =>
       _object.getInt64Property(wirelessDeviceInterfaceName, 'LastScan');
 
+  /// Request this device to scan for access points.
   Future requestScan([Map<String, DBusValue> options = const {}]) async {
     var args = [
       DBusDict(
@@ -700,18 +959,82 @@ class NetworkManagerActiveConnection {
         .propertiesChangedStreamController.stream;
   }
 
+  /// The connection settings.
+  NetworkManagerSettingsConnection get connection {
+    var objectPath = _object.getObjectPathProperty(
+      activeConnectionInterfaceName,
+      'Connection',
+    );
+    return client._getConnection(objectPath);
+  }
+
+  /// ID for this connection, e.g. 'Ethernet', 'my-cool-wifi'.
   String get id =>
       _object.getStringProperty(activeConnectionInterfaceName, 'Id');
+
+  /// Unique ID for this connection, e.g. '123e4567-e89b-12d3-a456-426614174000'.
   String get uuid =>
       _object.getStringProperty(activeConnectionInterfaceName, 'Uuid');
+
+  /// Type of this connection, e.g. '802-11-wireless', '802-3-ethernet'.
   String get type =>
       _object.getStringProperty(activeConnectionInterfaceName, 'type');
-  int get state => _object.getUint32Property(
-      activeConnectionInterfaceName, 'State'); // FIXME: enum
-  int get stateFlags => _object.getUint32Property(
-      activeConnectionInterfaceName, 'StateFlags'); // FIXME: enum
+
+  /// The state of this connection.
+  NetworkManagerActiveConnectionState get state {
+    var value =
+        _object.getUint32Property(activeConnectionInterfaceName, 'State');
+    if (value == 1) {
+      return NetworkManagerActiveConnectionState.activating;
+    } else if (value == 2) {
+      return NetworkManagerActiveConnectionState.activated;
+    } else if (value == 3) {
+      return NetworkManagerActiveConnectionState.deactivating;
+    } else if (value == 4) {
+      return NetworkManagerActiveConnectionState.deactivated;
+    } else {
+      return NetworkManagerActiveConnectionState.unknown;
+    }
+  }
+
+  /// Flags related to [state].
+  List<NetworkManagerActivationStateFlag> get stateFlags {
+    var value =
+        _object.getUint32Property(activeConnectionInterfaceName, 'StateFlags');
+    var flags = <NetworkManagerActivationStateFlag>[];
+    if ((value & 0x01) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.isMaster);
+    }
+    if ((value & 0x02) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.isSlave);
+    }
+    if ((value & 0x04) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.layer2Ready);
+    }
+    if ((value & 0x08) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.ip4Ready);
+    }
+    if ((value & 0x10) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.ip6Ready);
+    }
+    if ((value & 0x20) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.masterHasSlaves);
+    }
+    if ((value & 0x40) != 0) {
+      flags.add(
+          NetworkManagerActivationStateFlag.lifetimeBoundToProfileVisibility);
+    }
+    if ((value & 0x80) != 0) {
+      flags.add(NetworkManagerActivationStateFlag.external);
+    }
+    return flags;
+  }
+
+  /// True if this is the default IPv4 connection.
   bool get default4 =>
       _object.getBooleanProperty(activeConnectionInterfaceName, 'Default');
+
+  /// IPv4 configuration for this connection.
   NetworkManagerIP4Config get ip4Config {
     var objectPath = _object.getObjectPathProperty(
       activeConnectionInterfaceName,
@@ -720,6 +1043,7 @@ class NetworkManagerActiveConnection {
     return client._getIP4Config(objectPath);
   }
 
+  /// DHCPv4 configuration for this connection.
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath = _object.getObjectPathProperty(
       activeConnectionInterfaceName,
@@ -728,8 +1052,11 @@ class NetworkManagerActiveConnection {
     return client._getDHCP4Config(objectPath);
   }
 
+  /// True if this is the default IPv6 connection.
   bool get default6 =>
       _object.getBooleanProperty(activeConnectionInterfaceName, 'Default6');
+
+  /// IPv6 configuration for this connection.
   NetworkManagerIP6Config get ip6Config {
     var objectPath = _object.getObjectPathProperty(
       activeConnectionInterfaceName,
@@ -738,6 +1065,7 @@ class NetworkManagerActiveConnection {
     return client._getIP6Config(objectPath);
   }
 
+  /// DHCPv6 configuration for this connection.
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath = _object.getObjectPathProperty(
       activeConnectionInterfaceName,
@@ -746,10 +1074,36 @@ class NetworkManagerActiveConnection {
     return client._getDHCP6Config(objectPath);
   }
 
+  /// True if this is a VPN connection.
   bool get vpn => _object.getBooleanProperty(
         activeConnectionInterfaceName,
         'Vpn',
       );
+
+  /// Devices this connection uses.
+  List<NetworkManagerDevice> get devices {
+    var deviceObjectPaths = _object.getObjectPathArrayProperty(
+      activeConnectionInterfaceName,
+      'Devices',
+    );
+    var devices = <NetworkManagerDevice>[];
+    for (var objectPath in deviceObjectPaths) {
+      var device = client._getDevice(objectPath);
+      if (device != null) {
+        devices.add(device);
+      }
+    }
+    return devices;
+  }
+
+  /// Master device if this connection is a slave.
+  NetworkManagerDevice get master {
+    var objectPath = _object.getObjectPathProperty(
+      activeConnectionInterfaceName,
+      'Master',
+    );
+    return client._getDevice(objectPath);
+  }
 }
 
 class NetworkManagerIP4Config {
@@ -886,12 +1240,39 @@ class NetworkManagerAccessPoint {
         .propertiesChangedStreamController.stream;
   }
 
-  int get flags => _object.getUint32Property(
-      accessPointInterfaceName, 'Flags'); // FIXME: enum
-  int get wpaFlags => _object.getUint32Property(
-      accessPointInterfaceName, 'WpaFlags'); // FIXME: enum
-  int get rsnFlags => _object.getUint32Property(
-      accessPointInterfaceName, 'RsnFlags'); // FIXME: enum
+  /// Capabilities of this access point.
+  List<NetworkManagerWifiAcessPointFlag> get flags {
+    var value = _object.getUint32Property(accessPointInterfaceName, 'Flags');
+    var flags = <NetworkManagerWifiAcessPointFlag>[];
+    if ((value & 0x01) != 0) {
+      flags.add(NetworkManagerWifiAcessPointFlag.privacy);
+    }
+    if ((value & 0x02) != 0) {
+      flags.add(NetworkManagerWifiAcessPointFlag.wps);
+    }
+    if ((value & 0x04) != 0) {
+      flags.add(NetworkManagerWifiAcessPointFlag.wpsPushButton);
+    }
+    if ((value & 0x08) != 0) {
+      flags.add(NetworkManagerWifiAcessPointFlag.wpsPin);
+    }
+    return flags;
+  }
+
+  /// WPA security capabilities of this access point.
+  List<NetworkManagerWifiAcessPointSecurityFlag> get wpaFlags {
+    var value = _object.getUint32Property(accessPointInterfaceName, 'WpaFlags');
+    return _decodeWifiAcessPointSecurityFlags(value);
+  }
+
+  /// RSN security capabilities of this access point.
+  List<NetworkManagerWifiAcessPointSecurityFlag> get rsnFlags {
+    var value = _object.getUint32Property(accessPointInterfaceName, 'RsnFlags');
+    return _decodeWifiAcessPointSecurityFlags(value);
+  }
+
+  /// SSID advertised by the access point.
+  /// Note this is in binary form, but is likely to contain a text string.
   List<int> get ssid {
     var value = _object.getCachedProperty(accessPointInterfaceName, 'Ssid');
     if (value == null) {
@@ -906,16 +1287,29 @@ class NetworkManagerAccessPoint {
         .toList();
   }
 
+  /// Radio frequency of this access point in MHz.
   int get frequency =>
       _object.getUint32Property(accessPointInterfaceName, 'Frequency');
+
+  /// The hardware address (BSSID) of this access point.
   String get hwAddress =>
       _object.getStringProperty(accessPointInterfaceName, 'HwAddress');
-  int get mode => _object.getUint32Property(
-      accessPointInterfaceName, 'Mode'); // FIXME: enum
+
+  /// Mode this access point is operating in.
+  NetworkManagerWifiMode get mode {
+    var value = _object.getUint32Property(accessPointInterfaceName, 'Mode');
+    return _decodeWifiMode(value);
+  }
+
+  /// Maximum bitrate this access point is capable of in kilobits/second.
   int get maxBitrate =>
       _object.getUint32Property(accessPointInterfaceName, 'MaxBitrate');
+
+  /// Signal quality of access point in percent.
   int get strength =>
       _object.getByteProperty(accessPointInterfaceName, 'Strength');
+
+  /// Last time this access point was seen in a scan in seconds since boot.
   int get lastSeen =>
       _object.getInt32Property(accessPointInterfaceName, 'LastSeen');
 }

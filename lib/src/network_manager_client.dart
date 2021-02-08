@@ -478,32 +478,45 @@ class NetworkManagerDevice {
   /// The connection state of this device.
   NetworkManagerDeviceState get state {
     var value = _object.getUint32Property(deviceInterfaceName, 'State');
-    if (value == 10) {
-      return NetworkManagerDeviceState.unmanaged;
-    } else if (value == 20) {
-      return NetworkManagerDeviceState.unavailable;
-    } else if (value == 30) {
-      return NetworkManagerDeviceState.disconnected;
-    } else if (value == 40) {
-      return NetworkManagerDeviceState.prepare;
-    } else if (value == 50) {
-      return NetworkManagerDeviceState.config;
-    } else if (value == 60) {
-      return NetworkManagerDeviceState.need_auth;
-    } else if (value == 70) {
-      return NetworkManagerDeviceState.ip_config;
-    } else if (value == 80) {
-      return NetworkManagerDeviceState.ip_check;
-    } else if (value == 90) {
-      return NetworkManagerDeviceState.secondaries;
-    } else if (value == 100) {
-      return NetworkManagerDeviceState.activated;
-    } else if (value == 110) {
-      return NetworkManagerDeviceState.deactivating;
-    } else if (value == 120) {
-      return NetworkManagerDeviceState.failed;
-    } else {
-      return NetworkManagerDeviceState.unknown;
+    switch (value) {
+      case 10:
+        return NetworkManagerDeviceState.unmanaged;
+        break;
+      case 20:
+        return NetworkManagerDeviceState.unavailable;
+        break;
+      case 30:
+        return NetworkManagerDeviceState.disconnected;
+        break;
+      case 40:
+        return NetworkManagerDeviceState.prepare;
+        break;
+      case 50:
+        return NetworkManagerDeviceState.config;
+        break;
+      case 60:
+        return NetworkManagerDeviceState.need_auth;
+        break;
+      case 70:
+        return NetworkManagerDeviceState.ip_config;
+        break;
+      case 80:
+        return NetworkManagerDeviceState.ip_check;
+        break;
+      case 90:
+        return NetworkManagerDeviceState.secondaries;
+        break;
+      case 100:
+        return NetworkManagerDeviceState.activated;
+        break;
+      case 110:
+        return NetworkManagerDeviceState.deactivating;
+        break;
+      case 120:
+        return NetworkManagerDeviceState.failed;
+        break;
+      default:
+        return NetworkManagerDeviceState.unknown;
     }
   }
 
@@ -574,66 +587,96 @@ class NetworkManagerDevice {
       deviceInterfaceName,
       'DeviceType',
     );
-    if (value == 1) {
-      return NetworkManagerDeviceType.ethernet;
-    } else if (value == 2) {
-      return NetworkManagerDeviceType.wifi;
-    } else if (value == 5) {
-      return NetworkManagerDeviceType.bluetooth;
-    } else if (value == 6) {
-      return NetworkManagerDeviceType.olpc_mesh;
-    } else if (value == 7) {
-      return NetworkManagerDeviceType.wimax;
-    } else if (value == 8) {
-      return NetworkManagerDeviceType.modem;
-    } else if (value == 9) {
-      return NetworkManagerDeviceType.infiniband;
-    } else if (value == 10) {
-      return NetworkManagerDeviceType.bond;
-    } else if (value == 11) {
-      return NetworkManagerDeviceType.vlan;
-    } else if (value == 12) {
-      return NetworkManagerDeviceType.adsl;
-    } else if (value == 13) {
-      return NetworkManagerDeviceType.bridge;
-    } else if (value == 14) {
-      return NetworkManagerDeviceType.generic;
-    } else if (value == 15) {
-      return NetworkManagerDeviceType.team;
-    } else if (value == 16) {
-      return NetworkManagerDeviceType.tun;
-    } else if (value == 17) {
-      return NetworkManagerDeviceType.ip_tunnel;
-    } else if (value == 18) {
-      return NetworkManagerDeviceType.macvlan;
-    } else if (value == 19) {
-      return NetworkManagerDeviceType.vxlan;
-    } else if (value == 20) {
-      return NetworkManagerDeviceType.veth;
-    } else if (value == 21) {
-      return NetworkManagerDeviceType.macsec;
-    } else if (value == 22) {
-      return NetworkManagerDeviceType.dummy;
-    } else if (value == 23) {
-      return NetworkManagerDeviceType.ppp;
-    } else if (value == 24) {
-      return NetworkManagerDeviceType.ovs_interface;
-    } else if (value == 25) {
-      return NetworkManagerDeviceType.ovs_port;
-    } else if (value == 26) {
-      return NetworkManagerDeviceType.ovs_bridge;
-    } else if (value == 27) {
-      return NetworkManagerDeviceType.wpan;
-    } else if (value == 28) {
-      return NetworkManagerDeviceType._6lowpan;
-    } else if (value == 29) {
-      return NetworkManagerDeviceType.wireguard;
-    } else if (value == 30) {
-      return NetworkManagerDeviceType.wifi_p2p;
-    } else if (value == 31) {
-      return NetworkManagerDeviceType.vrf;
-    } else {
-      return NetworkManagerDeviceType.unknown;
+    switch (value) {
+      case 1:
+        return NetworkManagerDeviceType.ethernet;
+        break;
+      case 2:
+        return NetworkManagerDeviceType.wifi;
+        break;
+      case 5:
+        return NetworkManagerDeviceType.bluetooth;
+        break;
+      case 6:
+        return NetworkManagerDeviceType.olpc_mesh;
+        break;
+      case 7:
+        return NetworkManagerDeviceType.wimax;
+        break;
+      case 8:
+        return NetworkManagerDeviceType.modem;
+        break;
+      case 9:
+        return NetworkManagerDeviceType.infiniband;
+        break;
+      case 10:
+        return NetworkManagerDeviceType.bond;
+        break;
+      case 11:
+        return NetworkManagerDeviceType.vlan;
+        break;
+      case 12:
+        return NetworkManagerDeviceType.adsl;
+        break;
+      case 13:
+        return NetworkManagerDeviceType.bridge;
+        break;
+      case 14:
+        return NetworkManagerDeviceType.generic;
+        break;
+      case 15:
+        return NetworkManagerDeviceType.team;
+        break;
+      case 16:
+        return NetworkManagerDeviceType.tun;
+        break;
+      case 17:
+        return NetworkManagerDeviceType.ip_tunnel;
+        break;
+      case 18:
+        return NetworkManagerDeviceType.macvlan;
+        break;
+      case 19:
+        return NetworkManagerDeviceType.vxlan;
+        break;
+      case 20:
+        return NetworkManagerDeviceType.veth;
+        break;
+      case 21:
+        return NetworkManagerDeviceType.macsec;
+        break;
+      case 22:
+        return NetworkManagerDeviceType.dummy;
+        break;
+      case 23:
+        return NetworkManagerDeviceType.ppp;
+        break;
+      case 24:
+        return NetworkManagerDeviceType.ovs_interface;
+        break;
+      case 25:
+        return NetworkManagerDeviceType.ovs_port;
+        break;
+      case 26:
+        return NetworkManagerDeviceType.ovs_bridge;
+        break;
+      case 27:
+        return NetworkManagerDeviceType.wpan;
+        break;
+      case 28:
+        return NetworkManagerDeviceType._6lowpan;
+        break;
+      case 29:
+        return NetworkManagerDeviceType.wireguard;
+        break;
+      case 30:
+        return NetworkManagerDeviceType.wifi_p2p;
+        break;
+      case 31:
+        return NetworkManagerDeviceType.vrf;
+        break;
+      default:
+        return NetworkManagerDeviceType.unknown;
     }
   }
 
@@ -984,16 +1027,21 @@ class NetworkManagerActiveConnection {
   NetworkManagerActiveConnectionState get state {
     var value =
         _object.getUint32Property(activeConnectionInterfaceName, 'State');
-    if (value == 1) {
-      return NetworkManagerActiveConnectionState.activating;
-    } else if (value == 2) {
-      return NetworkManagerActiveConnectionState.activated;
-    } else if (value == 3) {
-      return NetworkManagerActiveConnectionState.deactivating;
-    } else if (value == 4) {
-      return NetworkManagerActiveConnectionState.deactivated;
-    } else {
-      return NetworkManagerActiveConnectionState.unknown;
+    switch (value) {
+      case 1:
+        return NetworkManagerActiveConnectionState.activating;
+        break;
+      case 2:
+        return NetworkManagerActiveConnectionState.activated;
+        break;
+      case 3:
+        return NetworkManagerActiveConnectionState.deactivating;
+        break;
+      case 4:
+        return NetworkManagerActiveConnectionState.deactivated;
+        break;
+      default:
+        return NetworkManagerActiveConnectionState.unknown;
     }
   }
 
@@ -1775,16 +1823,21 @@ class NetworkManagerClient {
   NetworkManagerConnectivityState get connectivity {
     var value =
         _manager.getUint32Property(managerInterfaceName, 'Connectivity');
-    if (value == 1) {
-      return NetworkManagerConnectivityState.none;
-    } else if (value == 2) {
-      return NetworkManagerConnectivityState.portal;
-    } else if (value == 3) {
-      return NetworkManagerConnectivityState.limited;
-    } else if (value == 4) {
-      return NetworkManagerConnectivityState.full;
-    } else {
-      return NetworkManagerConnectivityState.unknown;
+    switch (value) {
+      case 1:
+        return NetworkManagerConnectivityState.none;
+        break;
+      case 2:
+        return NetworkManagerConnectivityState.portal;
+        break;
+      case 3:
+        return NetworkManagerConnectivityState.limited;
+        break;
+      case 4:
+        return NetworkManagerConnectivityState.full;
+        break;
+      default:
+        return NetworkManagerConnectivityState.unknown;
     }
   }
 

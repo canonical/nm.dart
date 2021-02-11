@@ -489,10 +489,10 @@ class NetworkManagerSettings {
   final String settingsInterfaceName =
       'org.freedesktop.NetworkManager.Settings';
 
-  final NetworkManagerClient client;
+  final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerSettings(this.client, this._object);
+  NetworkManagerSettings(this._client, this._object);
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
@@ -506,7 +506,7 @@ class NetworkManagerSettings {
         settingsInterfaceName, 'Connections');
     var connections = <NetworkManagerSettingsConnection>[];
     for (var objectPath in objectPaths) {
-      var connection = client._getConnection(objectPath);
+      var connection = _client._getConnection(objectPath);
       if (connection != null) {
         connections.add(connection);
       }
@@ -672,7 +672,7 @@ class NetworkManagerDnsManager {
 class NetworkManagerDevice {
   final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
 
-  final NetworkManagerClient client;
+  final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
   /// Information for Bluetooth devices or null.
@@ -696,14 +696,14 @@ class NetworkManagerDevice {
   /// Information for wireless devices (e.g WiFi) or null.
   final NetworkManagerDeviceWireless wireless;
 
-  NetworkManagerDevice(this.client, this._object)
+  NetworkManagerDevice(this._client, this._object)
       : bluetooth = NetworkManagerDeviceBluetooth(_object),
         generic = NetworkManagerDeviceGeneric(_object),
         statistics = NetworkManagerDeviceStatistics(_object),
         tun = NetworkManagerDeviceTun(_object),
-        vlan = NetworkManagerDeviceVlan(client, _object),
+        vlan = NetworkManagerDeviceVlan(_client, _object),
         wired = NetworkManagerDeviceWired(_object),
-        wireless = NetworkManagerDeviceWireless(client, _object);
+        wireless = NetworkManagerDeviceWireless(_client, _object);
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
@@ -785,35 +785,35 @@ class NetworkManagerDevice {
   NetworkManagerActiveConnection get activeConnection {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'ActiveConnection');
-    return client._getActiveConnection(objectPath);
+    return _client._getActiveConnection(objectPath);
   }
 
   /// IPv4 configuration for this device.
   NetworkManagerIP4Config get ip4Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'Ip4Config');
-    return client._getIP4Config(objectPath);
+    return _client._getIP4Config(objectPath);
   }
 
   /// DHCPv4 configuration for this device.
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'DHCP4Config');
-    return client._getDHCP4Config(objectPath);
+    return _client._getDHCP4Config(objectPath);
   }
 
   /// IPv6 configuration for this device.
   NetworkManagerIP6Config get ip6Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'Ip6Config');
-    return client._getIP6Config(objectPath);
+    return _client._getIP6Config(objectPath);
   }
 
   /// DHCPv6 configuration for this device.
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath =
         _object.getObjectPathProperty(deviceInterfaceName, 'DHCP6Config');
-    return client._getDHCP6Config(objectPath);
+    return _client._getDHCP6Config(objectPath);
   }
 
   /// True if this device is being managed by NetworkManager.
@@ -916,7 +916,7 @@ class NetworkManagerDevice {
         deviceInterfaceName, 'AvailableConnections');
     var connections = <NetworkManagerSettingsConnection>[];
     for (var objectPath in objectPaths) {
-      var connection = client._getConnection(objectPath);
+      var connection = _client._getConnection(objectPath);
       if (connection != null) {
         connections.add(connection);
       }
@@ -1089,10 +1089,10 @@ class NetworkManagerDeviceVlan {
   final String vlanDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Vlan';
 
-  final NetworkManagerClient client;
+  final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerDeviceVlan(this.client, this._object);
+  NetworkManagerDeviceVlan(this._client, this._object);
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
@@ -1103,7 +1103,7 @@ class NetworkManagerDeviceVlan {
   NetworkManagerDevice get parent {
     var objectPath =
         _object.getObjectPathProperty(vlanDeviceInterfaceName, 'Parent');
-    return client._getDevice(objectPath);
+    return _client._getDevice(objectPath);
   }
 
   int get vlanId =>
@@ -1136,10 +1136,10 @@ class NetworkManagerDeviceWireless {
   final String wirelessDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Wireless';
 
-  final NetworkManagerClient client;
+  final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerDeviceWireless(this.client, this._object);
+  NetworkManagerDeviceWireless(this._client, this._object);
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
@@ -1167,7 +1167,7 @@ class NetworkManagerDeviceWireless {
         wirelessDeviceInterfaceName, 'AccessPoints');
     var accessPoints = <NetworkManagerAccessPoint>[];
     for (var objectPath in objectPaths) {
-      var accessPoint = client._getAccessPoint(objectPath);
+      var accessPoint = _client._getAccessPoint(objectPath);
       if (accessPoint != null) {
         accessPoints.add(accessPoint);
       }
@@ -1180,7 +1180,7 @@ class NetworkManagerDeviceWireless {
   NetworkManagerAccessPoint get activeAccessPoint {
     var objectPath = _object.getObjectPathProperty(
         wirelessDeviceInterfaceName, 'ActiveAccessPoint');
-    return client._getAccessPoint(objectPath);
+    return _client._getAccessPoint(objectPath);
   }
 
   /// Device capabilities.
@@ -1256,10 +1256,10 @@ class NetworkManagerActiveConnection {
   final String activeConnectionInterfaceName =
       'org.freedesktop.NetworkManager.Connection.Active';
 
-  final NetworkManagerClient client;
+  final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
-  NetworkManagerActiveConnection(this.client, this._object);
+  NetworkManagerActiveConnection(this._client, this._object);
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
@@ -1273,7 +1273,7 @@ class NetworkManagerActiveConnection {
       activeConnectionInterfaceName,
       'Connection',
     );
-    return client._getConnection(objectPath);
+    return _client._getConnection(objectPath);
   }
 
   /// ID for this connection, e.g. 'Ethernet', 'my-cool-wifi'.
@@ -1338,7 +1338,7 @@ class NetworkManagerActiveConnection {
       activeConnectionInterfaceName,
       'Ip4Config',
     );
-    return client._getIP4Config(objectPath);
+    return _client._getIP4Config(objectPath);
   }
 
   /// DHCPv4 configuration for this connection.
@@ -1347,7 +1347,7 @@ class NetworkManagerActiveConnection {
       activeConnectionInterfaceName,
       'DHCP4Config',
     );
-    return client._getDHCP4Config(objectPath);
+    return _client._getDHCP4Config(objectPath);
   }
 
   /// True if this is the default IPv6 connection.
@@ -1360,7 +1360,7 @@ class NetworkManagerActiveConnection {
       activeConnectionInterfaceName,
       'Ip6Config',
     );
-    return client._getIP6Config(objectPath);
+    return _client._getIP6Config(objectPath);
   }
 
   /// DHCPv6 configuration for this connection.
@@ -1369,7 +1369,7 @@ class NetworkManagerActiveConnection {
       activeConnectionInterfaceName,
       'DHCP6Config',
     );
-    return client._getDHCP6Config(objectPath);
+    return _client._getDHCP6Config(objectPath);
   }
 
   /// True if this is a VPN connection.
@@ -1386,7 +1386,7 @@ class NetworkManagerActiveConnection {
     );
     var devices = <NetworkManagerDevice>[];
     for (var objectPath in deviceObjectPaths) {
-      var device = client._getDevice(objectPath);
+      var device = _client._getDevice(objectPath);
       if (device != null) {
         devices.add(device);
       }
@@ -1400,7 +1400,7 @@ class NetworkManagerActiveConnection {
       activeConnectionInterfaceName,
       'Master',
     );
-    return client._getDevice(objectPath);
+    return _client._getDevice(objectPath);
   }
 }
 

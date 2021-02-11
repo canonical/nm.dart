@@ -1067,6 +1067,7 @@ class NetworkManagerDeviceTun {
         .propertiesChangedStreamController.stream;
   }
 
+  /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'.
   String get permHwAddress =>
       _object.getStringProperty(tunDeviceInterfaceName, 'PermHwAddress');
 
@@ -1083,6 +1084,7 @@ class NetworkManagerDeviceTun {
       _object.getBooleanProperty(tunDeviceInterfaceName, 'MultiQueue');
 }
 
+/// Information for VLAN devices.
 class NetworkManagerDeviceVlan {
   final String vlanDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Vlan';
@@ -1108,6 +1110,7 @@ class NetworkManagerDeviceVlan {
       _object.getUint32Property(vlanDeviceInterfaceName, 'VlanId');
 }
 
+/// Information for wired network devices.
 class NetworkManagerDeviceWired {
   final String wiredDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Wired';
@@ -1116,13 +1119,19 @@ class NetworkManagerDeviceWired {
 
   NetworkManagerDeviceWired(this._object);
 
+  /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'.
   String get permHwAddress =>
       _object.getStringProperty(wiredDeviceInterfaceName, 'PermHwAddress');
+
+  /// Design speed of this device in megabits/second.
   int get speed => _object.getUint32Property(wiredDeviceInterfaceName, 'Speed');
+
+  /// Array of S/390 subchannels for S/390 or z/Architecture devices.
   List<String> get s390Subchannels => _object.getStringArrayProperty(
       wiredDeviceInterfaceName, 'S390Subchannels');
 }
 
+/// Information for wireless network devices.
 class NetworkManagerDeviceWireless {
   final String wirelessDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Wireless';
@@ -1138,7 +1147,7 @@ class NetworkManagerDeviceWireless {
         .propertiesChangedStreamController.stream;
   }
 
-  /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'
+  /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'.
   String get permHwAddress =>
       _object.getStringProperty(wirelessDeviceInterfaceName, 'PermHwAddress');
 
@@ -1148,7 +1157,7 @@ class NetworkManagerDeviceWireless {
     return _decodeWifiMode(value);
   }
 
-  // Bitrate of currently in use, in kilobits/second.
+  // Bitrate currently in use, in kilobits/second.
   int get bitrate =>
       _object.getUint32Property(wirelessDeviceInterfaceName, 'Bitrate');
 

@@ -5,6 +5,21 @@ import 'package:dbus/dbus.dart';
 /// Internet connectivity states.
 enum NetworkManagerConnectivityState { unknown, none, portal, limited, full }
 
+NetworkManagerConnectivityState _decodeConnectivityState(int value) {
+  switch (value) {
+    case 1:
+      return NetworkManagerConnectivityState.none;
+    case 2:
+      return NetworkManagerConnectivityState.portal;
+    case 3:
+      return NetworkManagerConnectivityState.limited;
+    case 4:
+      return NetworkManagerConnectivityState.full;
+    default:
+      return NetworkManagerConnectivityState.unknown;
+  }
+}
+
 /// Device states.
 enum NetworkManagerDeviceState {
   unknown,
@@ -20,6 +35,259 @@ enum NetworkManagerDeviceState {
   activated,
   deactivating,
   failed
+}
+
+NetworkManagerDeviceState _decodeDeviceState(int value) {
+  switch (value) {
+    case 10:
+      return NetworkManagerDeviceState.unmanaged;
+    case 20:
+      return NetworkManagerDeviceState.unavailable;
+    case 30:
+      return NetworkManagerDeviceState.disconnected;
+    case 40:
+      return NetworkManagerDeviceState.prepare;
+    case 50:
+      return NetworkManagerDeviceState.config;
+    case 60:
+      return NetworkManagerDeviceState.need_auth;
+    case 70:
+      return NetworkManagerDeviceState.ip_config;
+    case 80:
+      return NetworkManagerDeviceState.ip_check;
+    case 90:
+      return NetworkManagerDeviceState.secondaries;
+    case 100:
+      return NetworkManagerDeviceState.activated;
+    case 110:
+      return NetworkManagerDeviceState.deactivating;
+    case 120:
+      return NetworkManagerDeviceState.failed;
+    default:
+      return NetworkManagerDeviceState.unknown;
+  }
+}
+
+/// Reasons for a device state.
+enum NetworkManagerDeviceStateReason {
+  none,
+  unknown,
+  nowManaged,
+  nowUnmanaged,
+  configFailed,
+  ipConfigUnavailable,
+  ipConfigExpired,
+  noSecrets,
+  supplicantDisconnect,
+  supplicantConfigFailed,
+  supplicantFailed,
+  supplicantTimeout,
+  pppStartFailed,
+  pppDisconnect,
+  pppFailed,
+  dhcpStartFailed,
+  dhcpError,
+  dhcpFailed,
+  sharedStartFailed,
+  sharedFailed,
+  autoIpStartFailed,
+  autoIpError,
+  autoIpFailed,
+  modemBusy,
+  modemNoDialTone,
+  modemNoCarrier,
+  modemDialTimeout,
+  modemDialFailed,
+  modemInitFailed,
+  gsmApnFailed,
+  gsmRegistrationNotSearching,
+  gsmRegistrationDenied,
+  gsmRegistrationTimeout,
+  gsmRegistrationFailed,
+  gsmPinCheckFailed,
+  firmwareMissing,
+  removed,
+  sleeping,
+  connectionRemoved,
+  userRequested,
+  carrier,
+  connectionAssumed,
+  supplicantAvailable,
+  ModemNotFound,
+  btFailed,
+  gsmSimNotInserted,
+  gsmSimPinRequired,
+  gsmSimPukRequired,
+  gsmSimWrong,
+  infinibandMode,
+  dependencyFailed,
+  br2684Failed,
+  ModemManagerUnavailable,
+  ssidNotFound,
+  SecondaryConnectionFailed,
+  dcbFcoeFailed,
+  teamdControlFailed,
+  modemFailed,
+  modemAvailable,
+  simPinIncorrect,
+  newActivation,
+  parentChanged,
+  parentManagedChanged,
+  ovsdbFailed,
+  ipAddressDuplicate,
+  ipMethodUnsupported,
+  sriovConfigurationFailed,
+  peerNotFound
+}
+
+NetworkManagerDeviceStateReason _decodeDeviceStateReason(int value) {
+  switch (value) {
+    case 0:
+      return NetworkManagerDeviceStateReason.none;
+    case 1:
+      return NetworkManagerDeviceStateReason.unknown;
+    case 2:
+      return NetworkManagerDeviceStateReason.nowManaged;
+    case 3:
+      return NetworkManagerDeviceStateReason.nowUnmanaged;
+    case 4:
+      return NetworkManagerDeviceStateReason.configFailed;
+    case 5:
+      return NetworkManagerDeviceStateReason.ipConfigUnavailable;
+    case 6:
+      return NetworkManagerDeviceStateReason.ipConfigExpired;
+    case 7:
+      return NetworkManagerDeviceStateReason.noSecrets;
+    case 8:
+      return NetworkManagerDeviceStateReason.supplicantDisconnect;
+    case 9:
+      return NetworkManagerDeviceStateReason.supplicantConfigFailed;
+    case 10:
+      return NetworkManagerDeviceStateReason.supplicantFailed;
+    case 11:
+      return NetworkManagerDeviceStateReason.supplicantTimeout;
+    case 12:
+      return NetworkManagerDeviceStateReason.pppStartFailed;
+    case 13:
+      return NetworkManagerDeviceStateReason.pppDisconnect;
+    case 14:
+      return NetworkManagerDeviceStateReason.pppFailed;
+    case 15:
+      return NetworkManagerDeviceStateReason.dhcpStartFailed;
+    case 16:
+      return NetworkManagerDeviceStateReason.dhcpError;
+    case 17:
+      return NetworkManagerDeviceStateReason.dhcpFailed;
+    case 18:
+      return NetworkManagerDeviceStateReason.sharedStartFailed;
+    case 19:
+      return NetworkManagerDeviceStateReason.sharedFailed;
+    case 20:
+      return NetworkManagerDeviceStateReason.autoIpStartFailed;
+    case 21:
+      return NetworkManagerDeviceStateReason.autoIpError;
+    case 22:
+      return NetworkManagerDeviceStateReason.autoIpFailed;
+    case 23:
+      return NetworkManagerDeviceStateReason.modemBusy;
+    case 24:
+      return NetworkManagerDeviceStateReason.modemNoDialTone;
+    case 25:
+      return NetworkManagerDeviceStateReason.modemNoCarrier;
+    case 26:
+      return NetworkManagerDeviceStateReason.modemDialTimeout;
+    case 27:
+      return NetworkManagerDeviceStateReason.modemDialFailed;
+    case 28:
+      return NetworkManagerDeviceStateReason.modemInitFailed;
+    case 29:
+      return NetworkManagerDeviceStateReason.gsmApnFailed;
+    case 30:
+      return NetworkManagerDeviceStateReason.gsmRegistrationNotSearching;
+    case 31:
+      return NetworkManagerDeviceStateReason.gsmRegistrationDenied;
+    case 32:
+      return NetworkManagerDeviceStateReason.gsmRegistrationTimeout;
+    case 33:
+      return NetworkManagerDeviceStateReason.gsmRegistrationFailed;
+    case 34:
+      return NetworkManagerDeviceStateReason.gsmPinCheckFailed;
+    case 35:
+      return NetworkManagerDeviceStateReason.firmwareMissing;
+    case 36:
+      return NetworkManagerDeviceStateReason.removed;
+    case 37:
+      return NetworkManagerDeviceStateReason.sleeping;
+    case 38:
+      return NetworkManagerDeviceStateReason.connectionRemoved;
+    case 39:
+      return NetworkManagerDeviceStateReason.userRequested;
+    case 40:
+      return NetworkManagerDeviceStateReason.carrier;
+    case 41:
+      return NetworkManagerDeviceStateReason.connectionAssumed;
+    case 42:
+      return NetworkManagerDeviceStateReason.supplicantAvailable;
+    case 43:
+      return NetworkManagerDeviceStateReason.ModemNotFound;
+    case 44:
+      return NetworkManagerDeviceStateReason.btFailed;
+    case 45:
+      return NetworkManagerDeviceStateReason.gsmSimNotInserted;
+    case 46:
+      return NetworkManagerDeviceStateReason.gsmSimPinRequired;
+    case 47:
+      return NetworkManagerDeviceStateReason.gsmSimPukRequired;
+    case 48:
+      return NetworkManagerDeviceStateReason.gsmSimWrong;
+    case 49:
+      return NetworkManagerDeviceStateReason.infinibandMode;
+    case 50:
+      return NetworkManagerDeviceStateReason.dependencyFailed;
+    case 51:
+      return NetworkManagerDeviceStateReason.br2684Failed;
+    case 52:
+      return NetworkManagerDeviceStateReason.ModemManagerUnavailable;
+    case 53:
+      return NetworkManagerDeviceStateReason.ssidNotFound;
+    case 54:
+      return NetworkManagerDeviceStateReason.SecondaryConnectionFailed;
+    case 55:
+      return NetworkManagerDeviceStateReason.dcbFcoeFailed;
+    case 56:
+      return NetworkManagerDeviceStateReason.teamdControlFailed;
+    case 57:
+      return NetworkManagerDeviceStateReason.modemFailed;
+    case 58:
+      return NetworkManagerDeviceStateReason.modemAvailable;
+    case 59:
+      return NetworkManagerDeviceStateReason.simPinIncorrect;
+    case 60:
+      return NetworkManagerDeviceStateReason.newActivation;
+    case 61:
+      return NetworkManagerDeviceStateReason.parentChanged;
+    case 62:
+      return NetworkManagerDeviceStateReason.parentManagedChanged;
+    case 63:
+      return NetworkManagerDeviceStateReason.ovsdbFailed;
+    case 64:
+      return NetworkManagerDeviceStateReason.ipAddressDuplicate;
+    case 65:
+      return NetworkManagerDeviceStateReason.ipMethodUnsupported;
+    case 66:
+      return NetworkManagerDeviceStateReason.sriovConfigurationFailed;
+    case 67:
+      return NetworkManagerDeviceStateReason.peerNotFound;
+    default:
+      return NetworkManagerDeviceStateReason.unknown;
+  }
+}
+
+class NetworkManagerDeviceStateAndReason {
+  final NetworkManagerDeviceState state;
+  final NetworkManagerDeviceStateReason reason;
+
+  NetworkManagerDeviceStateAndReason(this.state, this.reason);
 }
 
 /// Device types.
@@ -66,6 +334,21 @@ enum NetworkManagerActiveConnectionState {
   activated,
   deactivating,
   deactivated
+}
+
+NetworkManagerActiveConnectionState _decodeActiveConnectionState(int value) {
+  switch (value) {
+    case 1:
+      return NetworkManagerActiveConnectionState.activating;
+    case 2:
+      return NetworkManagerActiveConnectionState.activated;
+    case 3:
+      return NetworkManagerActiveConnectionState.deactivating;
+    case 4:
+      return NetworkManagerActiveConnectionState.deactivated;
+    default:
+      return NetworkManagerActiveConnectionState.unknown;
+  }
 }
 
 /// Flags describing a [NetworkManagerActiveConnectionState].
@@ -442,6 +725,7 @@ class NetworkManagerDevice {
   /// Device filesystem path.
   String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
 
+  /// Device filesystem path to IP data interface.
   String get ipInterface =>
       _object.getStringProperty(deviceInterfaceName, 'IpInterface');
 
@@ -478,49 +762,24 @@ class NetworkManagerDevice {
   /// The connection state of this device.
   NetworkManagerDeviceState get state {
     var value = _object.getUint32Property(deviceInterfaceName, 'State');
-    switch (value) {
-      case 10:
-        return NetworkManagerDeviceState.unmanaged;
-        break;
-      case 20:
-        return NetworkManagerDeviceState.unavailable;
-        break;
-      case 30:
-        return NetworkManagerDeviceState.disconnected;
-        break;
-      case 40:
-        return NetworkManagerDeviceState.prepare;
-        break;
-      case 50:
-        return NetworkManagerDeviceState.config;
-        break;
-      case 60:
-        return NetworkManagerDeviceState.need_auth;
-        break;
-      case 70:
-        return NetworkManagerDeviceState.ip_config;
-        break;
-      case 80:
-        return NetworkManagerDeviceState.ip_check;
-        break;
-      case 90:
-        return NetworkManagerDeviceState.secondaries;
-        break;
-      case 100:
-        return NetworkManagerDeviceState.activated;
-        break;
-      case 110:
-        return NetworkManagerDeviceState.deactivating;
-        break;
-      case 120:
-        return NetworkManagerDeviceState.failed;
-        break;
-      default:
-        return NetworkManagerDeviceState.unknown;
-    }
+    return _decodeDeviceState(value);
   }
 
-  // FIXME: StateReason
+  /// The state of this connection and the reason for that state.
+  NetworkManagerDeviceStateAndReason get stateReason {
+    var value = _object.getCachedProperty(deviceInterfaceName, 'StateReason');
+    if (value == null) {
+      return null;
+    }
+    if (value.signature != DBusSignature('uu')) {
+      return null;
+    }
+    var values = (value as DBusStruct).children.toList();
+    var state = _decodeDeviceState((values[0] as DBusUint32).value);
+    var reason = _decodeDeviceStateReason((values[1] as DBusUint32).value);
+
+    return NetworkManagerDeviceStateAndReason(state, reason);
+  }
 
   /// Connection that owns this device.
   NetworkManagerActiveConnection get activeConnection {
@@ -590,97 +849,82 @@ class NetworkManagerDevice {
     switch (value) {
       case 1:
         return NetworkManagerDeviceType.ethernet;
-        break;
       case 2:
         return NetworkManagerDeviceType.wifi;
-        break;
       case 5:
         return NetworkManagerDeviceType.bluetooth;
-        break;
       case 6:
         return NetworkManagerDeviceType.olpc_mesh;
-        break;
       case 7:
         return NetworkManagerDeviceType.wimax;
-        break;
       case 8:
         return NetworkManagerDeviceType.modem;
-        break;
       case 9:
         return NetworkManagerDeviceType.infiniband;
-        break;
       case 10:
         return NetworkManagerDeviceType.bond;
-        break;
       case 11:
         return NetworkManagerDeviceType.vlan;
-        break;
       case 12:
         return NetworkManagerDeviceType.adsl;
-        break;
       case 13:
         return NetworkManagerDeviceType.bridge;
-        break;
       case 14:
         return NetworkManagerDeviceType.generic;
-        break;
       case 15:
         return NetworkManagerDeviceType.team;
-        break;
       case 16:
         return NetworkManagerDeviceType.tun;
-        break;
       case 17:
         return NetworkManagerDeviceType.ip_tunnel;
-        break;
       case 18:
         return NetworkManagerDeviceType.macvlan;
-        break;
       case 19:
         return NetworkManagerDeviceType.vxlan;
-        break;
       case 20:
         return NetworkManagerDeviceType.veth;
-        break;
       case 21:
         return NetworkManagerDeviceType.macsec;
-        break;
       case 22:
         return NetworkManagerDeviceType.dummy;
-        break;
       case 23:
         return NetworkManagerDeviceType.ppp;
-        break;
       case 24:
         return NetworkManagerDeviceType.ovs_interface;
-        break;
       case 25:
         return NetworkManagerDeviceType.ovs_port;
-        break;
       case 26:
         return NetworkManagerDeviceType.ovs_bridge;
-        break;
       case 27:
         return NetworkManagerDeviceType.wpan;
-        break;
       case 28:
         return NetworkManagerDeviceType._6lowpan;
-        break;
       case 29:
         return NetworkManagerDeviceType.wireguard;
-        break;
       case 30:
         return NetworkManagerDeviceType.wifi_p2p;
-        break;
       case 31:
         return NetworkManagerDeviceType.vrf;
-        break;
       default:
         return NetworkManagerDeviceType.unknown;
     }
   }
 
-  // FIXME: AvailableConnections
+  // The connections that are configured for this device.
+  List<NetworkManagerSettingsConnection> get availableConnections {
+    var objectPaths = _object.getObjectPathArrayProperty(
+        deviceInterfaceName, 'AvailableConnections');
+    var connections = <NetworkManagerSettingsConnection>[];
+    for (var objectPath in objectPaths) {
+      var connection = client._getConnection(objectPath);
+      if (connection != null) {
+        connections.add(connection);
+      }
+    }
+    return connections;
+  }
+
+  /// The pyhsical network port associated with this device.
   String get physicalPortId =>
       _object.getStringProperty(deviceInterfaceName, 'PhysicalPortId');
 
@@ -692,11 +936,23 @@ class NetworkManagerDevice {
       .values[_object.getUint32Property(deviceInterfaceName, 'Metered')];
 
   // FIXME: LldpNeighbors
+
+  /// True if the device exists.
   bool get real => _object.getBooleanProperty(deviceInterfaceName, 'Real');
 
-  // FIXME: Ip4Connectivity
+  /// IPv4 connectivity state.
+  NetworkManagerConnectivityState get ip4Connectivity {
+    var value =
+        _object.getUint32Property(deviceInterfaceName, 'Ip4Connectivity');
+    return _decodeConnectivityState(value);
+  }
 
-  // FIXME: Ip6Connectivity
+  /// IPv6 connectivity state.
+  NetworkManagerConnectivityState get ip6Connectivity {
+    var value =
+        _object.getUint32Property(deviceInterfaceName, 'Ip6Connectivity');
+    return _decodeConnectivityState(value);
+  }
 
   /// Flags for network interfaces.
   List<NetworkManagerDeviceInterfaceFlag> get interfaceFlags {
@@ -1027,22 +1283,7 @@ class NetworkManagerActiveConnection {
   NetworkManagerActiveConnectionState get state {
     var value =
         _object.getUint32Property(activeConnectionInterfaceName, 'State');
-    switch (value) {
-      case 1:
-        return NetworkManagerActiveConnectionState.activating;
-        break;
-      case 2:
-        return NetworkManagerActiveConnectionState.activated;
-        break;
-      case 3:
-        return NetworkManagerActiveConnectionState.deactivating;
-        break;
-      case 4:
-        return NetworkManagerActiveConnectionState.deactivated;
-        break;
-      default:
-        return NetworkManagerActiveConnectionState.unknown;
-    }
+    return _decodeActiveConnectionState(value);
   }
 
   /// Flags related to [state].
@@ -1823,22 +2064,7 @@ class NetworkManagerClient {
   NetworkManagerConnectivityState get connectivity {
     var value =
         _manager.getUint32Property(managerInterfaceName, 'Connectivity');
-    switch (value) {
-      case 1:
-        return NetworkManagerConnectivityState.none;
-        break;
-      case 2:
-        return NetworkManagerConnectivityState.portal;
-        break;
-      case 3:
-        return NetworkManagerConnectivityState.limited;
-        break;
-      case 4:
-        return NetworkManagerConnectivityState.full;
-        break;
-      default:
-        return NetworkManagerConnectivityState.unknown;
-    }
+    return _decodeConnectivityState(value);
   }
 
   /// True if connectivity checking is available.

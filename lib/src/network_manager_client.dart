@@ -486,7 +486,7 @@ enum NetworkManagerBluetoothCapability { dun, tun }
 
 /// Settings profile manager.
 class NetworkManagerSettings {
-  final String settingsInterfaceName =
+  final String _settingsInterfaceName =
       'org.freedesktop.NetworkManager.Settings';
 
   final NetworkManagerClient _client;
@@ -496,14 +496,14 @@ class NetworkManagerSettings {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[settingsInterfaceName]
+    return _object.interfaces[_settingsInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Saved connections.
   List<NetworkManagerSettingsConnection> get connections {
     var objectPaths = _object.getObjectPathArrayProperty(
-        settingsInterfaceName, 'Connections');
+        _settingsInterfaceName, 'Connections');
     var connections = <NetworkManagerSettingsConnection>[];
     for (var objectPath in objectPaths) {
       var connection = _client._getConnection(objectPath);
@@ -516,16 +516,16 @@ class NetworkManagerSettings {
 
   /// The machine hostname.
   String get hostname =>
-      _object.getStringProperty(settingsInterfaceName, 'Hostname');
+      _object.getStringProperty(_settingsInterfaceName, 'Hostname');
 
   /// True if connections can be added or modified.
   bool get canModify =>
-      _object.getBooleanProperty(settingsInterfaceName, 'CanModify');
+      _object.getBooleanProperty(_settingsInterfaceName, 'CanModify');
 }
 
 /// Settings for a connection.
 class NetworkManagerSettingsConnection {
-  final String settingsConnectionInterfaceName =
+  final String _settingsConnectionInterfaceName =
       'org.freedesktop.NetworkManager.Settings.Connection';
 
   final _NetworkManagerObject _object;
@@ -534,13 +534,13 @@ class NetworkManagerSettingsConnection {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[settingsConnectionInterfaceName]
+    return _object.interfaces[_settingsConnectionInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Updates the settings for this connection, writing them to persistent storage.
   void update(Map<String, Map<String, DBusValue>> properties) async {
-    await _object.callMethod(settingsConnectionInterfaceName, 'Update', [
+    await _object.callMethod(_settingsConnectionInterfaceName, 'Update', [
       DBusDict(
         DBusSignature('s'),
         DBusSignature('a{sv}'),
@@ -560,7 +560,8 @@ class NetworkManagerSettingsConnection {
 
   /// Updates the settings for this connection, not writing them to persistent storage.
   void updateUnsaved(Map<String, Map<String, DBusValue>> properties) async {
-    await _object.callMethod(settingsConnectionInterfaceName, 'UpdateUnsaved', [
+    await _object
+        .callMethod(_settingsConnectionInterfaceName, 'UpdateUnsaved', [
       DBusDict(
         DBusSignature('s'),
         DBusSignature('a{sv}'),
@@ -580,13 +581,13 @@ class NetworkManagerSettingsConnection {
 
   /// Deletes this network connection settings.
   Future<void> delete() async {
-    await _object.callMethod(settingsConnectionInterfaceName, 'Delete', []);
+    await _object.callMethod(_settingsConnectionInterfaceName, 'Delete', []);
   }
 
   /// Gets the settings belonging to this network connection.
   Future<Map<String, Map<String, DBusValue>>> getSettings() async {
     var result = await _object
-        .callMethod(settingsConnectionInterfaceName, 'GetSettings', []);
+        .callMethod(_settingsConnectionInterfaceName, 'GetSettings', []);
     return (result.returnValues[0] as DBusDict).children.map(
           (key, value) => MapEntry(
             (key as DBusString).value,
@@ -599,7 +600,7 @@ class NetworkManagerSettingsConnection {
   /// Gets the secrets belonging to this network connection.
   Future<Map<String, Map<String, DBusValue>>> getSecrets(
       [String settingName = '']) async {
-    var result = await _object.callMethod(settingsConnectionInterfaceName,
+    var result = await _object.callMethod(_settingsConnectionInterfaceName,
         'GetSecrets', [DBusString(settingName)]);
     return (result.returnValues[0] as DBusDict).children.map((key, value) =>
         MapEntry(
@@ -610,22 +611,22 @@ class NetworkManagerSettingsConnection {
 
   /// Clears the secrets belonging to this network connection.
   void clearSecrets() async =>
-      _object.callMethod(settingsConnectionInterfaceName, 'ClearSecrets', []);
+      _object.callMethod(_settingsConnectionInterfaceName, 'ClearSecrets', []);
 
   /// Saves the connection settings to persistent storage.
   void save() async =>
-      _object.callMethod(settingsConnectionInterfaceName, 'Save', []);
+      _object.callMethod(_settingsConnectionInterfaceName, 'Save', []);
 
   // FIXME: Update2
 
   /// True if the settings have yet to be written to persistent storage.
   bool get unsaved =>
-      _object.getBooleanProperty(settingsConnectionInterfaceName, 'Unsaved');
+      _object.getBooleanProperty(_settingsConnectionInterfaceName, 'Unsaved');
 
   /// Flags associated with this connection.
   List<NetworkManagerConnectionFlag> get flags {
     var value =
-        _object.getUint32Property(settingsConnectionInterfaceName, 'Flags');
+        _object.getUint32Property(_settingsConnectionInterfaceName, 'Flags');
     var flags = <NetworkManagerConnectionFlag>[];
     if ((value & 0x01) != 0) {
       flags.add(NetworkManagerConnectionFlag.unsaved);
@@ -644,12 +645,12 @@ class NetworkManagerSettingsConnection {
 
   /// File that stores these settings.
   String get filename =>
-      _object.getStringProperty(settingsConnectionInterfaceName, 'Filename');
+      _object.getStringProperty(_settingsConnectionInterfaceName, 'Filename');
 }
 
 /// DNS configuration and state.
 class NetworkManagerDnsManager {
-  final String dnsManagerInterfaceName =
+  final String _dnsManagerInterfaceName =
       'org.freedesktop.NetworkManager.DnsManager';
 
   final _NetworkManagerObject _object;
@@ -658,25 +659,26 @@ class NetworkManagerDnsManager {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[dnsManagerInterfaceName]
+    return _object.interfaces[_dnsManagerInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Current DNS processing mode.
-  String get mode => _object.getStringProperty(dnsManagerInterfaceName, 'Mode');
+  String get mode =>
+      _object.getStringProperty(_dnsManagerInterfaceName, 'Mode');
 
   /// Current resolv.conf management mode.
   String get rcManager =>
-      _object.getStringProperty(dnsManagerInterfaceName, 'RcManager');
+      _object.getStringProperty(_dnsManagerInterfaceName, 'RcManager');
 
   /// Current DNS configuration. Each item has at least 'nameservers', 'priority' and optionally 'interface' and 'vpn'.
   List<Map<String, dynamic>> get configuration =>
-      _object.getDataListProperty(dnsManagerInterfaceName, 'Configuration');
+      _object.getDataListProperty(_dnsManagerInterfaceName, 'Configuration');
 }
 
 /// A device managed by NetworkManager.
 class NetworkManagerDevice {
-  final String deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
+  final String _deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
 
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
@@ -713,42 +715,43 @@ class NetworkManagerDevice {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[deviceInterfaceName]
+    return _object.interfaces[_deviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Disconnects a device and prevents the device from automatically activating further connections without user intervention.
   void disconnect() async =>
-      _object.callMethod(deviceInterfaceName, 'Disconnect', []);
+      _object.callMethod(_deviceInterfaceName, 'Disconnect', []);
 
   /// Deletes a software device from NetworkManager and removes the interface from the system.
   /// The method returns an error when called for a hardware device.
-  void delete() async => _object.callMethod(deviceInterfaceName, 'Delete', []);
+  void delete() async => _object.callMethod(_deviceInterfaceName, 'Delete', []);
 
   /// UDI for this device.
-  String get udi => _object.getStringProperty(deviceInterfaceName, 'Udi');
+  String get udi => _object.getStringProperty(_deviceInterfaceName, 'Udi');
 
   /// Device filesystem path.
-  String get path => _object.getStringProperty(deviceInterfaceName, 'Path');
+  String get path => _object.getStringProperty(_deviceInterfaceName, 'Path');
 
   /// Device filesystem path to IP data interface.
   String get ipInterface =>
-      _object.getStringProperty(deviceInterfaceName, 'IpInterface');
+      _object.getStringProperty(_deviceInterfaceName, 'IpInterface');
 
   /// The kernel driver this device is using.
-  String get driver => _object.getStringProperty(deviceInterfaceName, 'Driver');
+  String get driver =>
+      _object.getStringProperty(_deviceInterfaceName, 'Driver');
 
   /// The version of the kernel driver this device is using.
   String get driverVersion =>
-      _object.getStringProperty(deviceInterfaceName, 'DriverVersion');
+      _object.getStringProperty(_deviceInterfaceName, 'DriverVersion');
 
   /// The version of the firmware this device is using.
   String get firmwareVersion =>
-      _object.getStringProperty(deviceInterfaceName, 'FirmwareVersion');
+      _object.getStringProperty(_deviceInterfaceName, 'FirmwareVersion');
 
   /// Capabilities of this device
   List<NetworkManagerDeviceCapability> get capabilities {
-    var value = _object.getUint32Property(deviceInterfaceName, 'Capabilities');
+    var value = _object.getUint32Property(_deviceInterfaceName, 'Capabilities');
     var values = <NetworkManagerDeviceCapability>[];
     if ((value & 0x01) != 0) {
       values.add(NetworkManagerDeviceCapability.networkManagerSupported);
@@ -767,13 +770,13 @@ class NetworkManagerDevice {
 
   /// The connection state of this device.
   NetworkManagerDeviceState get state {
-    var value = _object.getUint32Property(deviceInterfaceName, 'State');
+    var value = _object.getUint32Property(_deviceInterfaceName, 'State');
     return _decodeDeviceState(value);
   }
 
   /// The state of this connection and the reason for that state.
   NetworkManagerDeviceStateAndReason get stateReason {
-    var value = _object.getCachedProperty(deviceInterfaceName, 'StateReason');
+    var value = _object.getCachedProperty(_deviceInterfaceName, 'StateReason');
     if (value == null) {
       return null;
     }
@@ -790,66 +793,66 @@ class NetworkManagerDevice {
   /// Connection that owns this device.
   NetworkManagerActiveConnection get activeConnection {
     var objectPath =
-        _object.getObjectPathProperty(deviceInterfaceName, 'ActiveConnection');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'ActiveConnection');
     return _client._getActiveConnection(objectPath);
   }
 
   /// IPv4 configuration for this device.
   NetworkManagerIP4Config get ip4Config {
     var objectPath =
-        _object.getObjectPathProperty(deviceInterfaceName, 'Ip4Config');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'Ip4Config');
     return _client._getIP4Config(objectPath);
   }
 
   /// DHCPv4 configuration for this device.
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath =
-        _object.getObjectPathProperty(deviceInterfaceName, 'DHCP4Config');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'DHCP4Config');
     return _client._getDHCP4Config(objectPath);
   }
 
   /// IPv6 configuration for this device.
   NetworkManagerIP6Config get ip6Config {
     var objectPath =
-        _object.getObjectPathProperty(deviceInterfaceName, 'Ip6Config');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'Ip6Config');
     return _client._getIP6Config(objectPath);
   }
 
   /// DHCPv6 configuration for this device.
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath =
-        _object.getObjectPathProperty(deviceInterfaceName, 'DHCP6Config');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'DHCP6Config');
     return _client._getDHCP6Config(objectPath);
   }
 
   /// True if this device is being managed by NetworkManager.
   bool get managed =>
-      _object.getBooleanProperty(deviceInterfaceName, 'Managed');
+      _object.getBooleanProperty(_deviceInterfaceName, 'Managed');
 
   /// Sets if this device is being managed by NetworkManager.
   set managed(bool value) =>
-      _object.setProperty(deviceInterfaceName, 'Managed', DBusBoolean(value));
+      _object.setProperty(_deviceInterfaceName, 'Managed', DBusBoolean(value));
 
   /// True if this device is allowed to automatically connect.
   bool get autoconnect =>
-      _object.getBooleanProperty(deviceInterfaceName, 'Autoconnect');
+      _object.getBooleanProperty(_deviceInterfaceName, 'Autoconnect');
 
   /// Sets if this device is allowed to automatically connect.
   set autoconnect(bool value) => _object.setProperty(
-      deviceInterfaceName, 'Autoconnect', DBusBoolean(value));
+      _deviceInterfaceName, 'Autoconnect', DBusBoolean(value));
 
   /// True if this device is missing firware required for it to operate.
   bool get firmwareMissing =>
-      _object.getBooleanProperty(deviceInterfaceName, 'FirmwareMissing');
+      _object.getBooleanProperty(_deviceInterfaceName, 'FirmwareMissing');
 
   /// True if this device is missing a plugin or needs plugin configuration for it to operate.
   bool get nmPluginMissing =>
-      _object.getBooleanProperty(deviceInterfaceName, 'NmPluginMissing');
+      _object.getBooleanProperty(_deviceInterfaceName, 'NmPluginMissing');
 
   /// The type of device.
   NetworkManagerDeviceType get deviceType {
     var value = _object.getUint32Property(
-      deviceInterfaceName,
+      _deviceInterfaceName,
       'DeviceType',
     );
     switch (value) {
@@ -919,7 +922,7 @@ class NetworkManagerDevice {
   // The connections that are configured for this device.
   List<NetworkManagerSettingsConnection> get availableConnections {
     var objectPaths = _object.getObjectPathArrayProperty(
-        deviceInterfaceName, 'AvailableConnections');
+        _deviceInterfaceName, 'AvailableConnections');
     var connections = <NetworkManagerSettingsConnection>[];
     for (var objectPath in objectPaths) {
       var connection = _client._getConnection(objectPath);
@@ -932,38 +935,38 @@ class NetworkManagerDevice {
 
   /// The pyhsical network port associated with this device.
   String get physicalPortId =>
-      _object.getStringProperty(deviceInterfaceName, 'PhysicalPortId');
+      _object.getStringProperty(_deviceInterfaceName, 'PhysicalPortId');
 
   /// The device MTU.
-  int get mtu => _object.getUint32Property(deviceInterfaceName, 'Mtu');
+  int get mtu => _object.getUint32Property(_deviceInterfaceName, 'Mtu');
 
   /// True if the device has traffic limitations.
   NetworkManagerMetered get metered => NetworkManagerMetered
-      .values[_object.getUint32Property(deviceInterfaceName, 'Metered')];
+      .values[_object.getUint32Property(_deviceInterfaceName, 'Metered')];
 
   // FIXME: LldpNeighbors
 
   /// True if the device exists.
-  bool get real => _object.getBooleanProperty(deviceInterfaceName, 'Real');
+  bool get real => _object.getBooleanProperty(_deviceInterfaceName, 'Real');
 
   /// IPv4 connectivity state.
   NetworkManagerConnectivityState get ip4Connectivity {
     var value =
-        _object.getUint32Property(deviceInterfaceName, 'Ip4Connectivity');
+        _object.getUint32Property(_deviceInterfaceName, 'Ip4Connectivity');
     return _decodeConnectivityState(value);
   }
 
   /// IPv6 connectivity state.
   NetworkManagerConnectivityState get ip6Connectivity {
     var value =
-        _object.getUint32Property(deviceInterfaceName, 'Ip6Connectivity');
+        _object.getUint32Property(_deviceInterfaceName, 'Ip6Connectivity');
     return _decodeConnectivityState(value);
   }
 
   /// Flags for network interfaces.
   List<NetworkManagerDeviceInterfaceFlag> get interfaceFlags {
     var value =
-        _object.getUint32Property(deviceInterfaceName, 'InterfaceFlags');
+        _object.getUint32Property(_deviceInterfaceName, 'InterfaceFlags');
     var flags = <NetworkManagerDeviceInterfaceFlag>[];
     if ((value & 0x01) != 0) {
       flags.add(NetworkManagerDeviceInterfaceFlag.up);
@@ -979,12 +982,12 @@ class NetworkManagerDevice {
 
   /// Hardware address for this device.
   String get hwAddress =>
-      _object.getStringProperty(deviceInterfaceName, 'HwAddress');
+      _object.getStringProperty(_deviceInterfaceName, 'HwAddress');
 }
 
 /// Information for Bluetooth devices.
 class NetworkManagerDeviceBluetooth {
-  final String bluetoothDeviceInterfaceName =
+  final String _bluetoothDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Bluetooth';
 
   final _NetworkManagerObject _object;
@@ -993,14 +996,14 @@ class NetworkManagerDeviceBluetooth {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[bluetoothDeviceInterfaceName]
+    return _object.interfaces[_bluetoothDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Bluetooth capabilities of this device.
   List<NetworkManagerBluetoothCapability> get btCapabilities {
     var value = _object.getUint32Property(
-        bluetoothDeviceInterfaceName, 'BtCapabilities');
+        _bluetoothDeviceInterfaceName, 'BtCapabilities');
     var flags = <NetworkManagerBluetoothCapability>[];
     if ((value & 0x1) != 0) {
       flags.add(NetworkManagerBluetoothCapability.dun);
@@ -1014,7 +1017,7 @@ class NetworkManagerDeviceBluetooth {
 
 /// Information for generic devices.
 class NetworkManagerDeviceGeneric {
-  final String genericDeviceInterfaceName =
+  final String _genericDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Generic';
 
   final _NetworkManagerObject _object;
@@ -1023,17 +1026,18 @@ class NetworkManagerDeviceGeneric {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[genericDeviceInterfaceName]
+    return _object.interfaces[_genericDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
+  /// A human readable description of this device.
   String get typeDescription =>
-      _object.getStringProperty(genericDeviceInterfaceName, 'TypeDescription');
+      _object.getStringProperty(_genericDeviceInterfaceName, 'TypeDescription');
 }
 
 /// Statistics for devices.
 class NetworkManagerDeviceStatistics {
-  final String statisticsDeviceInterfaceName =
+  final String _statisticsDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Statistics';
 
   final _NetworkManagerObject _object;
@@ -1042,25 +1046,26 @@ class NetworkManagerDeviceStatistics {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[statisticsDeviceInterfaceName]
+    return _object.interfaces[_statisticsDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
-  int get refreshRateMs =>
-      _object.getUint32Property(statisticsDeviceInterfaceName, 'RefreshRateMs');
+  /// Maximum time between properties being updated in milliseconds or 0 if guaranteed refresh rate.
+  int get refreshRateMs => _object.getUint32Property(
+      _statisticsDeviceInterfaceName, 'RefreshRateMs');
 
   /// How many bytes have been transmitted.
   int get txBytes =>
-      _object.getUint64Property(statisticsDeviceInterfaceName, 'TxBytes');
+      _object.getUint64Property(_statisticsDeviceInterfaceName, 'TxBytes');
 
   /// How many bytes have been received.
   int get rxBytes =>
-      _object.getUint64Property(statisticsDeviceInterfaceName, 'RxBytes');
+      _object.getUint64Property(_statisticsDeviceInterfaceName, 'RxBytes');
 }
 
-/// Information for TUN devices.
+/// Information for userspace tunneling devices.
 class NetworkManagerDeviceTun {
-  final String tunDeviceInterfaceName =
+  final String _tunDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Tun';
 
   final _NetworkManagerObject _object;
@@ -1069,30 +1074,38 @@ class NetworkManagerDeviceTun {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[tunDeviceInterfaceName]
+    return _object.interfaces[_tunDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'.
   String get permHwAddress =>
-      _object.getStringProperty(tunDeviceInterfaceName, 'PermHwAddress');
+      _object.getStringProperty(_tunDeviceInterfaceName, 'PermHwAddress');
 
-  int get owner => _object.getInt64Property(tunDeviceInterfaceName, 'Owner');
+  /// UID of tunnel owner or -1 if no owner.
+  int get owner => _object.getInt64Property(_tunDeviceInterfaceName, 'Owner');
 
-  int get group => _object.getInt64Property(tunDeviceInterfaceName, 'Group');
+  /// GID of tunnel group or -1 if no owner.
+  int get group => _object.getInt64Property(_tunDeviceInterfaceName, 'Group');
 
-  bool get noPi => _object.getBooleanProperty(tunDeviceInterfaceName, 'NoPi');
+  /// Tunnel mode, either 'tun' or 'tap'.
+  String get mode => _object.getStringProperty(_tunDeviceInterfaceName, 'Mode');
 
+  /// True if no protocol info is prepended to the tunnel packets.
+  bool get noPi => _object.getBooleanProperty(_tunDeviceInterfaceName, 'NoPi');
+
+  /// True if the tunnel packets include a virtio network header.
   bool get vnetHdr =>
-      _object.getBooleanProperty(tunDeviceInterfaceName, 'VnetHdr');
+      _object.getBooleanProperty(_tunDeviceInterfaceName, 'VnetHdr');
 
+  /// True if callers can connect to the tap device multiple times, for multiple send/receive queues.
   bool get multiQueue =>
-      _object.getBooleanProperty(tunDeviceInterfaceName, 'MultiQueue');
+      _object.getBooleanProperty(_tunDeviceInterfaceName, 'MultiQueue');
 }
 
 /// Information for Virtual LAN devices.
 class NetworkManagerDeviceVlan {
-  final String vlanDeviceInterfaceName =
+  final String _vlanDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Vlan';
 
   final NetworkManagerClient _client;
@@ -1102,25 +1115,25 @@ class NetworkManagerDeviceVlan {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[vlanDeviceInterfaceName]
+    return _object.interfaces[_vlanDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Parent device of this VLAN device.
   NetworkManagerDevice get parent {
     var objectPath =
-        _object.getObjectPathProperty(vlanDeviceInterfaceName, 'Parent');
+        _object.getObjectPathProperty(_vlanDeviceInterfaceName, 'Parent');
     return _client._getDevice(objectPath);
   }
 
   /// The VLAN ID in use.
   int get vlanId =>
-      _object.getUint32Property(vlanDeviceInterfaceName, 'VlanId');
+      _object.getUint32Property(_vlanDeviceInterfaceName, 'VlanId');
 }
 
 /// Information for wired network devices.
 class NetworkManagerDeviceWired {
-  final String wiredDeviceInterfaceName =
+  final String _wiredDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Wired';
 
   final _NetworkManagerObject _object;
@@ -1129,19 +1142,20 @@ class NetworkManagerDeviceWired {
 
   /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'.
   String get permHwAddress =>
-      _object.getStringProperty(wiredDeviceInterfaceName, 'PermHwAddress');
+      _object.getStringProperty(_wiredDeviceInterfaceName, 'PermHwAddress');
 
   /// Design speed of this device in megabits/second.
-  int get speed => _object.getUint32Property(wiredDeviceInterfaceName, 'Speed');
+  int get speed =>
+      _object.getUint32Property(_wiredDeviceInterfaceName, 'Speed');
 
   /// Array of S/390 subchannels for S/390 or z/Architecture devices.
   List<String> get s390Subchannels => _object.getStringArrayProperty(
-      wiredDeviceInterfaceName, 'S390Subchannels');
+      _wiredDeviceInterfaceName, 'S390Subchannels');
 }
 
 /// Information for wireless network devices.
 class NetworkManagerDeviceWireless {
-  final String wirelessDeviceInterfaceName =
+  final String _wirelessDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Wireless';
 
   final NetworkManagerClient _client;
@@ -1151,28 +1165,28 @@ class NetworkManagerDeviceWireless {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[wirelessDeviceInterfaceName]
+    return _object.interfaces[_wirelessDeviceInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Permanent hardware address, e.g. '00:0a:95:9d:68:16'.
   String get permHwAddress =>
-      _object.getStringProperty(wirelessDeviceInterfaceName, 'PermHwAddress');
+      _object.getStringProperty(_wirelessDeviceInterfaceName, 'PermHwAddress');
 
   /// Operating mode of the device.
   NetworkManagerWifiMode get mode {
-    var value = _object.getUint32Property(wirelessDeviceInterfaceName, 'Mode');
+    var value = _object.getUint32Property(_wirelessDeviceInterfaceName, 'Mode');
     return _decodeWifiMode(value);
   }
 
   // Bitrate currently in use, in kilobits/second.
   int get bitrate =>
-      _object.getUint32Property(wirelessDeviceInterfaceName, 'Bitrate');
+      _object.getUint32Property(_wirelessDeviceInterfaceName, 'Bitrate');
 
   /// Access points available on this device.
   List<NetworkManagerAccessPoint> get accessPoints {
     var objectPaths = _object.getObjectPathArrayProperty(
-        wirelessDeviceInterfaceName, 'AccessPoints');
+        _wirelessDeviceInterfaceName, 'AccessPoints');
     var accessPoints = <NetworkManagerAccessPoint>[];
     for (var objectPath in objectPaths) {
       var accessPoint = _client._getAccessPoint(objectPath);
@@ -1187,14 +1201,14 @@ class NetworkManagerDeviceWireless {
   /// Access point currently in use.
   NetworkManagerAccessPoint get activeAccessPoint {
     var objectPath = _object.getObjectPathProperty(
-        wirelessDeviceInterfaceName, 'ActiveAccessPoint');
+        _wirelessDeviceInterfaceName, 'ActiveAccessPoint');
     return _client._getAccessPoint(objectPath);
   }
 
   /// Device capabilities.
   List<NetworkManagerDeviceWifiCapability> get wirelessCapabilities {
     var value = _object.getUint32Property(
-        wirelessDeviceInterfaceName, 'WirelessCapabilities');
+        _wirelessDeviceInterfaceName, 'WirelessCapabilities');
     var flags = <NetworkManagerDeviceWifiCapability>[];
     if ((value & 0x1) != 0) {
       flags.add(NetworkManagerDeviceWifiCapability.cipherWEP40);
@@ -1240,7 +1254,7 @@ class NetworkManagerDeviceWireless {
 
   /// Last time this device completed a network scan in milliseconds since boot. -1 if has never scanned for access points.
   int get lastScan =>
-      _object.getInt64Property(wirelessDeviceInterfaceName, 'LastScan');
+      _object.getInt64Property(_wirelessDeviceInterfaceName, 'LastScan');
 
   /// Request this device to scan for access points.
   Future requestScan([Map<String, DBusValue> options = const {}]) async {
@@ -1252,7 +1266,7 @@ class NetworkManagerDeviceWireless {
               (name, value) => MapEntry(DBusString(name), DBusVariant(value))))
     ];
     var result = await _object.callMethod(
-        wirelessDeviceInterfaceName, 'RequestScan', args);
+        _wirelessDeviceInterfaceName, 'RequestScan', args);
     var values = result.returnValues;
     if (values.isNotEmpty) {
       throw 'RequestScan returned invalid result: ${values}';
@@ -1262,7 +1276,7 @@ class NetworkManagerDeviceWireless {
 
 /// Active connection.
 class NetworkManagerActiveConnection {
-  final String activeConnectionInterfaceName =
+  final String _activeConnectionInterfaceName =
       'org.freedesktop.NetworkManager.Connection.Active';
 
   final NetworkManagerClient _client;
@@ -1272,14 +1286,14 @@ class NetworkManagerActiveConnection {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[activeConnectionInterfaceName]
+    return _object.interfaces[_activeConnectionInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// The connection settings.
   NetworkManagerSettingsConnection get connection {
     var objectPath = _object.getObjectPathProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'Connection',
     );
     return _client._getConnection(objectPath);
@@ -1287,27 +1301,27 @@ class NetworkManagerActiveConnection {
 
   /// ID for this connection, e.g. 'Ethernet', 'my-cool-wifi'.
   String get id =>
-      _object.getStringProperty(activeConnectionInterfaceName, 'Id');
+      _object.getStringProperty(_activeConnectionInterfaceName, 'Id');
 
   /// Unique ID for this connection, e.g. '123e4567-e89b-12d3-a456-426614174000'.
   String get uuid =>
-      _object.getStringProperty(activeConnectionInterfaceName, 'Uuid');
+      _object.getStringProperty(_activeConnectionInterfaceName, 'Uuid');
 
   /// Type of this connection, e.g. '802-11-wireless', '802-3-ethernet'.
   String get type =>
-      _object.getStringProperty(activeConnectionInterfaceName, 'type');
+      _object.getStringProperty(_activeConnectionInterfaceName, 'type');
 
   /// The state of this connection.
   NetworkManagerActiveConnectionState get state {
     var value =
-        _object.getUint32Property(activeConnectionInterfaceName, 'State');
+        _object.getUint32Property(_activeConnectionInterfaceName, 'State');
     return _decodeActiveConnectionState(value);
   }
 
   /// Flags related to [state].
   List<NetworkManagerActivationStateFlag> get stateFlags {
     var value =
-        _object.getUint32Property(activeConnectionInterfaceName, 'StateFlags');
+        _object.getUint32Property(_activeConnectionInterfaceName, 'StateFlags');
     var flags = <NetworkManagerActivationStateFlag>[];
     if ((value & 0x01) != 0) {
       flags.add(NetworkManagerActivationStateFlag.isMaster);
@@ -1339,12 +1353,12 @@ class NetworkManagerActiveConnection {
 
   /// True if this is the default IPv4 connection.
   bool get default4 =>
-      _object.getBooleanProperty(activeConnectionInterfaceName, 'Default');
+      _object.getBooleanProperty(_activeConnectionInterfaceName, 'Default');
 
   /// IPv4 configuration for this connection.
   NetworkManagerIP4Config get ip4Config {
     var objectPath = _object.getObjectPathProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'Ip4Config',
     );
     return _client._getIP4Config(objectPath);
@@ -1353,7 +1367,7 @@ class NetworkManagerActiveConnection {
   /// DHCPv4 configuration for this connection.
   NetworkManagerDHCP4Config get dhcp4Config {
     var objectPath = _object.getObjectPathProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'DHCP4Config',
     );
     return _client._getDHCP4Config(objectPath);
@@ -1361,12 +1375,12 @@ class NetworkManagerActiveConnection {
 
   /// True if this is the default IPv6 connection.
   bool get default6 =>
-      _object.getBooleanProperty(activeConnectionInterfaceName, 'Default6');
+      _object.getBooleanProperty(_activeConnectionInterfaceName, 'Default6');
 
   /// IPv6 configuration for this connection.
   NetworkManagerIP6Config get ip6Config {
     var objectPath = _object.getObjectPathProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'Ip6Config',
     );
     return _client._getIP6Config(objectPath);
@@ -1375,7 +1389,7 @@ class NetworkManagerActiveConnection {
   /// DHCPv6 configuration for this connection.
   NetworkManagerDHCP6Config get dhcp6Config {
     var objectPath = _object.getObjectPathProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'DHCP6Config',
     );
     return _client._getDHCP6Config(objectPath);
@@ -1383,14 +1397,14 @@ class NetworkManagerActiveConnection {
 
   /// True if this is a VPN connection.
   bool get vpn => _object.getBooleanProperty(
-        activeConnectionInterfaceName,
+        _activeConnectionInterfaceName,
         'Vpn',
       );
 
   /// Devices this connection uses.
   List<NetworkManagerDevice> get devices {
     var deviceObjectPaths = _object.getObjectPathArrayProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'Devices',
     );
     var devices = <NetworkManagerDevice>[];
@@ -1406,7 +1420,7 @@ class NetworkManagerActiveConnection {
   /// Master device if this connection is a slave.
   NetworkManagerDevice get master {
     var objectPath = _object.getObjectPathProperty(
-      activeConnectionInterfaceName,
+      _activeConnectionInterfaceName,
       'Master',
     );
     return _client._getDevice(objectPath);
@@ -1415,7 +1429,7 @@ class NetworkManagerActiveConnection {
 
 /// IPv4 configuration.
 class NetworkManagerIP4Config {
-  final String ip4ConfigInterfaceName =
+  final String _ip4ConfigInterfaceName =
       'org.freedesktop.NetworkManager.IP4Config';
 
   final _NetworkManagerObject _object;
@@ -1424,51 +1438,51 @@ class NetworkManagerIP4Config {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[ip4ConfigInterfaceName]
+    return _object.interfaces[_ip4ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// IP addresses. Each item will contain at least 'address' and 'prefix'. e.g. '192.168.1.42' and 24.
   List<Map<String, dynamic>> get addressData =>
-      _object.getDataListProperty(ip4ConfigInterfaceName, 'AddressData');
+      _object.getDataListProperty(_ip4ConfigInterfaceName, 'AddressData');
 
   /// The gateway in use, e.g. '192.168.1.1'.
   String get gateway =>
-      _object.getStringProperty(ip4ConfigInterfaceName, 'Gateway');
+      _object.getStringProperty(_ip4ConfigInterfaceName, 'Gateway');
 
   /// Routes. Each item will contain at least 'dest' and 'prefix'.
   /// Some routes may include 'next-hop' and 'metric'.
   List<Map<String, dynamic>> get routeData =>
-      _object.getDataListProperty(ip4ConfigInterfaceName, 'RouteData');
+      _object.getDataListProperty(_ip4ConfigInterfaceName, 'RouteData');
 
   /// Nameservers in use. Each item will contain at least 'address'.
   List<Map<String, dynamic>> get nameServerData =>
-      _object.getDataListProperty(ip4ConfigInterfaceName, 'NameServerData');
+      _object.getDataListProperty(_ip4ConfigInterfaceName, 'NameServerData');
 
   /// Domains this address belongs to.
   List<String> get domains =>
-      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'Domains');
+      _object.getStringArrayProperty(_ip4ConfigInterfaceName, 'Domains');
 
   /// DNS searches.
   List<String> get searches =>
-      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'Searches');
+      _object.getStringArrayProperty(_ip4ConfigInterfaceName, 'Searches');
 
   /// Options that modify the behaviour of the DNS resolver.
   List<String> get dnsOptions =>
-      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'DnsOptions');
+      _object.getStringArrayProperty(_ip4ConfigInterfaceName, 'DnsOptions');
 
   /// Relative priority of DNS servers.
   int get dnsPriority =>
-      _object.getInt32Property(ip4ConfigInterfaceName, 'DnsPriority');
+      _object.getInt32Property(_ip4ConfigInterfaceName, 'DnsPriority');
 
   ///  The Windows Internet Name Service servers associated with the connection.
   List<String> get winsServerData =>
-      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'WinsServerData');
+      _object.getStringArrayProperty(_ip4ConfigInterfaceName, 'WinsServerData');
 }
 
 /// DCHPv4 configuration.
 class NetworkManagerDHCP4Config {
-  final String dhcp4ConfigInterfaceName =
+  final String _dhcp4ConfigInterfaceName =
       'org.freedesktop.NetworkManager.DHCP4Config';
 
   final _NetworkManagerObject _object;
@@ -1477,13 +1491,13 @@ class NetworkManagerDHCP4Config {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[dhcp4ConfigInterfaceName]
+    return _object.interfaces[_dhcp4ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Configuration options returned by a DHCP server.
   Map<String, dynamic> get options {
-    var value = _object.getCachedProperty(dhcp4ConfigInterfaceName, 'Options');
+    var value = _object.getCachedProperty(_dhcp4ConfigInterfaceName, 'Options');
     if (value == null) {
       return {};
     }
@@ -1497,7 +1511,7 @@ class NetworkManagerDHCP4Config {
 
 /// IPv6 configuration.
 class NetworkManagerIP6Config {
-  final String ip6ConfigInterfaceName =
+  final String _ip6ConfigInterfaceName =
       'org.freedesktop.NetworkManager.IP6Config';
 
   final _NetworkManagerObject _object;
@@ -1506,47 +1520,47 @@ class NetworkManagerIP6Config {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[ip6ConfigInterfaceName]
+    return _object.interfaces[_ip6ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// IP addresses. Each item will contain at least 'address' and 'prefix'. e.g. '2001:db8:85a3::8a2e:370:7334' and 64.
   List<Map<String, dynamic>> get addressData =>
-      _object.getDataListProperty(ip6ConfigInterfaceName, 'AddressData');
+      _object.getDataListProperty(_ip6ConfigInterfaceName, 'AddressData');
 
   /// The gateway in use, e.g. '2001:db8:85a3::8a2e:370:7334'.
   String get gateway =>
-      _object.getStringProperty(ip6ConfigInterfaceName, 'Gateway');
+      _object.getStringProperty(_ip6ConfigInterfaceName, 'Gateway');
 
   /// Routes. Each item will contain at least 'dest' and 'prefix'.
   /// Some routes may include 'next-hop' and 'metric'.
   List<Map<String, dynamic>> get routeData =>
-      _object.getDataListProperty(ip6ConfigInterfaceName, 'RouteData');
+      _object.getDataListProperty(_ip6ConfigInterfaceName, 'RouteData');
 
   /// Nameservers in use. Each item will contain at least 'address'.
   List<Map<String, dynamic>> get nameServerData =>
-      _object.getDataListProperty(ip6ConfigInterfaceName, 'NameServerData');
+      _object.getDataListProperty(_ip6ConfigInterfaceName, 'NameServerData');
 
   /// Domains this address belongs to.
   List<String> get domains =>
-      _object.getStringArrayProperty(ip6ConfigInterfaceName, 'Domains');
+      _object.getStringArrayProperty(_ip6ConfigInterfaceName, 'Domains');
 
   /// DNS searches.
   List<String> get searches =>
-      _object.getStringArrayProperty(ip6ConfigInterfaceName, 'Searches');
+      _object.getStringArrayProperty(_ip6ConfigInterfaceName, 'Searches');
 
   /// Options that modify the behaviour of the DNS resolver.
   List<String> get dnsOptions =>
-      _object.getStringArrayProperty(ip6ConfigInterfaceName, 'DnsOptions');
+      _object.getStringArrayProperty(_ip6ConfigInterfaceName, 'DnsOptions');
 
   /// Relative priority of DNS servers.
   int get dnsPriority =>
-      _object.getInt32Property(ip6ConfigInterfaceName, 'DnsPriority');
+      _object.getInt32Property(_ip6ConfigInterfaceName, 'DnsPriority');
 }
 
 /// DCHPv6 configuration.
 class NetworkManagerDHCP6Config {
-  final String dhcp6ConfigInterfaceName =
+  final String _dhcp6ConfigInterfaceName =
       'org.freedesktop.NetworkManager.DHCP6Config';
 
   final _NetworkManagerObject _object;
@@ -1555,13 +1569,13 @@ class NetworkManagerDHCP6Config {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[dhcp6ConfigInterfaceName]
+    return _object.interfaces[_dhcp6ConfigInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Configuration options returned by a DHCP server.
   Map<String, dynamic> get options {
-    var value = _object.getCachedProperty(dhcp6ConfigInterfaceName, 'Options');
+    var value = _object.getCachedProperty(_dhcp6ConfigInterfaceName, 'Options');
     if (value == null) {
       return {};
     }
@@ -1575,7 +1589,7 @@ class NetworkManagerDHCP6Config {
 
 /// WiFi access point.
 class NetworkManagerAccessPoint {
-  final String accessPointInterfaceName =
+  final String _accessPointInterfaceName =
       'org.freedesktop.NetworkManager.AccessPoint';
 
   final _NetworkManagerObject _object;
@@ -1584,13 +1598,13 @@ class NetworkManagerAccessPoint {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream {
-    return _object.interfaces[accessPointInterfaceName]
+    return _object.interfaces[_accessPointInterfaceName]
         .propertiesChangedStreamController.stream;
   }
 
   /// Capabilities of this access point.
   List<NetworkManagerWifiAcessPointFlag> get flags {
-    var value = _object.getUint32Property(accessPointInterfaceName, 'Flags');
+    var value = _object.getUint32Property(_accessPointInterfaceName, 'Flags');
     var flags = <NetworkManagerWifiAcessPointFlag>[];
     if ((value & 0x01) != 0) {
       flags.add(NetworkManagerWifiAcessPointFlag.privacy);
@@ -1609,20 +1623,22 @@ class NetworkManagerAccessPoint {
 
   /// WPA security capabilities of this access point.
   List<NetworkManagerWifiAcessPointSecurityFlag> get wpaFlags {
-    var value = _object.getUint32Property(accessPointInterfaceName, 'WpaFlags');
+    var value =
+        _object.getUint32Property(_accessPointInterfaceName, 'WpaFlags');
     return _decodeWifiAcessPointSecurityFlags(value);
   }
 
   /// RSN security capabilities of this access point.
   List<NetworkManagerWifiAcessPointSecurityFlag> get rsnFlags {
-    var value = _object.getUint32Property(accessPointInterfaceName, 'RsnFlags');
+    var value =
+        _object.getUint32Property(_accessPointInterfaceName, 'RsnFlags');
     return _decodeWifiAcessPointSecurityFlags(value);
   }
 
   /// SSID advertised by the access point.
   /// Note this is in binary form, but is likely to contain a text string.
   List<int> get ssid {
-    var value = _object.getCachedProperty(accessPointInterfaceName, 'Ssid');
+    var value = _object.getCachedProperty(_accessPointInterfaceName, 'Ssid');
     if (value == null) {
       return [];
     }
@@ -1637,29 +1653,29 @@ class NetworkManagerAccessPoint {
 
   /// Radio frequency of this access point in MHz.
   int get frequency =>
-      _object.getUint32Property(accessPointInterfaceName, 'Frequency');
+      _object.getUint32Property(_accessPointInterfaceName, 'Frequency');
 
   /// The hardware address (BSSID) of this access point.
   String get hwAddress =>
-      _object.getStringProperty(accessPointInterfaceName, 'HwAddress');
+      _object.getStringProperty(_accessPointInterfaceName, 'HwAddress');
 
   /// Mode this access point is operating in.
   NetworkManagerWifiMode get mode {
-    var value = _object.getUint32Property(accessPointInterfaceName, 'Mode');
+    var value = _object.getUint32Property(_accessPointInterfaceName, 'Mode');
     return _decodeWifiMode(value);
   }
 
   /// Maximum bitrate this access point is capable of in kilobits/second.
   int get maxBitrate =>
-      _object.getUint32Property(accessPointInterfaceName, 'MaxBitrate');
+      _object.getUint32Property(_accessPointInterfaceName, 'MaxBitrate');
 
   /// Signal quality of access point in percent.
   int get strength =>
-      _object.getByteProperty(accessPointInterfaceName, 'Strength');
+      _object.getByteProperty(_accessPointInterfaceName, 'Strength');
 
   /// Last time this access point was seen in a scan in seconds since boot.
   int get lastSeen =>
-      _object.getInt32Property(accessPointInterfaceName, 'LastSeen');
+      _object.getInt32Property(_accessPointInterfaceName, 'LastSeen');
 }
 
 class _NetworkManagerInterface {
@@ -1871,7 +1887,7 @@ class _NetworkManagerObject extends DBusRemoteObject {
 
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
-  final String managerInterfaceName = 'org.freedesktop.NetworkManager';
+  final String _managerInterfaceName = 'org.freedesktop.NetworkManager';
 
   /// The bus this client is connected to.
   final DBusClient systemBus;
@@ -1960,8 +1976,8 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    var deviceObjectPaths =
-        _manager.getObjectPathArrayProperty(managerInterfaceName, propertyName);
+    var deviceObjectPaths = _manager.getObjectPathArrayProperty(
+        _managerInterfaceName, propertyName);
     var devices = <NetworkManagerDevice>[];
     for (var objectPath in deviceObjectPaths) {
       var device = _getDevice(objectPath);
@@ -1981,7 +1997,7 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'NetworkingEnabled',
     );
   }
@@ -1991,14 +2007,15 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    return _manager.getBooleanProperty(managerInterfaceName, 'WirelessEnabled');
+    return _manager.getBooleanProperty(
+        _managerInterfaceName, 'WirelessEnabled');
   }
 
   /// Sets if wireless network is enabled.
   set wirelessEnabled(bool value) {
     if (_manager != null) {
       _manager.setProperty(
-        managerInterfaceName,
+        _managerInterfaceName,
         'WirelessEnabled',
         DBusBoolean(value),
       );
@@ -2011,7 +2028,7 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-        managerInterfaceName, 'WirelessHardwareEnabled');
+        _managerInterfaceName, 'WirelessHardwareEnabled');
   }
 
   /// True if mobile broadband is enabled.
@@ -2019,14 +2036,14 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    return _manager.getBooleanProperty(managerInterfaceName, 'WwanEnabled');
+    return _manager.getBooleanProperty(_managerInterfaceName, 'WwanEnabled');
   }
 
   /// Sets if mobile broadband is enabled.
   set wwanEnabled(bool value) {
     if (_manager != null) {
       _manager.setProperty(
-        managerInterfaceName,
+        _managerInterfaceName,
         'WwanEnabled',
         DBusBoolean(value),
       );
@@ -2039,7 +2056,7 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getBooleanProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'WwanHardwareEnabled',
     );
   }
@@ -2050,7 +2067,7 @@ class NetworkManagerClient {
       return null;
     }
     var connectionObjectPaths = _manager.getObjectPathArrayProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'ActiveConnections',
     );
     var connections = <NetworkManagerActiveConnection>[];
@@ -2070,7 +2087,7 @@ class NetworkManagerClient {
       return null;
     }
     var objectPath = _manager.getObjectPathProperty(
-        managerInterfaceName, 'PrimaryConnection');
+        _managerInterfaceName, 'PrimaryConnection');
     var connection = _objects[objectPath];
     if (connection == null) {
       return null;
@@ -2085,7 +2102,7 @@ class NetworkManagerClient {
       return null;
     }
     return _manager.getStringProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'PrimaryConnectionType',
     );
   }
@@ -2096,7 +2113,7 @@ class NetworkManagerClient {
       return null;
     }
     return NetworkManagerMetered
-        .values[_manager.getUint32Property(managerInterfaceName, 'Metered')];
+        .values[_manager.getUint32Property(_managerInterfaceName, 'Metered')];
   }
 
   // FIXME: ActivatingConnection
@@ -2106,7 +2123,7 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    return _manager.getBooleanProperty(managerInterfaceName, 'Startup');
+    return _manager.getBooleanProperty(_managerInterfaceName, 'Startup');
   }
 
   /// The version of NetworkManager running.
@@ -2114,7 +2131,7 @@ class NetworkManagerClient {
     if (_manager == null) {
       return null;
     }
-    return _manager.getStringProperty(managerInterfaceName, 'Version');
+    return _manager.getStringProperty(_managerInterfaceName, 'Version');
   }
 
   // FIXME: Capabilities
@@ -2122,14 +2139,14 @@ class NetworkManagerClient {
   /// The result of the last connectivity check.
   NetworkManagerConnectivityState get connectivity {
     var value =
-        _manager.getUint32Property(managerInterfaceName, 'Connectivity');
+        _manager.getUint32Property(_managerInterfaceName, 'Connectivity');
     return _decodeConnectivityState(value);
   }
 
   /// True if connectivity checking is available.
   bool get connectivityCheckAvailable {
     return _manager.getBooleanProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'ConnectivityCheckAvailable',
     );
   }
@@ -2137,14 +2154,14 @@ class NetworkManagerClient {
   /// True if connectivity checking is enabled.
   bool get connectivityCheckEnabled {
     return _manager.getBooleanProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'ConnectivityCheckEnabled',
     );
   }
 
   /// Sets if connectivity checking is enabled.
   set connectivityCheckEnabled(bool value) => _manager.setProperty(
-        managerInterfaceName,
+        _managerInterfaceName,
         'ConnectivityCheckEnabled',
         DBusBoolean(value),
       );
@@ -2152,7 +2169,7 @@ class NetworkManagerClient {
   /// URI used for connectivity checking.
   String get connectivityCheckUri {
     return _manager.getStringProperty(
-      managerInterfaceName,
+      _managerInterfaceName,
       'ConnectivityCheckUri',
     );
   }

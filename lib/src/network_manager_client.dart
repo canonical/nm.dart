@@ -1395,6 +1395,7 @@ class NetworkManagerActiveConnection {
   }
 }
 
+/// IPv4 configuration.
 class NetworkManagerIP4Config {
   final String ip4ConfigInterfaceName =
       'org.freedesktop.NetworkManager.IP4Config';
@@ -1409,26 +1410,45 @@ class NetworkManagerIP4Config {
         .propertiesChangedStreamController.stream;
   }
 
+  /// IP addresses. Each item will contain at least 'address' and 'prefix'. e.g. '192.168.1.42' and 24.
   List<Map<String, dynamic>> get addressData =>
       _object.getDataListProperty(ip4ConfigInterfaceName, 'AddressData');
+
+  /// The gateway in use, e.g. '192.168.1.1'.
   String get gateway =>
       _object.getStringProperty(ip4ConfigInterfaceName, 'Gateway');
+
+  /// Routes. Each item will contain at least 'dest' and 'prefix'.
+  /// Some routes may include 'next-hop' and 'metric'.
   List<Map<String, dynamic>> get routeData =>
       _object.getDataListProperty(ip4ConfigInterfaceName, 'RouteData');
+
+  /// Nameservers in use. Each item will contain at least 'address'.
   List<Map<String, dynamic>> get nameServerData =>
       _object.getDataListProperty(ip4ConfigInterfaceName, 'NameServerData');
+
+  /// Domains this address belongs to.
   List<String> get domains =>
       _object.getStringArrayProperty(ip4ConfigInterfaceName, 'Domains');
+
+  /// DNS searches.
   List<String> get searches =>
       _object.getStringArrayProperty(ip4ConfigInterfaceName, 'Searches');
+
+  /// Options that modify the behaviour of the DNS resolver.
   List<String> get dnsOptions =>
       _object.getStringArrayProperty(ip4ConfigInterfaceName, 'DnsOptions');
+
+  /// Relative priority of DNS servers.
   int get dnsPriority =>
       _object.getInt32Property(ip4ConfigInterfaceName, 'DnsPriority');
-  List<Map<String, dynamic>> get winsServerData =>
-      _object.getDataListProperty(ip4ConfigInterfaceName, 'WinsServerData');
+
+  ///  The Windows Internet Name Service servers associated with the connection.
+  List<String> get winsServerData =>
+      _object.getStringArrayProperty(ip4ConfigInterfaceName, 'WinsServerData');
 }
 
+/// DCHPv4 configuration.
 class NetworkManagerDHCP4Config {
   final String dhcp4ConfigInterfaceName =
       'org.freedesktop.NetworkManager.DHCP4Config';
@@ -1443,6 +1463,7 @@ class NetworkManagerDHCP4Config {
         .propertiesChangedStreamController.stream;
   }
 
+  /// Configuration options returned by a DHCP server.
   Map<String, dynamic> get options {
     var value = _object.getCachedProperty(dhcp4ConfigInterfaceName, 'Options');
     if (value == null) {
@@ -1456,6 +1477,7 @@ class NetworkManagerDHCP4Config {
   }
 }
 
+/// IPv6 configuration.
 class NetworkManagerIP6Config {
   final String ip6ConfigInterfaceName =
       'org.freedesktop.NetworkManager.IP6Config';
@@ -1470,24 +1492,41 @@ class NetworkManagerIP6Config {
         .propertiesChangedStreamController.stream;
   }
 
+  /// IP addresses. Each item will contain at least 'address' and 'prefix'. e.g. '2001:db8:85a3::8a2e:370:7334' and 64.
   List<Map<String, dynamic>> get addressData =>
       _object.getDataListProperty(ip6ConfigInterfaceName, 'AddressData');
+
+  /// The gateway in use, e.g. '2001:db8:85a3::8a2e:370:7334'.
   String get gateway =>
       _object.getStringProperty(ip6ConfigInterfaceName, 'Gateway');
+
+  /// Routes. Each item will contain at least 'dest' and 'prefix'.
+  /// Some routes may include 'next-hop' and 'metric'.
   List<Map<String, dynamic>> get routeData =>
       _object.getDataListProperty(ip6ConfigInterfaceName, 'RouteData');
+
+  /// Nameservers in use. Each item will contain at least 'address'.
   List<Map<String, dynamic>> get nameServerData =>
       _object.getDataListProperty(ip6ConfigInterfaceName, 'NameServerData');
+
+  /// Domains this address belongs to.
   List<String> get domains =>
       _object.getStringArrayProperty(ip6ConfigInterfaceName, 'Domains');
+
+  /// DNS searches.
   List<String> get searches =>
       _object.getStringArrayProperty(ip6ConfigInterfaceName, 'Searches');
+
+  /// Options that modify the behaviour of the DNS resolver.
   List<String> get dnsOptions =>
       _object.getStringArrayProperty(ip6ConfigInterfaceName, 'DnsOptions');
+
+  /// Relative priority of DNS servers.
   int get dnsPriority =>
       _object.getInt32Property(ip6ConfigInterfaceName, 'DnsPriority');
 }
 
+/// DCHPv6 configuration.
 class NetworkManagerDHCP6Config {
   final String dhcp6ConfigInterfaceName =
       'org.freedesktop.NetworkManager.DHCP6Config';
@@ -1502,6 +1541,7 @@ class NetworkManagerDHCP6Config {
         .propertiesChangedStreamController.stream;
   }
 
+  /// Configuration options returned by a DHCP server.
   Map<String, dynamic> get options {
     var value = _object.getCachedProperty(dhcp6ConfigInterfaceName, 'Options');
     if (value == null) {

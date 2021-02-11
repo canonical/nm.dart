@@ -647,6 +647,7 @@ class NetworkManagerSettingsConnection {
       _object.getStringProperty(settingsConnectionInterfaceName, 'Filename');
 }
 
+/// DNS configuration and state.
 class NetworkManagerDnsManager {
   final String dnsManagerInterfaceName =
       'org.freedesktop.NetworkManager.DnsManager';
@@ -661,9 +662,14 @@ class NetworkManagerDnsManager {
         .propertiesChangedStreamController.stream;
   }
 
+  /// Current DNS processing mode.
   String get mode => _object.getStringProperty(dnsManagerInterfaceName, 'Mode');
+
+  /// Current resolv.conf management mode.
   String get rcManager =>
       _object.getStringProperty(dnsManagerInterfaceName, 'RcManager');
+
+  /// Current DNS configuration. Each item has at least 'nameservers', 'priority' and optionally 'interface' and 'vpn'.
   List<Map<String, dynamic>> get configuration =>
       _object.getDataListProperty(dnsManagerInterfaceName, 'Configuration');
 }
@@ -687,7 +693,7 @@ class NetworkManagerDevice {
   /// TUN device information or null.
   final NetworkManagerDeviceTun tun;
 
-  /// Information for VLAN devices or null.
+  /// Information for Virtual LAN devices or null.
   final NetworkManagerDeviceVlan vlan;
 
   /// Information for wired devices (e.g. Ethernet) or null.
@@ -1084,7 +1090,7 @@ class NetworkManagerDeviceTun {
       _object.getBooleanProperty(tunDeviceInterfaceName, 'MultiQueue');
 }
 
-/// Information for VLAN devices.
+/// Information for Virtual LAN devices.
 class NetworkManagerDeviceVlan {
   final String vlanDeviceInterfaceName =
       'org.freedesktop.NetworkManager.Device.Vlan';
@@ -1100,12 +1106,14 @@ class NetworkManagerDeviceVlan {
         .propertiesChangedStreamController.stream;
   }
 
+  /// Parent device of this VLAN device.
   NetworkManagerDevice get parent {
     var objectPath =
         _object.getObjectPathProperty(vlanDeviceInterfaceName, 'Parent');
     return _client._getDevice(objectPath);
   }
 
+  /// The VLAN ID in use.
   int get vlanId =>
       _object.getUint32Property(vlanDeviceInterfaceName, 'VlanId');
 }
@@ -1252,6 +1260,7 @@ class NetworkManagerDeviceWireless {
   }
 }
 
+/// Active connection.
 class NetworkManagerActiveConnection {
   final String activeConnectionInterfaceName =
       'org.freedesktop.NetworkManager.Connection.Active';
@@ -1564,6 +1573,7 @@ class NetworkManagerDHCP6Config {
   }
 }
 
+/// WiFi access point.
 class NetworkManagerAccessPoint {
   final String accessPointInterfaceName =
       'org.freedesktop.NetworkManager.AccessPoint';

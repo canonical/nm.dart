@@ -21,7 +21,7 @@ void checkConnectivity(NetworkManagerClient client) {
     print('Networking is disabled');
   } else if (client.connectivityCheckEnabled) {
     var connectivity = client.connectivity;
-    print('Network connectivity state is ${connectivity}');
+    print('Network connectivity state is $connectivity');
   } else {
     print("Can't determine connectivity");
   }

@@ -9,7 +9,7 @@ void main() async {
     var settings = await connection.getSettings();
     var connectionSettings = settings['connection'];
     var connectionId = connectionSettings['id'].toNative();
-    print('${connectionId}');
+    print('$connectionId');
   }
   await systemBus.close();
 }

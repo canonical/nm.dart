@@ -8,7 +8,7 @@ void main() async {
   for (var connection in client.settings.connections) {
     var settings = await connection.getSettings();
     var connectionSettings = settings['connection'];
-    var connectionId = connectionSettings['id'].toNative();
+    var connectionId = connectionSettings?['id']?.toNative();
     print('$connectionId');
   }
   await systemBus.close();

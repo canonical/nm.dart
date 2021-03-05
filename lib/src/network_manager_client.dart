@@ -1269,7 +1269,7 @@ class NetworkManagerDeviceWireless {
         _wirelessDeviceInterfaceName, 'RequestScan', args);
     var values = result.returnValues;
     if (values.isNotEmpty) {
-      throw 'RequestScan returned invalid result: ${values}';
+      throw 'RequestScan returned invalid result: $values';
     }
   }
 }

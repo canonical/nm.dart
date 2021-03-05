@@ -31,7 +31,7 @@ void main() async {
       for (var accessPoint in accessPoints) {
         var ssid = utf8.decode(accessPoint.ssid);
         var strength = accessPoint.strength.toString().padRight(3);
-        print("  ${accessPoint.frequency}MHz ${strength} '${ssid}'");
+        print("  ${accessPoint.frequency}MHz $strength '$ssid'");
       }
 
       exit(0);

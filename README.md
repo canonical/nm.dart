@@ -3,14 +3,12 @@
 Provides a client to connect to [NetworkManager](https://gitlab.freedesktop.org/NetworkManager/NetworkManager) - the service that manages network connections on Linux.
 
 ```dart
-import 'package:dbus/dbus.dart';
 import 'package:nm/nm.dart';
 
-var systemBus = DBusClient.system();
-var client = NetworkManagerClient(systemBus);
+var client = NetworkManagerClient();
 await client.connect();
 print('Running NetworkManager ${client.version}');
-await systemBus.close();
+await client.close();
 ```
 
 ## Contributing to nm.dart

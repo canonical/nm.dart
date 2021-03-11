@@ -1,9 +1,7 @@
-import 'package:dbus/dbus.dart';
 import 'package:nm/nm.dart';
 
 void main() async {
-  var systemBus = DBusClient.system();
-  var client = NetworkManagerClient(systemBus);
+  var client = NetworkManagerClient();
   await client.connect();
   client.propertiesChangedStream.listen((propertyNames) {
     print(propertyNames);

@@ -1934,10 +1934,11 @@ class NetworkManagerClient {
   final String _managerInterfaceName = 'org.freedesktop.NetworkManager';
 
   /// The bus this client is connected to.
-  final DBusClient systemBus;
+  final DBusClient _bus;
+  final bool _closeBus;
 
   /// The root D-Bus NetworkManager object at path '/org/freedesktop'.
-  final DBusRemoteObject _root;
+  late final DBusRemoteObject _root;
 
   // Objects exported on the bus.
   final _objects = <DBusObjectPath, _NetworkManagerObject>{};
@@ -1946,12 +1947,15 @@ class NetworkManagerClient {
   StreamSubscription? _objectManagerSubscription;
 
   /// Creates a new NetworkManager client connected to the system D-Bus.
-  NetworkManagerClient(this.systemBus)
-      : _root = DBusRemoteObject(
-          systemBus,
-          'org.freedesktop.NetworkManager',
-          DBusObjectPath('/org/freedesktop'),
-        );
+  NetworkManagerClient({DBusClient? bus})
+      : _bus = bus ?? DBusClient.system(),
+        _closeBus = bus == null {
+    _root = DBusRemoteObject(
+      _bus,
+      'org.freedesktop.NetworkManager',
+      DBusObjectPath('/org/freedesktop'),
+    );
+  }
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChangedStream =>
@@ -1976,7 +1980,7 @@ class NetworkManagerClient {
           object.updateInterfaces(signal.interfacesAndProperties);
         } else {
           _objects[signal.changedPath] = _NetworkManagerObject(
-              systemBus, signal.changedPath, signal.interfacesAndProperties);
+              _bus, signal.changedPath, signal.interfacesAndProperties);
         }
       } else if (signal is DBusObjectManagerInterfacesRemovedSignal) {
         var object = _objects[signal.changedPath];
@@ -1996,7 +2000,7 @@ class NetworkManagerClient {
     var objects = await _root.getManagedObjects();
     objects.forEach((objectPath, interfacesAndProperties) {
       _objects[objectPath] =
-          _NetworkManagerObject(systemBus, objectPath, interfacesAndProperties);
+          _NetworkManagerObject(_bus, objectPath, interfacesAndProperties);
     });
   }
 
@@ -2195,8 +2199,8 @@ class NetworkManagerClient {
   NetworkManagerSettings get settings {
     var object =
         _objects[DBusObjectPath('/org/freedesktop/NetworkManager/Settings')];
-    return NetworkManagerSettings(this,
-        object ?? _NetworkManagerObject(systemBus, DBusObjectPath('/'), {}));
+    return NetworkManagerSettings(
+        this, object ?? _NetworkManagerObject(_bus, DBusObjectPath('/'), {}));
   }
 
   /// Gets the DNS manager object.
@@ -2204,14 +2208,17 @@ class NetworkManagerClient {
     var object =
         _objects[DBusObjectPath('/org/freedesktop/NetworkManager/DnsManager')];
     return NetworkManagerDnsManager(
-        object ?? _NetworkManagerObject(systemBus, DBusObjectPath('/'), {}));
+        object ?? _NetworkManagerObject(_bus, DBusObjectPath('/'), {}));
   }
 
   /// Terminates all active connections. If a client remains unclosed, the Dart process may not terminate.
-  void close() {
+  Future<void> close() async {
     if (_objectManagerSubscription != null) {
-      _objectManagerSubscription!.cancel();
+      await _objectManagerSubscription!.cancel();
       _objectManagerSubscription = null;
+    }
+    if (_closeBus) {
+      await _bus.close();
     }
   }
 

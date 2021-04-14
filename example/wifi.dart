@@ -19,7 +19,7 @@ void main() async {
   print('Scanning WiFi device ${device.hwAddress}...');
   await device.wireless.requestScan();
 
-  device.wireless.propertiesChangedStream.listen((propertyNames) {
+  device.wireless.propertiesChanged.listen((propertyNames) {
     if (propertyNames.contains('LastScan')) {
       /// Get APs with names.
       var accessPoints =

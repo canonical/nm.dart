@@ -1938,7 +1938,7 @@ class NetworkManagerClient {
   final bool _closeBus;
 
   /// The root D-Bus NetworkManager object at path '/org/freedesktop'.
-  late final DBusRemoteObject _root;
+  late final DBusRemoteObjectManager _root;
 
   // Objects exported on the bus.
   final _objects = <DBusObjectPath, _NetworkManagerObject>{};
@@ -1950,7 +1950,7 @@ class NetworkManagerClient {
   NetworkManagerClient({DBusClient? bus})
       : _bus = bus ?? DBusClient.system(),
         _closeBus = bus == null {
-    _root = DBusRemoteObject(
+    _root = DBusRemoteObjectManager(
       _bus,
       'org.freedesktop.NetworkManager',
       DBusObjectPath('/org/freedesktop'),
@@ -1972,8 +1972,7 @@ class NetworkManagerClient {
     }
 
     // Subscribe to changes
-    var signals = _root.subscribeObjectManagerSignals();
-    _objectManagerSubscription = signals.listen((signal) {
+    _objectManagerSubscription = _root.signals.listen((signal) {
       if (signal is DBusObjectManagerInterfacesAddedSignal) {
         var object = _objects[signal.changedPath];
         if (object != null) {

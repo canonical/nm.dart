@@ -495,7 +495,7 @@ class NetworkManagerSettings {
   NetworkManagerSettings(this._client, this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_settingsInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -534,7 +534,7 @@ class NetworkManagerSettingsConnection {
   NetworkManagerSettingsConnection(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_settingsConnectionInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -662,7 +662,7 @@ class NetworkManagerDnsManager {
   NetworkManagerDnsManager(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_dnsManagerInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -719,7 +719,7 @@ class NetworkManagerDevice {
         wireless = NetworkManagerDeviceWireless(_client, _object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_deviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1007,7 +1007,7 @@ class NetworkManagerDeviceBluetooth {
   NetworkManagerDeviceBluetooth(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_bluetoothDeviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1038,7 +1038,7 @@ class NetworkManagerDeviceGeneric {
   NetworkManagerDeviceGeneric(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_genericDeviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1060,7 +1060,7 @@ class NetworkManagerDeviceStatistics {
   NetworkManagerDeviceStatistics(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_statisticsDeviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1090,7 +1090,7 @@ class NetworkManagerDeviceTun {
   NetworkManagerDeviceTun(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_tunDeviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1136,7 +1136,7 @@ class NetworkManagerDeviceVlan {
   NetworkManagerDeviceVlan(this._client, this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_vlanDeviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1189,7 +1189,7 @@ class NetworkManagerDeviceWireless {
   NetworkManagerDeviceWireless(this._client, this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_wirelessDeviceInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1315,7 +1315,7 @@ class NetworkManagerActiveConnection {
   NetworkManagerActiveConnection(this._client, this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_activeConnectionInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1473,7 +1473,7 @@ class NetworkManagerIP4Config {
   NetworkManagerIP4Config(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_ip4ConfigInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1530,7 +1530,7 @@ class NetworkManagerDHCP4Config {
   NetworkManagerDHCP4Config(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_dhcp4ConfigInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1559,7 +1559,7 @@ class NetworkManagerIP6Config {
   NetworkManagerIP6Config(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_ip6ConfigInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1610,7 +1610,7 @@ class NetworkManagerDHCP6Config {
   NetworkManagerDHCP6Config(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_dhcp6ConfigInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1639,7 +1639,7 @@ class NetworkManagerAccessPoint {
   NetworkManagerAccessPoint(this._object);
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _object.interfaces[_accessPointInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
@@ -1728,7 +1728,7 @@ class _NetworkManagerInterface {
       StreamController<List<String>>.broadcast();
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       propertiesChangedStreamController.stream;
 
   _NetworkManagerInterface(this.properties);
@@ -1958,7 +1958,7 @@ class NetworkManagerClient {
   }
 
   /// Stream of property names as their values change.
-  Stream<List<String>> get propertiesChangedStream =>
+  Stream<List<String>> get propertiesChanged =>
       _manager?.interfaces['org.freedesktop.NetworkManager']
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();

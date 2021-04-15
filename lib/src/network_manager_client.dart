@@ -1496,8 +1496,8 @@ class NetworkManagerIP4Config {
       _object.getDataListProperty(_ip4ConfigInterfaceName, 'RouteData') ?? [];
 
   /// Nameservers in use. Each item will contain at least 'address'.
-  List<Map<String, dynamic>> get nameServerData =>
-      _object.getDataListProperty(_ip4ConfigInterfaceName, 'NameServerData') ??
+  List<Map<String, dynamic>> get nameserverData =>
+      _object.getDataListProperty(_ip4ConfigInterfaceName, 'NameserverData') ??
       [];
 
   /// Domains this address belongs to.
@@ -1582,8 +1582,8 @@ class NetworkManagerIP6Config {
       _object.getDataListProperty(_ip6ConfigInterfaceName, 'RouteData') ?? [];
 
   /// Nameservers in use. Each item will contain at least 'address'.
-  List<Map<String, dynamic>> get nameServerData =>
-      _object.getDataListProperty(_ip6ConfigInterfaceName, 'NameServerData') ??
+  List<Map<String, dynamic>> get nameserverData =>
+      _object.getDataListProperty(_ip6ConfigInterfaceName, 'NameserverData') ??
       [];
 
   /// Domains this address belongs to.

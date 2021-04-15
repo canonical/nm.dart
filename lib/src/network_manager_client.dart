@@ -740,7 +740,11 @@ class NetworkManagerDevice {
   String get path =>
       _object.getStringProperty(_deviceInterfaceName, 'Path') ?? '';
 
-  /// Device filesystem path to IP data interface.
+  /// Name of the device's control (and often data) interface.
+  String get interface =>
+      _object.getStringProperty(_deviceInterfaceName, 'Interface') ?? '';
+
+  /// The name of the device's data interface when available.
   String get ipInterface =>
       _object.getStringProperty(_deviceInterfaceName, 'IpInterface') ?? '';
 

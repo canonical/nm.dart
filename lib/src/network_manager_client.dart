@@ -1359,7 +1359,7 @@ class NetworkManagerActiveConnection {
 
   /// Type of this connection, e.g. '802-11-wireless', '802-3-ethernet'.
   String get type =>
-      _object.getStringProperty(_activeConnectionInterfaceName, 'type') ?? '';
+      _object.getStringProperty(_activeConnectionInterfaceName, 'Type') ?? '';
 
   /// The state of this connection.
   NetworkManagerActiveConnectionState get state {

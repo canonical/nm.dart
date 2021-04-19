@@ -828,7 +828,7 @@ class NetworkManagerDevice {
   /// DHCPv4 configuration for this device.
   NetworkManagerDHCP4Config? get dhcp4Config {
     var objectPath =
-        _object.getObjectPathProperty(_deviceInterfaceName, 'DHCP4Config');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'Dhcp4Config');
     return _client._getDHCP4Config(objectPath);
   }
 
@@ -842,7 +842,7 @@ class NetworkManagerDevice {
   /// DHCPv6 configuration for this device.
   NetworkManagerDHCP6Config? get dhcp6Config {
     var objectPath =
-        _object.getObjectPathProperty(_deviceInterfaceName, 'DHCP6Config');
+        _object.getObjectPathProperty(_deviceInterfaceName, 'Dhcp6Config');
     return _client._getDHCP6Config(objectPath);
   }
 
@@ -1420,7 +1420,7 @@ class NetworkManagerActiveConnection {
   NetworkManagerDHCP4Config? get dhcp4Config {
     var objectPath = _object.getObjectPathProperty(
       _activeConnectionInterfaceName,
-      'DHCP4Config',
+      'Dhcp4Config',
     );
     return _client._getDHCP4Config(objectPath);
   }
@@ -1443,7 +1443,7 @@ class NetworkManagerActiveConnection {
   NetworkManagerDHCP6Config? get dhcp6Config {
     var objectPath = _object.getObjectPathProperty(
       _activeConnectionInterfaceName,
-      'DHCP6Config',
+      'Dhcp6Config',
     );
     return _client._getDHCP6Config(objectPath);
   }

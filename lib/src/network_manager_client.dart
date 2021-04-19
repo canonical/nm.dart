@@ -725,12 +725,22 @@ class NetworkManagerDevice {
       Stream<List<String>>.empty();
 
   /// Disconnects a device and prevents the device from automatically activating further connections without user intervention.
-  void disconnect() async =>
-      _object.callMethod(_deviceInterfaceName, 'Disconnect', []);
+  Future<void> disconnect() async {
+    var result =
+        await _object.callMethod(_deviceInterfaceName, 'Disconnect', []);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Device.Disconnect returned invalid result: ${result.returnValues}';
+    }
+  }
 
   /// Deletes a software device from NetworkManager and removes the interface from the system.
   /// The method returns an error when called for a hardware device.
-  void delete() async => _object.callMethod(_deviceInterfaceName, 'Delete', []);
+  Future<void> delete() async {
+    var result = await _object.callMethod(_deviceInterfaceName, 'Delete', []);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Device.Delete returned invalid result: ${result.returnValues}';
+    }
+  }
 
   /// UDI for this device.
   String get udi =>

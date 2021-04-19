@@ -96,6 +96,9 @@ class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
   final String permHwAddress;
   final int wirelessCapabilities;
 
+  bool disconnected = false;
+  bool deleted = false;
+
   MockNetworkManagerDeviceObject(int id,
       {this.autoconnect = false,
       this.capabilities = 0,
@@ -176,6 +179,24 @@ class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
     }
 
     return interfacesAndProperties_;
+  }
+
+  @override
+  Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
+    if (methodCall.interface != 'org.freedesktop.NetworkManager.Device') {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
+
+    switch (methodCall.name) {
+      case 'Disconnect':
+        disconnected = true;
+        return DBusMethodSuccessResponse([]);
+      case 'Delete':
+        deleted = true;
+        return DBusMethodSuccessResponse([]);
+      default:
+        return DBusMethodErrorResponse.unknownMethod();
+    }
   }
 }
 
@@ -788,6 +809,48 @@ void main() {
           {'dest': 'fe80::', 'prefix': 64, 'metric': 600},
         ]));
     expect(ip6Config.searches, equals(['search6a', 'search6b']));
+
+    await client.close();
+  });
+
+  test('device disconnect', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d = await nm.addDevice();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(d.disconnected, isFalse);
+    await device.disconnect();
+    expect(d.disconnected, isTrue);
+
+    await client.close();
+  });
+
+  test('device delete', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d = await nm.addDevice();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(d.deleted, isFalse);
+    await device.delete();
+    expect(d.deleted, isTrue);
 
     await client.close();
   });

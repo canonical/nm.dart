@@ -93,6 +93,8 @@ class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
   final bool default4;
   final bool default6;
   final List<MockNetworkManagerDevice> devices;
+  final MockNetworkManagerDHCP4Config? dhcp4Config;
+  final MockNetworkManagerDHCP6Config? dhcp6Config;
   final String id;
   final MockNetworkManagerIP4Config? ip4Config;
   final MockNetworkManagerIP6Config? ip6Config;
@@ -106,6 +108,8 @@ class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
       {this.default4 = false,
       this.default6 = false,
       this.devices = const [],
+      this.dhcp4Config,
+      this.dhcp6Config,
       this.id = '',
       this.ip4Config,
       this.ip6Config,
@@ -125,8 +129,8 @@ class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
               DBusSignature('o'), devices.map((device) => device.path)),
           'Default': DBusBoolean(default4),
           'Default6': DBusBoolean(default6),
-          'Dhcp4Config': DBusObjectPath('/'), // FIXME
-          'Dhcp6Config': DBusObjectPath('/'), // FIXME
+          'Dhcp4Config': dhcp4Config?.path ?? DBusObjectPath('/'),
+          'Dhcp6Config': dhcp6Config?.path ?? DBusObjectPath('/'),
           'Id': DBusString(id),
           'Ip4Config': ip4Config?.path ?? DBusObjectPath('/'),
           'Ip6Config': ip6Config?.path ?? DBusObjectPath('/'),
@@ -145,6 +149,8 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final bool autoconnect;
   final int capabilities;
   final int deviceType;
+  final MockNetworkManagerDHCP4Config? dhcp4Config;
+  final MockNetworkManagerDHCP6Config? dhcp6Config;
   final String driver;
   final String driverVersion;
   final bool firmwareMissing;
@@ -183,6 +189,8 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       {this.autoconnect = false,
       this.capabilities = 0,
       this.deviceType = 0,
+      this.dhcp4Config,
+      this.dhcp6Config,
       this.driver = '',
       this.driverVersion = '',
       this.firmwareMissing = false,
@@ -221,6 +229,8 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'Autoconnect': DBusBoolean(autoconnect),
         'Capabilities': DBusUint32(capabilities),
         'DeviceType': DBusUint32(deviceType),
+        'Dhcp4Config': dhcp4Config?.path ?? DBusObjectPath('/'),
+        'Dhcp6Config': dhcp6Config?.path ?? DBusObjectPath('/'),
         'Driver': DBusString(driver),
         'DriverVersion': DBusString(driverVersion),
         'FirmwareMissing': DBusBoolean(firmwareMissing),
@@ -441,6 +451,44 @@ class MockNetworkManagerIP6Config extends MockNetworkManagerObject {
       };
 }
 
+class MockNetworkManagerDHCP4Config extends MockNetworkManagerObject {
+  final Map<String, DBusValue> options;
+
+  MockNetworkManagerDHCP4Config(int id, {this.options = const {}})
+      : super(
+            DBusObjectPath('/org/freedesktop/NetworkManager/DHCP4Config/$id'));
+
+  @override
+  Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
+        'org.freedesktop.NetworkManager.DHCP4Config': {
+          'Options': DBusDict(
+              DBusSignature('s'),
+              DBusSignature('v'),
+              options.map((key, value) =>
+                  MapEntry(DBusString(key), DBusVariant(value))))
+        }
+      };
+}
+
+class MockNetworkManagerDHCP6Config extends MockNetworkManagerObject {
+  final Map<String, DBusValue> options;
+
+  MockNetworkManagerDHCP6Config(int id, {this.options = const {}})
+      : super(
+            DBusObjectPath('/org/freedesktop/NetworkManager/DHCP6Config/$id'));
+
+  @override
+  Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
+        'org.freedesktop.NetworkManager.DHCP6Config': {
+          'Options': DBusDict(
+              DBusSignature('s'),
+              DBusSignature('v'),
+              options.map((key, value) =>
+                  MapEntry(DBusString(key), DBusVariant(value))))
+        }
+      };
+}
+
 class MockNetworkManagerServer extends DBusClient {
   final List<int> capabilities;
   final int connectivity;
@@ -463,6 +511,8 @@ class MockNetworkManagerServer extends DBusClient {
   late final MockNetworkManagerManager _manager;
   var _nextIp4ConfigId = 1;
   var _nextIp6ConfigId = 1;
+  var _nextDhcp4ConfigId = 1;
+  var _nextDhcp6ConfigId = 1;
   var _nextAccessPointId = 1;
   var _nextDeviceId = 1;
   var _nextActiveConnectionId = 1;
@@ -551,6 +601,24 @@ class MockNetworkManagerServer extends DBusClient {
     return config;
   }
 
+  Future<MockNetworkManagerDHCP4Config> addDhcp4Config(
+      {Map<String, DBusValue> options = const {}}) async {
+    var config =
+        MockNetworkManagerDHCP4Config(_nextDhcp4ConfigId, options: options);
+    _nextDhcp4ConfigId++;
+    await registerObject(config);
+    return config;
+  }
+
+  Future<MockNetworkManagerDHCP6Config> addDhcp6Config(
+      {Map<String, DBusValue> options = const {}}) async {
+    var config =
+        MockNetworkManagerDHCP6Config(_nextDhcp6ConfigId, options: options);
+    _nextDhcp6ConfigId++;
+    await registerObject(config);
+    return config;
+  }
+
   Future<MockNetworkManagerAccessPoint> addAccessPoint(
       {int flags = 0,
       int frequency = 0,
@@ -582,6 +650,8 @@ class MockNetworkManagerServer extends DBusClient {
     bool autoconnect = false,
     int capabilities = 0,
     int deviceType = 0,
+    MockNetworkManagerDHCP4Config? dhcp4Config,
+    MockNetworkManagerDHCP6Config? dhcp6Config,
     String driver = '',
     String driverVersion = '',
     String firmwareVersion = '',
@@ -615,6 +685,8 @@ class MockNetworkManagerServer extends DBusClient {
         autoconnect: autoconnect,
         capabilities: capabilities,
         deviceType: deviceType,
+        dhcp4Config: dhcp4Config,
+        dhcp6Config: dhcp6Config,
         driver: driver,
         driverVersion: driverVersion,
         firmwareVersion: firmwareVersion,
@@ -654,6 +726,8 @@ class MockNetworkManagerServer extends DBusClient {
       {bool default4 = false,
       bool default6 = false,
       List<MockNetworkManagerDevice> devices = const [],
+      MockNetworkManagerDHCP4Config? dhcp4Config,
+      MockNetworkManagerDHCP6Config? dhcp6Config,
       String id = '',
       MockNetworkManagerIP4Config? ip4Config,
       MockNetworkManagerIP6Config? ip6Config,
@@ -667,6 +741,8 @@ class MockNetworkManagerServer extends DBusClient {
         default4: default4,
         default6: default6,
         devices: devices,
+        dhcp4Config: dhcp4Config,
+        dhcp6Config: dhcp6Config,
         id: id,
         ip4Config: ip4Config,
         ip6Config: ip6Config,
@@ -805,6 +881,8 @@ void main() {
           NetworkManagerDeviceCapability.singleRootIOVirtualization
         }));
     expect(device.deviceType, equals(NetworkManagerDeviceType.ethernet));
+    expect(device.dhcp4Config, isNull);
+    expect(device.dhcp6Config, isNull);
     expect(device.driver, equals('DRIVER'));
     expect(device.driverVersion, equals('DRIVER-VERSION'));
     expect(device.firmwareVersion, equals('FIRMWARE-VERSION'));
@@ -943,6 +1021,42 @@ void main() {
           {'dest': 'fe80::', 'prefix': 64, 'metric': 600},
         ]));
     expect(ip6Config.searches, equals(['search6a', 'search6b']));
+
+    await client.close();
+  });
+
+  test('device dhcp config', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var dhcp4c = await nm.addDhcp4Config(options: {
+      'option4a': DBusString('192.168.0.1'),
+      'option4b': DBusUint32(42)
+    });
+    var dhcp6c = await nm.addDhcp6Config(options: {
+      'option6a': DBusString('2001:0db8:85a3:0000:0000:8a2e:0370:1234'),
+      'option6b': DBusUint32(42)
+    });
+    await nm.addDevice(dhcp4Config: dhcp4c, dhcp6Config: dhcp6c);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.dhcp4Config, isNotNull);
+    expect(device.dhcp4Config!.options,
+        equals({'option4a': '192.168.0.1', 'option4b': 42}));
+    expect(device.dhcp6Config, isNotNull);
+    expect(
+        device.dhcp6Config!.options,
+        equals({
+          'option6a': '2001:0db8:85a3:0000:0000:8a2e:0370:1234',
+          'option6b': 42
+        }));
 
     await client.close();
   });
@@ -1130,10 +1244,20 @@ void main() {
     var ip4c = await nm.addIp4Config(gateway: '192.168.0.1');
     var ip6c = await nm.addIp6Config(
         gateway: '2001:0db8:85a3:0000:0000:8a2e:0370:1234');
+    var dhcp4c = await nm.addDhcp4Config(options: {
+      'option4a': DBusString('192.168.0.1'),
+      'option4b': DBusUint32(42)
+    });
+    var dhcp6c = await nm.addDhcp6Config(options: {
+      'option6a': DBusString('2001:0db8:85a3:0000:0000:8a2e:0370:1234'),
+      'option6b': DBusUint32(42)
+    });
     await nm.addActiveConnection(
         default4: true,
         default6: true,
         devices: [d1, d2],
+        dhcp4Config: dhcp4c,
+        dhcp6Config: dhcp6c,
         id: 'ID',
         ip4Config: ip4c,
         ip6Config: ip6c,
@@ -1153,6 +1277,16 @@ void main() {
     expect(connection.devices, hasLength(2));
     expect(connection.devices[0].hwAddress, equals('DE:71:CE:00:00:01'));
     expect(connection.devices[1].hwAddress, equals('DE:71:CE:00:00:02'));
+    expect(connection.dhcp4Config, isNotNull);
+    expect(connection.dhcp4Config!.options,
+        equals({'option4a': '192.168.0.1', 'option4b': 42}));
+    expect(connection.dhcp6Config, isNotNull);
+    expect(
+        connection.dhcp6Config!.options,
+        equals({
+          'option6a': '2001:0db8:85a3:0000:0000:8a2e:0370:1234',
+          'option6b': 42
+        }));
     expect(connection.id, equals('ID'));
     expect(connection.ip4Config, isNotNull);
     expect(connection.ip4Config!.gateway, equals('192.168.0.1'));

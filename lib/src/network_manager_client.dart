@@ -1291,16 +1291,22 @@ class NetworkManagerDeviceWireless {
       _object.getInt64Property(_wirelessDeviceInterfaceName, 'LastScan') ?? -1;
 
   /// Request this device to scan for access points.
-  Future requestScan([Map<String, DBusValue> options = const {}]) async {
-    var args = [
+  Future requestScan({List<List<int>>? ssids}) async {
+    var options = <String, DBusValue>{};
+    if (ssids != null) {
+      options['ssids'] = DBusArray(
+          DBusSignature('ay'),
+          ssids.map((ssid) =>
+              DBusArray(DBusSignature('y'), ssid.map((v) => DBusByte(v)))));
+    }
+    var result =
+        await _object.callMethod(_wirelessDeviceInterfaceName, 'RequestScan', [
       DBusDict(
           DBusSignature('s'),
           DBusSignature('v'),
           options.map(
               (name, value) => MapEntry(DBusString(name), DBusVariant(value))))
-    ];
-    var result = await _object.callMethod(
-        _wirelessDeviceInterfaceName, 'RequestScan', args);
+    ]);
     var values = result.returnValues;
     if (values.isNotEmpty) {
       throw 'RequestScan returned invalid result: $values';

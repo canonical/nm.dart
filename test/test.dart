@@ -8,60 +8,140 @@ class MockNetworkManagerObject extends DBusObject {
   MockNetworkManagerObject(DBusObjectPath path) : super(path);
 }
 
-class MockNetworkManagerManagerObject extends MockNetworkManagerObject {
+class MockNetworkManagerManager extends MockNetworkManagerObject {
   final MockNetworkManagerServer server;
 
-  final int connectivity;
-  final bool connectivityCheckAvailable;
-  final bool connectivityCheckEnabled;
-  final String connectivityCheckUri;
-  final int metered;
-  final bool networkingEnabled;
-  final String primaryConnectionType = ''; // FIXME: pull from PrimaryConnection
-  final bool startup;
-  final int state;
-  final String version;
-  final bool wirelessEnabled;
-  final bool wirelessHardwareEnabled;
-
-  MockNetworkManagerManagerObject(this.server,
-      {this.connectivity = 0,
-      this.connectivityCheckAvailable = false,
-      this.connectivityCheckEnabled = false,
-      this.connectivityCheckUri = '',
-      this.metered = 0,
-      this.networkingEnabled = true,
-      this.startup = true,
-      this.state = 0,
-      this.version = '',
-      this.wirelessEnabled = true,
-      this.wirelessHardwareEnabled = true})
+  MockNetworkManagerManager(this.server)
       : super(DBusObjectPath('/org/freedesktop/NetworkManager'));
 
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
         'org.freedesktop.NetworkManager': {
+          'ActivatingConnection':
+              server.activatingConnection?.path ?? DBusObjectPath('/'),
+          'ActiveConnections': DBusArray(DBusSignature('o'),
+              server.activeConnections.map((device) => device.path)),
           'AllDevices': DBusArray(DBusSignature('o'),
               server.allDevices.map((device) => device.path)),
-          'Connectivity': DBusUint32(connectivity),
-          'ConnectivityCheckAvailable': DBusBoolean(connectivityCheckAvailable),
-          'ConnectivityCheckEnabled': DBusBoolean(connectivityCheckEnabled),
-          'ConnectivityCheckUri': DBusString(connectivityCheckUri),
+          'Capabilities': DBusArray(DBusSignature('u'),
+              server.capabilities.map((cap) => DBusUint32(cap))),
+          'Checkpoints': DBusArray(DBusSignature('o'), []), // FIXME
+          'Connectivity': DBusUint32(server.connectivity),
+          'ConnectivityCheckAvailable':
+              DBusBoolean(server.connectivityCheckAvailable),
+          'ConnectivityCheckEnabled':
+              DBusBoolean(server.connectivityCheckEnabled),
+          'ConnectivityCheckUri': DBusString(server.connectivityCheckUri),
           'Devices': DBusArray(
               DBusSignature('o'), server.devices.map((device) => device.path)),
-          'Metered': DBusUint32(metered),
-          'NetworkingEnabled': DBusBoolean(networkingEnabled),
-          'PrimaryConnectionType': DBusString(primaryConnectionType),
-          'Startup': DBusBoolean(startup),
+          'Metered': DBusUint32(server.metered),
+          'NetworkingEnabled': DBusBoolean(server.networkingEnabled),
+          'PrimaryConnection':
+              server.primaryConnection?.path ?? DBusObjectPath('/'),
+          'PrimaryConnectionType':
+              DBusString(server.primaryConnection?.type ?? ''),
+          'Startup': DBusBoolean(server.startup),
+          'State': DBusUint32(server.state),
+          'Version': DBusString(server.version),
+          'WimaxEnabled': DBusBoolean(server.wimaxEnabled),
+          'WimaxHardwareEnabled': DBusBoolean(server.wimaxHardwareEnabled),
+          'WirelessEnabled': DBusBoolean(server.wirelessEnabled),
+          'WirelessHardwareEnabled':
+              DBusBoolean(server.wirelessHardwareEnabled),
+          'WwanEnabled': DBusBoolean(server.wwanEnabled),
+          'WwanHardwareEnabled': DBusBoolean(server.wwanHardwareEnabled)
+        }
+      };
+
+  @override
+  Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
+    if (methodCall.interface != 'org.freedesktop.NetworkManager') {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
+
+    switch (methodCall.name) {
+      case 'ActivateConnection':
+        return DBusMethodSuccessResponse([DBusObjectPath('/')]);
+      case 'CheckConnectivity':
+        return DBusMethodSuccessResponse([DBusUint32(server.connectivity)]);
+      case 'DeactivateConnection':
+        return DBusMethodSuccessResponse([]);
+      case 'Enable':
+        return DBusMethodSuccessResponse([]);
+      case 'GetAllDevices':
+        return DBusMethodSuccessResponse([DBusArray(DBusSignature('o'), [])]);
+      case 'GetDeviceByIpIface':
+        return DBusMethodSuccessResponse([DBusObjectPath('/')]);
+      case 'GetDevices':
+        return DBusMethodSuccessResponse([DBusArray(DBusSignature('o'), [])]);
+      case 'GetPermissions':
+        return DBusMethodSuccessResponse(
+            [DBusDict(DBusSignature('s'), DBusSignature('s'), {})]);
+      case 'Reload':
+        return DBusMethodSuccessResponse([]);
+      case 'SetLogging':
+        return DBusMethodSuccessResponse([]);
+      case 'Sleep':
+        return DBusMethodSuccessResponse([]);
+      default:
+        return DBusMethodErrorResponse.unknownMethod();
+    }
+  }
+}
+
+class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
+  final bool default4;
+  final bool default6;
+  final List<MockNetworkManagerDevice> devices;
+  final String id;
+  final MockNetworkManagerIP4Config? ip4Config;
+  final MockNetworkManagerIP6Config? ip6Config;
+  final int state;
+  final int stateFlags;
+  final String type;
+  final String uuid;
+  final bool vpn;
+
+  MockNetworkManagerActiveConnection(int number,
+      {this.default4 = false,
+      this.default6 = false,
+      this.devices = const [],
+      this.id = '',
+      this.ip4Config,
+      this.ip6Config,
+      this.state = 0,
+      this.stateFlags = 0,
+      this.type = '',
+      this.uuid = '',
+      this.vpn = false})
+      : super(DBusObjectPath(
+            '/org/freedesktop/NetworkManager/ActiveConnection/$number'));
+
+  @override
+  Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
+        'org.freedesktop.NetworkManager.Connection.Active': {
+          'Connection': DBusObjectPath('/'), // FIXME
+          'Devices': DBusArray(
+              DBusSignature('o'), devices.map((device) => device.path)),
+          'Default': DBusBoolean(default4),
+          'Default6': DBusBoolean(default6),
+          'Dhcp4Config': DBusObjectPath('/'), // FIXME
+          'Dhcp6Config': DBusObjectPath('/'), // FIXME
+          'Id': DBusString(id),
+          'Ip4Config': ip4Config?.path ?? DBusObjectPath('/'),
+          'Ip6Config': ip6Config?.path ?? DBusObjectPath('/'),
+          'Master': DBusObjectPath('/'), // FIXME
+          'SpecificObject': DBusObjectPath('/'), // FIXME
           'State': DBusUint32(state),
-          'Version': DBusString(version),
-          'WirelessEnabled': DBusBoolean(wirelessEnabled),
-          'WirelessHardwareEnabled': DBusBoolean(wirelessHardwareEnabled),
+          'StateFlags': DBusUint32(stateFlags),
+          'Type': DBusString(type),
+          'Uuid': DBusString(uuid),
+          'Vpn': DBusBoolean(vpn),
         }
       };
 }
 
-class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
+class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final bool autoconnect;
   final int capabilities;
   final int deviceType;
@@ -72,9 +152,9 @@ class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
   final String hwAddress;
   final String interface;
   final int interfaceFlags;
-  final MockNetworkManagerIP4ConfigObject? ip4Config;
+  final MockNetworkManagerIP4Config? ip4Config;
   final int ip4Connectivity;
-  final MockNetworkManagerIP6ConfigObject? ip6Config;
+  final MockNetworkManagerIP6Config? ip6Config;
   final int ip6Connectivity;
   final String ipInterface;
   final bool managed;
@@ -88,8 +168,8 @@ class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
   final String udi;
 
   final bool isWireless;
-  final List<MockNetworkManagerAccessPointObject> accessPoints;
-  final MockNetworkManagerAccessPointObject? activeAccessPoint;
+  final List<MockNetworkManagerAccessPoint> accessPoints;
+  final MockNetworkManagerAccessPoint? activeAccessPoint;
   final int bitrate;
   final int lastScan;
   final int wirelessMode;
@@ -99,7 +179,7 @@ class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
   bool disconnected = false;
   bool deleted = false;
 
-  MockNetworkManagerDeviceObject(int id,
+  MockNetworkManagerDevice(int id,
       {this.autoconnect = false,
       this.capabilities = 0,
       this.deviceType = 0,
@@ -200,7 +280,7 @@ class MockNetworkManagerDeviceObject extends MockNetworkManagerObject {
   }
 }
 
-class MockNetworkManagerAccessPointObject extends MockNetworkManagerObject {
+class MockNetworkManagerAccessPoint extends MockNetworkManagerObject {
   final int flags;
   final int frequency;
   final String hwAddress;
@@ -212,7 +292,7 @@ class MockNetworkManagerAccessPointObject extends MockNetworkManagerObject {
   final int strength;
   final int wpaFlags;
 
-  MockNetworkManagerAccessPointObject(int id,
+  MockNetworkManagerAccessPoint(int id,
       {this.flags = 0,
       this.frequency = 0,
       this.hwAddress = '',
@@ -243,7 +323,7 @@ class MockNetworkManagerAccessPointObject extends MockNetworkManagerObject {
       };
 }
 
-class MockNetworkManagerIP4ConfigObject extends MockNetworkManagerObject {
+class MockNetworkManagerIP4Config extends MockNetworkManagerObject {
   final List<Map<String, DBusValue>> addressData;
   final List<String> dnsOptions;
   final int dnsPriority;
@@ -254,7 +334,7 @@ class MockNetworkManagerIP4ConfigObject extends MockNetworkManagerObject {
   final List<String> searches;
   final List<String> winsServerData;
 
-  MockNetworkManagerIP4ConfigObject(int id,
+  MockNetworkManagerIP4Config(int id,
       {this.addressData = const [],
       this.dnsOptions = const [],
       this.dnsPriority = 0,
@@ -304,7 +384,7 @@ class MockNetworkManagerIP4ConfigObject extends MockNetworkManagerObject {
       };
 }
 
-class MockNetworkManagerIP6ConfigObject extends MockNetworkManagerObject {
+class MockNetworkManagerIP6Config extends MockNetworkManagerObject {
   final List<Map<String, DBusValue>> addressData;
   final List<String> dnsOptions;
   final int dnsPriority;
@@ -314,7 +394,7 @@ class MockNetworkManagerIP6ConfigObject extends MockNetworkManagerObject {
   final List<Map<String, DBusValue>> routeData;
   final List<String> searches;
 
-  MockNetworkManagerIP6ConfigObject(int id,
+  MockNetworkManagerIP6Config(int id,
       {this.addressData = const [],
       this.dnsOptions = const [],
       this.dnsPriority = 0,
@@ -362,35 +442,58 @@ class MockNetworkManagerIP6ConfigObject extends MockNetworkManagerObject {
 }
 
 class MockNetworkManagerServer extends DBusClient {
+  final List<int> capabilities;
+  final int connectivity;
+  final bool connectivityCheckAvailable;
+  final bool connectivityCheckEnabled;
+  final String connectivityCheckUri;
+  final int metered;
+  final bool networkingEnabled;
+  final bool startup;
+  final int state;
+  final String version;
+  final bool wimaxEnabled;
+  final bool wimaxHardwareEnabled;
+  final bool wirelessEnabled;
+  final bool wirelessHardwareEnabled;
+  final bool wwanEnabled;
+  final bool wwanHardwareEnabled;
+
   final DBusObject _root;
-  late final MockNetworkManagerManagerObject _manager;
+  late final MockNetworkManagerManager _manager;
   var _nextIp4ConfigId = 1;
   var _nextIp6ConfigId = 1;
   var _nextAccessPointId = 1;
   var _nextDeviceId = 1;
+  var _nextActiveConnectionId = 1;
 
-  final allDevices = <MockNetworkManagerDeviceObject>[];
-  final devices = <MockNetworkManagerDeviceObject>[];
+  final allDevices = <MockNetworkManagerDevice>[];
+  final devices = <MockNetworkManagerDevice>[];
+  MockNetworkManagerActiveConnection? activatingConnection;
+  final activeConnections = <MockNetworkManagerActiveConnection>[];
+  MockNetworkManagerActiveConnection? primaryConnection;
 
   MockNetworkManagerServer(DBusAddress clientAddress,
-      {int connectivity = 0,
-      bool connectivityCheckAvailable = false,
-      bool connectivityCheckEnabled = false,
-      String connectivityCheckUri = '',
-      bool startup = true,
-      int state = 0,
-      String version = ''})
+      {this.capabilities = const [],
+      this.connectivity = 0,
+      this.connectivityCheckAvailable = false,
+      this.connectivityCheckEnabled = false,
+      this.connectivityCheckUri = '',
+      this.metered = 0,
+      this.networkingEnabled = true,
+      this.startup = false,
+      this.state = 0,
+      this.version = '',
+      this.wimaxEnabled = false,
+      this.wimaxHardwareEnabled = false,
+      this.wirelessEnabled = false,
+      this.wirelessHardwareEnabled = false,
+      this.wwanEnabled = false,
+      this.wwanHardwareEnabled = false})
       : _root = DBusObject(DBusObjectPath('/org/freedesktop'),
             isObjectManager: true),
         super(clientAddress) {
-    _manager = MockNetworkManagerManagerObject(this,
-        connectivity: connectivity,
-        connectivityCheckAvailable: connectivityCheckAvailable,
-        connectivityCheckEnabled: connectivityCheckEnabled,
-        connectivityCheckUri: connectivityCheckUri,
-        startup: startup,
-        state: state,
-        version: version);
+    _manager = MockNetworkManagerManager(this);
   }
 
   Future<void> start() async {
@@ -399,7 +502,7 @@ class MockNetworkManagerServer extends DBusClient {
     await registerObject(_manager);
   }
 
-  Future<MockNetworkManagerIP4ConfigObject> addIp4Config({
+  Future<MockNetworkManagerIP4Config> addIp4Config({
     List<Map<String, DBusValue>> addressData = const [],
     List<String> dnsOptions = const [],
     int dnsPriority = 0,
@@ -410,7 +513,7 @@ class MockNetworkManagerServer extends DBusClient {
     List<String> searches = const [],
     List<String> winsServerData = const [],
   }) async {
-    var config = MockNetworkManagerIP4ConfigObject(_nextIp4ConfigId,
+    var config = MockNetworkManagerIP4Config(_nextIp4ConfigId,
         addressData: addressData,
         dnsOptions: dnsOptions,
         dnsPriority: dnsPriority,
@@ -425,7 +528,7 @@ class MockNetworkManagerServer extends DBusClient {
     return config;
   }
 
-  Future<MockNetworkManagerIP6ConfigObject> addIp6Config(
+  Future<MockNetworkManagerIP6Config> addIp6Config(
       {List<Map<String, DBusValue>> addressData = const [],
       List<String> dnsOptions = const [],
       int dnsPriority = 0,
@@ -434,7 +537,7 @@ class MockNetworkManagerServer extends DBusClient {
       List<Map<String, DBusValue>> nameserverData = const [],
       List<Map<String, DBusValue>> routeData = const [],
       List<String> searches = const []}) async {
-    var config = MockNetworkManagerIP6ConfigObject(_nextIp6ConfigId,
+    var config = MockNetworkManagerIP6Config(_nextIp6ConfigId,
         addressData: addressData,
         dnsOptions: dnsOptions,
         dnsPriority: dnsPriority,
@@ -448,7 +551,7 @@ class MockNetworkManagerServer extends DBusClient {
     return config;
   }
 
-  Future<MockNetworkManagerAccessPointObject> addAccessPoint(
+  Future<MockNetworkManagerAccessPoint> addAccessPoint(
       {int flags = 0,
       int frequency = 0,
       String hwAddress = '',
@@ -459,7 +562,7 @@ class MockNetworkManagerServer extends DBusClient {
       List<int> ssid = const [],
       int strength = 0,
       int wpaFlags = 0}) async {
-    var accessPoint = MockNetworkManagerAccessPointObject(_nextAccessPointId,
+    var accessPoint = MockNetworkManagerAccessPoint(_nextAccessPointId,
         flags: flags,
         frequency: frequency,
         hwAddress: hwAddress,
@@ -475,7 +578,7 @@ class MockNetworkManagerServer extends DBusClient {
     return accessPoint;
   }
 
-  Future<MockNetworkManagerDeviceObject> addDevice({
+  Future<MockNetworkManagerDevice> addDevice({
     bool autoconnect = false,
     int capabilities = 0,
     int deviceType = 0,
@@ -485,9 +588,9 @@ class MockNetworkManagerServer extends DBusClient {
     String hwAddress = '',
     String interface = '',
     int interfaceFlags = 0,
-    MockNetworkManagerIP4ConfigObject? ip4Config,
+    MockNetworkManagerIP4Config? ip4Config,
     int ip4Connectivity = 0,
-    MockNetworkManagerIP6ConfigObject? ip6Config,
+    MockNetworkManagerIP6Config? ip6Config,
     int ip6Connectivity = 0,
     String ipInterface = '',
     bool managed = false,
@@ -500,15 +603,15 @@ class MockNetworkManagerServer extends DBusClient {
     int state = 0,
     String udi = '',
     bool isWireless = false,
-    List<MockNetworkManagerAccessPointObject> accessPoints = const [],
-    MockNetworkManagerAccessPointObject? activeAccessPoint,
+    List<MockNetworkManagerAccessPoint> accessPoints = const [],
+    MockNetworkManagerAccessPoint? activeAccessPoint,
     int bitrate = 0,
     int lastScan = 0,
     int wirelessMode = 0,
     String permHwAddress = '',
     int wirelessCapabilities = 0,
   }) async {
-    var device = MockNetworkManagerDeviceObject(_nextDeviceId,
+    var device = MockNetworkManagerDevice(_nextDeviceId,
         autoconnect: autoconnect,
         capabilities: capabilities,
         deviceType: deviceType,
@@ -545,6 +648,37 @@ class MockNetworkManagerServer extends DBusClient {
     allDevices.add(device);
     devices.add(device);
     return device;
+  }
+
+  Future<MockNetworkManagerActiveConnection> addActiveConnection(
+      {bool default4 = false,
+      bool default6 = false,
+      List<MockNetworkManagerDevice> devices = const [],
+      String id = '',
+      MockNetworkManagerIP4Config? ip4Config,
+      MockNetworkManagerIP6Config? ip6Config,
+      int state = 0,
+      int stateFlags = 0,
+      String type = '',
+      String uuid = '',
+      bool vpn = false}) async {
+    var activeConnection = MockNetworkManagerActiveConnection(
+        _nextActiveConnectionId,
+        default4: default4,
+        default6: default6,
+        devices: devices,
+        id: id,
+        ip4Config: ip4Config,
+        ip6Config: ip6Config,
+        state: state,
+        stateFlags: stateFlags,
+        type: type,
+        uuid: uuid,
+        vpn: vpn);
+    _nextActiveConnectionId++;
+    await registerObject(activeConnection);
+    activeConnections.add(activeConnection);
+    return activeConnection;
   }
 }
 
@@ -942,6 +1076,106 @@ void main() {
           NetworkManagerDeviceWifiCapability.rsn,
           NetworkManagerDeviceWifiCapability.mesh
         }));
+
+    await client.close();
+  });
+
+  test('no active connections', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.activeConnections, isEmpty);
+
+    await client.close();
+  });
+
+  test('active connections', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addActiveConnection(id: 'connection1');
+    await nm.addActiveConnection(id: 'connection2');
+    await nm.addActiveConnection(id: 'connection3');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.activeConnections, hasLength(3));
+    expect(client.activeConnections[0].id, equals('connection1'));
+    expect(client.activeConnections[1].id, equals('connection2'));
+    expect(client.activeConnections[2].id, equals('connection3'));
+
+    await client.close();
+  });
+
+  test('active connection properties', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+    var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
+    var ip4c = await nm.addIp4Config(gateway: '192.168.0.1');
+    var ip6c = await nm.addIp6Config(
+        gateway: '2001:0db8:85a3:0000:0000:8a2e:0370:1234');
+    await nm.addActiveConnection(
+        default4: true,
+        default6: true,
+        devices: [d1, d2],
+        id: 'ID',
+        ip4Config: ip4c,
+        ip6Config: ip6c,
+        state: 1,
+        stateFlags: 0xff,
+        type: '802-3-ethernet',
+        uuid: '123e4567-e89b-12d3-a456-426614174000',
+        vpn: true);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.activeConnections, hasLength(1));
+    var connection = client.activeConnections[0];
+    expect(connection.default4, isTrue);
+    expect(connection.default6, isTrue);
+    expect(connection.devices, hasLength(2));
+    expect(connection.devices[0].hwAddress, equals('DE:71:CE:00:00:01'));
+    expect(connection.devices[1].hwAddress, equals('DE:71:CE:00:00:02'));
+    expect(connection.id, equals('ID'));
+    expect(connection.ip4Config, isNotNull);
+    expect(connection.ip4Config!.gateway, equals('192.168.0.1'));
+    expect(connection.ip6Config, isNotNull);
+    expect(connection.ip6Config!.gateway,
+        equals('2001:0db8:85a3:0000:0000:8a2e:0370:1234'));
+    expect(connection.state,
+        equals(NetworkManagerActiveConnectionState.activating));
+    expect(
+        connection.stateFlags,
+        equals({
+          NetworkManagerActivationStateFlag.isMaster,
+          NetworkManagerActivationStateFlag.isSlave,
+          NetworkManagerActivationStateFlag.layer2Ready,
+          NetworkManagerActivationStateFlag.ip4Ready,
+          NetworkManagerActivationStateFlag.ip6Ready,
+          NetworkManagerActivationStateFlag.masterHasSlaves,
+          NetworkManagerActivationStateFlag.lifetimeBoundToProfileVisibility,
+          NetworkManagerActivationStateFlag.external
+        }));
+    expect(connection.type, equals('802-3-ethernet'));
+    expect(connection.uuid, equals('123e4567-e89b-12d3-a456-426614174000'));
+    expect(connection.vpn, isTrue);
 
     await client.close();
   });

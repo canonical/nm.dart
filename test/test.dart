@@ -89,6 +89,42 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
   }
 }
 
+class MockNetworkManagerSettings extends MockNetworkManagerObject {
+  final MockNetworkManagerServer server;
+
+  MockNetworkManagerSettings(this.server)
+      : super(DBusObjectPath('/org/freedesktop/NetworkManager/Settings'));
+
+  @override
+  Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
+        'org.freedesktop.NetworkManager.Settings': {
+          'CanModify': DBusBoolean(server.settingsCanModify),
+          'Connections': DBusArray(DBusSignature('o'),
+              server.connectionSettings.map((setting) => setting.path)),
+          'Hostname': DBusString(server.hostname)
+        }
+      };
+}
+
+class MockNetworkManagerConnectionSettings extends MockNetworkManagerObject {
+  final String filename;
+  final int flags;
+  final bool unsaved;
+
+  MockNetworkManagerConnectionSettings(int id,
+      {this.filename = '', this.flags = 0, this.unsaved = false})
+      : super(DBusObjectPath('/org/freedesktop/NetworkManager/Settings/$id'));
+
+  @override
+  Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
+        'org.freedesktop.NetworkManager.Settings.Connection': {
+          'Filename': DBusString(filename),
+          'Flags': DBusUint32(flags),
+          'Unsaved': DBusBoolean(unsaved)
+        }
+      };
+}
+
 class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
   final bool default4;
   final bool default6;
@@ -495,8 +531,10 @@ class MockNetworkManagerServer extends DBusClient {
   final bool connectivityCheckAvailable;
   final bool connectivityCheckEnabled;
   final String connectivityCheckUri;
+  final String hostname;
   final int metered;
   final bool networkingEnabled;
+  final bool settingsCanModify;
   final bool startup;
   final int state;
   final String version;
@@ -509,6 +547,7 @@ class MockNetworkManagerServer extends DBusClient {
 
   final DBusObject _root;
   late final MockNetworkManagerManager _manager;
+  late final MockNetworkManagerSettings _settings;
   var _nextIp4ConfigId = 1;
   var _nextIp6ConfigId = 1;
   var _nextDhcp4ConfigId = 1;
@@ -516,12 +555,14 @@ class MockNetworkManagerServer extends DBusClient {
   var _nextAccessPointId = 1;
   var _nextDeviceId = 1;
   var _nextActiveConnectionId = 1;
+  var _nextSettingsId = 1;
 
   final allDevices = <MockNetworkManagerDevice>[];
   final devices = <MockNetworkManagerDevice>[];
   MockNetworkManagerActiveConnection? activatingConnection;
   final activeConnections = <MockNetworkManagerActiveConnection>[];
   MockNetworkManagerActiveConnection? primaryConnection;
+  final connectionSettings = <MockNetworkManagerConnectionSettings>[];
 
   MockNetworkManagerServer(DBusAddress clientAddress,
       {this.capabilities = const [],
@@ -529,8 +570,10 @@ class MockNetworkManagerServer extends DBusClient {
       this.connectivityCheckAvailable = false,
       this.connectivityCheckEnabled = false,
       this.connectivityCheckUri = '',
+      this.hostname = '',
       this.metered = 0,
-      this.networkingEnabled = true,
+      this.networkingEnabled = false,
+      this.settingsCanModify = false,
       this.startup = false,
       this.state = 0,
       this.version = '',
@@ -544,12 +587,14 @@ class MockNetworkManagerServer extends DBusClient {
             isObjectManager: true),
         super(clientAddress) {
     _manager = MockNetworkManagerManager(this);
+    _settings = MockNetworkManagerSettings(this);
   }
 
   Future<void> start() async {
     await requestName('org.freedesktop.NetworkManager');
     await registerObject(_root);
     await registerObject(_manager);
+    await registerObject(_settings);
   }
 
   Future<MockNetworkManagerIP4Config> addIp4Config({
@@ -644,6 +689,16 @@ class MockNetworkManagerServer extends DBusClient {
     _nextAccessPointId++;
     await registerObject(accessPoint);
     return accessPoint;
+  }
+
+  Future<MockNetworkManagerConnectionSettings> addConnectionSettings(
+      {String filename = '', int flags = 0, bool unsaved = false}) async {
+    var settings = MockNetworkManagerConnectionSettings(_nextSettingsId,
+        filename: filename, flags: flags, unsaved: unsaved);
+    _nextSettingsId++;
+    await registerObject(settings);
+    connectionSettings.add(settings);
+    return settings;
   }
 
   Future<MockNetworkManagerDevice> addDevice({
@@ -794,6 +849,79 @@ void main() {
     expect(client.connectivityCheckEnabled, isTrue);
     expect(client.connectivityCheckUri, equals('http://example.com'));
     expect(client.connectivity, NetworkManagerConnectivityState.full);
+
+    await client.close();
+  });
+
+  test('hostname', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress, hostname: 'HOSTNAME');
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.hostname, equals('HOSTNAME'));
+
+    await client.close();
+  });
+
+  test('no settings', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, isEmpty);
+
+    await client.close();
+  });
+
+  test('settings', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress, settingsCanModify: true);
+    await nm.start();
+    await nm.addConnectionSettings(
+        filename:
+            '/etc/NetworkManager/system-connections/Ethernet.nmconnection');
+    await nm.addConnectionSettings(
+        filename: '/etc/NetworkManager/system-connections/accesspoint1');
+    await nm.addConnectionSettings(
+        filename: '/etc/NetworkManager/system-connections/accesspoint2',
+        unsaved: true,
+        flags: 0xf);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.canModify, isTrue);
+    expect(client.settings.connections, hasLength(3));
+    expect(client.settings.connections[0].filename,
+        equals('/etc/NetworkManager/system-connections/Ethernet.nmconnection'));
+    expect(client.settings.connections[1].filename,
+        equals('/etc/NetworkManager/system-connections/accesspoint1'));
+    expect(client.settings.connections[2].filename,
+        equals('/etc/NetworkManager/system-connections/accesspoint2'));
+    expect(client.settings.connections[2].unsaved, isTrue);
+    expect(
+        client.settings.connections[2].flags,
+        equals({
+          NetworkManagerConnectionFlag.unsaved,
+          NetworkManagerConnectionFlag.networkManagerGenerated,
+          NetworkManagerConnectionFlag.volatile,
+          NetworkManagerConnectionFlag.external
+        }));
 
     await client.close();
   });

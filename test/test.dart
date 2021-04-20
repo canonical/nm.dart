@@ -302,6 +302,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final int mtu;
   final bool nmPluginMissing;
   final String path_;
+  final String permHwAddress;
   final String physicalPortId;
   final bool real;
   final int state;
@@ -310,13 +311,16 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final bool hasGeneric;
   final String typeDescription;
 
+  final bool hasWired;
+  final List<String> s390Subchannels;
+  final int speed;
+
   final bool hasWireless;
   final List<MockNetworkManagerAccessPoint> accessPoints;
   final MockNetworkManagerAccessPoint? activeAccessPoint;
   final int bitrate;
   final int lastScan;
   final int wirelessMode;
-  final String permHwAddress;
   final int wirelessCapabilities;
 
   final bool hasStatistics;
@@ -350,19 +354,22 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.mtu = 0,
       this.nmPluginMissing = false,
       this.path_ = '',
+      this.permHwAddress = '',
       this.physicalPortId = '',
       this.real = true,
       this.state = 0,
       this.udi = '',
       this.hasGeneric = false,
       this.typeDescription = '',
+      this.hasWired = false,
+      this.speed = 0,
+      this.s390Subchannels = const [],
       this.hasWireless = false,
       this.accessPoints = const [],
       this.activeAccessPoint,
       this.bitrate = 0,
       this.lastScan = 0,
       this.wirelessMode = 0,
-      this.permHwAddress = '',
       this.wirelessCapabilities = 0,
       this.hasStatistics = false,
       this.refreshRateMs = 0,
@@ -405,8 +412,16 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
     if (hasGeneric) {
       interfacesAndProperties_[
           'org.freedesktop.NetworkManager.Device.Generic'] = {
-        'HwAddress': DBusString(hwAddress),
         'TypeDescription': DBusString(typeDescription)
+      };
+    }
+    if (hasWired) {
+      interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Wired'] =
+          {
+        'S390Subchannels': DBusArray(DBusSignature('s'),
+            s390Subchannels.map((channel) => DBusString(channel))),
+        'Speed': DBusUint32(speed),
+        'PermHwAddress': DBusString(permHwAddress)
       };
     }
     if (hasWireless) {
@@ -441,6 +456,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasGeneric &&
         interface == 'org.freedesktop.NetworkManager.Device.Generic') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasWired &&
+        interface == 'org.freedesktop.NetworkManager.Device.Wired') {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasWireless &&
         interface == 'org.freedesktop.NetworkManager.Device.Wireless') {
@@ -888,6 +906,9 @@ class MockNetworkManagerServer extends DBusClient {
       String udi = '',
       bool hasGeneric = false,
       String typeDescription = '',
+      bool hasWired = false,
+      int speed = 0,
+      List<String> s390Subchannels = const [],
       bool hasWireless = false,
       List<MockNetworkManagerAccessPoint> accessPoints = const [],
       MockNetworkManagerAccessPoint? activeAccessPoint,
@@ -928,6 +949,9 @@ class MockNetworkManagerServer extends DBusClient {
         udi: udi,
         hasGeneric: hasGeneric,
         typeDescription: typeDescription,
+        hasWired: hasWired,
+        s390Subchannels: s390Subchannels,
+        speed: speed,
         hasWireless: hasWireless,
         accessPoints: accessPoints,
         activeAccessPoint: activeAccessPoint,
@@ -1598,6 +1622,28 @@ void main() {
     var device = client.devices[0];
     expect(device.generic, isNotNull);
     expect(device.generic.typeDescription, equals('TYPE-DESCRIPTION'));
+
+    await client.close();
+  });
+
+  test('wired device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(
+        hasWired: true, permHwAddress: 'DE:71:CE:00:00:01', speed: 100);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.wired, isNotNull);
+    expect(device.wired.permHwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.wired.speed, equals(100));
 
     await client.close();
   });

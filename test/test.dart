@@ -104,6 +104,29 @@ class MockNetworkManagerSettings extends MockNetworkManagerObject {
           'Hostname': DBusString(server.hostname)
         }
       };
+
+  @override
+  Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
+    if (methodCall.interface != 'org.freedesktop.NetworkManager.Settings') {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
+
+    switch (methodCall.name) {
+      case 'AddConnection':
+        var connection = await server.addConnectionSettings();
+        return DBusMethodSuccessResponse([connection.path]);
+      case 'AddConnectionUnsaved':
+        var connection = await server.addConnectionSettings(unsaved: true);
+        return DBusMethodSuccessResponse([connection.path]);
+      case 'ListConnections':
+        return DBusMethodSuccessResponse([
+          DBusArray(DBusSignature('o'),
+              server.connectionSettings.map((setting) => setting.path))
+        ]);
+      default:
+        return DBusMethodErrorResponse.unknownMethod();
+    }
+  }
 }
 
 class MockNetworkManagerConnectionSettings extends MockNetworkManagerObject {
@@ -1438,6 +1461,44 @@ void main() {
     expect(connection.type, equals('802-3-ethernet'));
     expect(connection.uuid, equals('123e4567-e89b-12d3-a456-426614174000'));
     expect(connection.vpn, isTrue);
+
+    await client.close();
+  });
+
+  test('add connection', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    var connection = await client.settings.addConnection({});
+    expect(connection, isNotNull);
+    expect(nm.connectionSettings, hasLength(1));
+    expect(nm.connectionSettings[0].unsaved, isFalse);
+
+    await client.close();
+  });
+
+  test('add connection unsaved', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    var connection = await client.settings.addConnectionUnsaved({});
+    expect(connection, isNotNull);
+    expect(nm.connectionSettings, hasLength(1));
+    expect(nm.connectionSettings[0].unsaved, isTrue);
 
     await client.close();
   });

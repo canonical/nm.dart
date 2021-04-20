@@ -522,6 +522,50 @@ class NetworkManagerSettings {
   /// True if connections can be added or modified.
   bool get canModify =>
       _object.getBooleanProperty(_settingsInterfaceName, 'CanModify') ?? false;
+
+  /// Add new connection and save it to disk.
+  Future<NetworkManagerSettingsConnection> addConnection(
+      Map<String, Map<String, DBusValue>> connection) async {
+    var result =
+        await _object.callMethod(_settingsInterfaceName, 'AddConnection', [
+      DBusDict(
+          DBusSignature('s'),
+          DBusSignature('a{sv}'),
+          connection.map((key, value) => MapEntry(
+              DBusString(key),
+              DBusDict(
+                  DBusSignature('s'),
+                  DBusSignature('v'),
+                  value.map((key, value) =>
+                      MapEntry(DBusString(key), DBusVariant(value)))))))
+    ]);
+    if (result.signature != DBusSignature('o')) {
+      throw 'org.freedesktop.NetworkManager.Settings.AddConnection returned invalid result: ${result.returnValues}';
+    }
+    return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
+  }
+
+  /// Add new connection but do not save it to disk immediately.
+  Future<NetworkManagerSettingsConnection> addConnectionUnsaved(
+      Map<String, Map<String, DBusValue>> connection) async {
+    var result = await _object
+        .callMethod(_settingsInterfaceName, 'AddConnectionUnsaved', [
+      DBusDict(
+          DBusSignature('s'),
+          DBusSignature('a{sv}'),
+          connection.map((key, value) => MapEntry(
+              DBusString(key),
+              DBusDict(
+                  DBusSignature('s'),
+                  DBusSignature('v'),
+                  value.map((key, value) =>
+                      MapEntry(DBusString(key), DBusVariant(value)))))))
+    ]);
+    if (result.signature != DBusSignature('o')) {
+      throw 'org.freedesktop.NetworkManager.Settings.AddConnection returned invalid result: ${result.returnValues}';
+    }
+    return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
+  }
 }
 
 /// Settings for a connection.

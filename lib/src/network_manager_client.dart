@@ -923,16 +923,20 @@ class NetworkManagerDevice {
       _object.getBooleanProperty(_deviceInterfaceName, 'Managed') ?? false;
 
   /// Sets if this device is being managed by NetworkManager.
-  set managed(bool value) =>
-      _object.setProperty(_deviceInterfaceName, 'Managed', DBusBoolean(value));
+  Future<void> setManaged(bool value) async {
+    await _object.setProperty(
+        _deviceInterfaceName, 'Managed', DBusBoolean(value));
+  }
 
   /// True if this device is allowed to automatically connect.
   bool get autoconnect =>
       _object.getBooleanProperty(_deviceInterfaceName, 'Autoconnect') ?? false;
 
   /// Sets if this device is allowed to automatically connect.
-  set autoconnect(bool value) => _object.setProperty(
-      _deviceInterfaceName, 'Autoconnect', DBusBoolean(value));
+  Future<void> setAutoconnect(bool value) async {
+    await _object.setProperty(
+        _deviceInterfaceName, 'Autoconnect', DBusBoolean(value));
+  }
 
   /// True if this device is missing firware required for it to operate.
   bool get firmwareMissing =>
@@ -2140,8 +2144,8 @@ class NetworkManagerClient {
   }
 
   /// Sets if wireless network is enabled.
-  set wirelessEnabled(bool value) {
-    _manager?.setProperty(
+  Future<void> setWirelessEnabled(bool value) async {
+    await _manager?.setProperty(
       _managerInterfaceName,
       'WirelessEnabled',
       DBusBoolean(value),
@@ -2162,8 +2166,8 @@ class NetworkManagerClient {
   }
 
   /// Sets if mobile broadband is enabled.
-  set wwanEnabled(bool value) {
-    _manager?.setProperty(
+  Future<void> setWwanEnabled(bool value) async {
+    await _manager?.setProperty(
       _managerInterfaceName,
       'WwanEnabled',
       DBusBoolean(value),
@@ -2265,11 +2269,13 @@ class NetworkManagerClient {
   }
 
   /// Sets if connectivity checking is enabled.
-  set connectivityCheckEnabled(bool value) => _manager?.setProperty(
-        _managerInterfaceName,
-        'ConnectivityCheckEnabled',
-        DBusBoolean(value),
-      );
+  Future<void> setConnectivityCheckEnabled(bool value) async {
+    await _manager?.setProperty(
+      _managerInterfaceName,
+      'ConnectivityCheckEnabled',
+      DBusBoolean(value),
+    );
+  }
 
   /// URI used for connectivity checking.
   String get connectivityCheckUri {

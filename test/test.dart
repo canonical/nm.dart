@@ -316,6 +316,11 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final String permHwAddress;
   final int wirelessCapabilities;
 
+  final bool hasStatistics;
+  int refreshRateMs;
+  final int rxBytes;
+  final int txBytes;
+
   bool disconnected = false;
   bool deleted = false;
 
@@ -353,7 +358,11 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.lastScan = 0,
       this.wirelessMode = 0,
       this.permHwAddress = '',
-      this.wirelessCapabilities = 0})
+      this.wirelessCapabilities = 0,
+      this.hasStatistics = false,
+      this.refreshRateMs = 0,
+      this.rxBytes = 0,
+      this.txBytes = 0})
       : super(DBusObjectPath('/org/freedesktop/NetworkManager/Devices/$id'));
 
   @override
@@ -401,8 +410,37 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'WirelessCapabilities': DBusUint32(wirelessCapabilities)
       };
     }
+    if (hasStatistics) {
+      interfacesAndProperties_[
+          'org.freedesktop.NetworkManager.Device.Statistics'] = {
+        'RefreshRateMs': DBusUint32(refreshRateMs),
+        'RxBytes': DBusUint64(rxBytes),
+        'TxBytes': DBusUint64(txBytes)
+      };
+    }
 
     return interfacesAndProperties_;
+  }
+
+  @override
+  Future<DBusMethodResponse> setProperty(
+      String interface, String name, DBusValue value) async {
+    if (interface == 'org.freedesktop.NetworkManager.Device') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (isWireless &&
+        interface == 'org.freedesktop.NetworkManager.Device.Wireless') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasStatistics &&
+        interface == 'org.freedesktop.NetworkManager.Device.Statistics') {
+      if (name == 'RefreshRateMs') {
+        refreshRateMs = (value as DBusUint32).value;
+        return DBusMethodSuccessResponse();
+      } else {
+        return DBusMethodErrorResponse.propertyReadOnly();
+      }
+    } else {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
   }
 
   @override
@@ -807,41 +845,44 @@ class MockNetworkManagerServer extends DBusClient {
     return s;
   }
 
-  Future<MockNetworkManagerDevice> addDevice({
-    bool autoconnect = false,
-    int capabilities = 0,
-    int deviceType = 0,
-    MockNetworkManagerDHCP4Config? dhcp4Config,
-    MockNetworkManagerDHCP6Config? dhcp6Config,
-    String driver = '',
-    String driverVersion = '',
-    String firmwareVersion = '',
-    String hwAddress = '',
-    String interface = '',
-    int interfaceFlags = 0,
-    MockNetworkManagerIP4Config? ip4Config,
-    int ip4Connectivity = 0,
-    MockNetworkManagerIP6Config? ip6Config,
-    int ip6Connectivity = 0,
-    String ipInterface = '',
-    bool managed = false,
-    int metered = 0,
-    int mtu = 0,
-    bool nmPluginMissing = false,
-    String path = '',
-    String physicalPortId = '',
-    bool real = true,
-    int state = 0,
-    String udi = '',
-    bool isWireless = false,
-    List<MockNetworkManagerAccessPoint> accessPoints = const [],
-    MockNetworkManagerAccessPoint? activeAccessPoint,
-    int bitrate = 0,
-    int lastScan = 0,
-    int wirelessMode = 0,
-    String permHwAddress = '',
-    int wirelessCapabilities = 0,
-  }) async {
+  Future<MockNetworkManagerDevice> addDevice(
+      {bool autoconnect = false,
+      int capabilities = 0,
+      int deviceType = 0,
+      MockNetworkManagerDHCP4Config? dhcp4Config,
+      MockNetworkManagerDHCP6Config? dhcp6Config,
+      String driver = '',
+      String driverVersion = '',
+      String firmwareVersion = '',
+      String hwAddress = '',
+      String interface = '',
+      int interfaceFlags = 0,
+      MockNetworkManagerIP4Config? ip4Config,
+      int ip4Connectivity = 0,
+      MockNetworkManagerIP6Config? ip6Config,
+      int ip6Connectivity = 0,
+      String ipInterface = '',
+      bool managed = false,
+      int metered = 0,
+      int mtu = 0,
+      bool nmPluginMissing = false,
+      String path = '',
+      String physicalPortId = '',
+      bool real = true,
+      int state = 0,
+      String udi = '',
+      bool isWireless = false,
+      List<MockNetworkManagerAccessPoint> accessPoints = const [],
+      MockNetworkManagerAccessPoint? activeAccessPoint,
+      int bitrate = 0,
+      int lastScan = 0,
+      int wirelessMode = 0,
+      String permHwAddress = '',
+      int wirelessCapabilities = 0,
+      bool hasStatistics = false,
+      int refreshRateMs = 0,
+      int rxBytes = 0,
+      int txBytes = 0}) async {
     var device = MockNetworkManagerDevice(_nextDeviceId,
         autoconnect: autoconnect,
         capabilities: capabilities,
@@ -875,7 +916,11 @@ class MockNetworkManagerServer extends DBusClient {
         lastScan: lastScan,
         wirelessMode: wirelessMode,
         permHwAddress: permHwAddress,
-        wirelessCapabilities: wirelessCapabilities);
+        wirelessCapabilities: wirelessCapabilities,
+        hasStatistics: hasStatistics,
+        refreshRateMs: refreshRateMs,
+        rxBytes: rxBytes,
+        txBytes: txBytes);
     _nextDeviceId++;
     await registerObject(device);
     allDevices.add(device);
@@ -1605,6 +1650,32 @@ void main() {
           NetworkManagerDeviceWifiCapability.rsn,
           NetworkManagerDeviceWifiCapability.mesh
         }));
+
+    await client.close();
+  });
+
+  test('device statistics', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(
+        hasStatistics: true, refreshRateMs: 100, rxBytes: 1024, txBytes: 2048);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.statistics, isNotNull);
+    expect(device.statistics.refreshRateMs, equals(100));
+    expect(device.statistics.rxBytes, equals(1024));
+    expect(device.statistics.txBytes, equals(2048));
+
+    await device.statistics.setRefreshRateMs(10);
+    expect(device.statistics.refreshRateMs, equals(100));
 
     await client.close();
   });

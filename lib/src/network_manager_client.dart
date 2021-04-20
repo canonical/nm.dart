@@ -1161,6 +1161,12 @@ class NetworkManagerDeviceStatistics {
           _statisticsDeviceInterfaceName, 'RefreshRateMs') ??
       0;
 
+  /// Sets the vlaue of [refreshRateMs].
+  Future<void> setRefreshRateMs(int value) async {
+    await _object.setProperty(
+        _statisticsDeviceInterfaceName, 'RefreshRateMs', DBusUint32(value));
+  }
+
   /// How many bytes have been transmitted.
   int get txBytes =>
       _object.getUint64Property(_statisticsDeviceInterfaceName, 'TxBytes') ?? 0;

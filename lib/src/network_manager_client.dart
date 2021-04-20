@@ -584,8 +584,9 @@ class NetworkManagerSettingsConnection {
       Stream<List<String>>.empty();
 
   /// Updates the settings for this connection, writing them to persistent storage.
-  void update(Map<String, Map<String, DBusValue>> properties) async {
-    await _object.callMethod(_settingsConnectionInterfaceName, 'Update', [
+  Future<void> update(Map<String, Map<String, DBusValue>> properties) async {
+    var result =
+        await _object.callMethod(_settingsConnectionInterfaceName, 'Update', [
       DBusDict(
         DBusSignature('s'),
         DBusSignature('a{sv}'),
@@ -601,11 +602,15 @@ class NetworkManagerSettingsConnection {
         ),
       )
     ]);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.Update returned invalid result: ${result.returnValues}';
+    }
   }
 
   /// Updates the settings for this connection, not writing them to persistent storage.
-  void updateUnsaved(Map<String, Map<String, DBusValue>> properties) async {
-    await _object
+  Future<void> updateUnsaved(
+      Map<String, Map<String, DBusValue>> properties) async {
+    var result = await _object
         .callMethod(_settingsConnectionInterfaceName, 'UpdateUnsaved', [
       DBusDict(
         DBusSignature('s'),
@@ -622,17 +627,27 @@ class NetworkManagerSettingsConnection {
         ),
       )
     ]);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.UpdateUnsaved returned invalid result: ${result.returnValues}';
+    }
   }
 
   /// Deletes this network connection settings.
   Future<void> delete() async {
-    await _object.callMethod(_settingsConnectionInterfaceName, 'Delete', []);
+    var result = await _object
+        .callMethod(_settingsConnectionInterfaceName, 'Delete', []);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.Delete returned invalid result: ${result.returnValues}';
+    }
   }
 
   /// Gets the settings belonging to this network connection.
   Future<Map<String, Map<String, DBusValue>>> getSettings() async {
     var result = await _object
         .callMethod(_settingsConnectionInterfaceName, 'GetSettings', []);
+    if (result.signature != DBusSignature('a{sa{sv}}')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.GetSettings returned invalid result: ${result.returnValues}';
+    }
     return (result.returnValues[0] as DBusDict).children.map(
           (key, value) => MapEntry(
             (key as DBusString).value,
@@ -647,6 +662,9 @@ class NetworkManagerSettingsConnection {
       [String settingName = '']) async {
     var result = await _object.callMethod(_settingsConnectionInterfaceName,
         'GetSecrets', [DBusString(settingName)]);
+    if (result.signature != DBusSignature('a{sa{sv}}')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.GetSecrets returned invalid result: ${result.returnValues}';
+    }
     return (result.returnValues[0] as DBusDict).children.map((key, value) =>
         MapEntry(
             (key as DBusString).value,
@@ -655,12 +673,22 @@ class NetworkManagerSettingsConnection {
   }
 
   /// Clears the secrets belonging to this network connection.
-  void clearSecrets() async =>
-      _object.callMethod(_settingsConnectionInterfaceName, 'ClearSecrets', []);
+  Future<void> clearSecrets() async {
+    var result = await _object
+        .callMethod(_settingsConnectionInterfaceName, 'ClearSecrets', []);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.ClearSecrets returned invalid result: ${result.returnValues}';
+    }
+  }
 
   /// Saves the connection settings to persistent storage.
-  void save() async =>
-      _object.callMethod(_settingsConnectionInterfaceName, 'Save', []);
+  Future<void> save() async {
+    var result =
+        await _object.callMethod(_settingsConnectionInterfaceName, 'Save', []);
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Settings.Connection.Save returned invalid result: ${result.returnValues}';
+    }
+  }
 
   // FIXME: Update2
 

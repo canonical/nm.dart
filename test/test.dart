@@ -307,7 +307,10 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final int state;
   final String udi;
 
-  final bool isWireless;
+  final bool hasGeneric;
+  final String typeDescription;
+
+  final bool hasWireless;
   final List<MockNetworkManagerAccessPoint> accessPoints;
   final MockNetworkManagerAccessPoint? activeAccessPoint;
   final int bitrate;
@@ -351,7 +354,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.real = true,
       this.state = 0,
       this.udi = '',
-      this.isWireless = false,
+      this.hasGeneric = false,
+      this.typeDescription = '',
+      this.hasWireless = false,
       this.accessPoints = const [],
       this.activeAccessPoint,
       this.bitrate = 0,
@@ -397,7 +402,14 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'Udi': DBusString(udi)
       }
     };
-    if (isWireless) {
+    if (hasGeneric) {
+      interfacesAndProperties_[
+          'org.freedesktop.NetworkManager.Device.Generic'] = {
+        'HwAddress': DBusString(hwAddress),
+        'TypeDescription': DBusString(typeDescription)
+      };
+    }
+    if (hasWireless) {
       interfacesAndProperties_[
           'org.freedesktop.NetworkManager.Device.Wireless'] = {
         'AccessPoints': DBusArray(DBusSignature('o'),
@@ -427,7 +439,10 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       String interface, String name, DBusValue value) async {
     if (interface == 'org.freedesktop.NetworkManager.Device') {
       return DBusMethodErrorResponse.propertyReadOnly();
-    } else if (isWireless &&
+    } else if (hasGeneric &&
+        interface == 'org.freedesktop.NetworkManager.Device.Generic') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasWireless &&
         interface == 'org.freedesktop.NetworkManager.Device.Wireless') {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasStatistics &&
@@ -871,7 +886,9 @@ class MockNetworkManagerServer extends DBusClient {
       bool real = true,
       int state = 0,
       String udi = '',
-      bool isWireless = false,
+      bool hasGeneric = false,
+      String typeDescription = '',
+      bool hasWireless = false,
       List<MockNetworkManagerAccessPoint> accessPoints = const [],
       MockNetworkManagerAccessPoint? activeAccessPoint,
       int bitrate = 0,
@@ -909,7 +926,9 @@ class MockNetworkManagerServer extends DBusClient {
         real: real,
         state: state,
         udi: udi,
-        isWireless: isWireless,
+        hasGeneric: hasGeneric,
+        typeDescription: typeDescription,
+        hasWireless: hasWireless,
         accessPoints: accessPoints,
         activeAccessPoint: activeAccessPoint,
         bitrate: bitrate,
@@ -1563,6 +1582,26 @@ void main() {
     await client.close();
   });
 
+  test('generic device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(hasGeneric: true, typeDescription: 'TYPE-DESCRIPTION');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.generic, isNotNull);
+    expect(device.generic.typeDescription, equals('TYPE-DESCRIPTION'));
+
+    await client.close();
+  });
+
   test('wireless device', () async {
     var server = DBusServer();
     var clientAddress =
@@ -1584,7 +1623,7 @@ void main() {
     var ap2 = await nm.addAccessPoint(hwAddress: 'AC:CE:55:00:00:02');
     var ap3 = await nm.addAccessPoint(hwAddress: 'AC:CE:55:00:00:03');
     await nm.addDevice(
-        isWireless: true,
+        hasWireless: true,
         accessPoints: [ap1, ap2, ap3],
         activeAccessPoint: ap1,
         bitrate: 135000,

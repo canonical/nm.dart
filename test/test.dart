@@ -322,6 +322,10 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final String tunMode;
   final bool vnetHdr;
 
+  final bool hasVlan;
+  final MockNetworkManagerDevice? parent;
+  final int vlanId;
+
   final bool hasWired;
   final List<String> s390Subchannels;
   final int speed;
@@ -381,6 +385,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.owner = -1,
       this.tunMode = '',
       this.vnetHdr = false,
+      this.hasVlan = false,
+      this.parent,
+      this.vlanId = 0,
       this.hasWired = false,
       this.speed = 0,
       this.s390Subchannels = const [],
@@ -452,6 +459,12 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'VnetHdr': DBusBoolean(vnetHdr)
       };
     }
+    if (hasVlan) {
+      interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Vlan'] = {
+        'Parent': parent?.path ?? DBusObjectPath('/'),
+        'VlanId': DBusUint32(vlanId)
+      };
+    }
     if (hasWired) {
       interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Wired'] =
           {
@@ -499,6 +512,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasTun &&
         interface == 'org.freedesktop.NetworkManager.Device.Tun') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasVlan &&
+        interface == 'org.freedesktop.NetworkManager.Device.Vlan') {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasWired &&
         interface == 'org.freedesktop.NetworkManager.Device.Wired') {
@@ -958,6 +974,9 @@ class MockNetworkManagerServer extends DBusClient {
       int owner = -1,
       String tunMode = '',
       bool vnetHdr = false,
+      bool hasVlan = false,
+      MockNetworkManagerDevice? parent,
+      int vlanId = 0,
       bool hasWired = false,
       int speed = 0,
       List<String> s390Subchannels = const [],
@@ -1010,6 +1029,9 @@ class MockNetworkManagerServer extends DBusClient {
         owner: owner,
         tunMode: tunMode,
         vnetHdr: vnetHdr,
+        hasVlan: hasVlan,
+        parent: parent,
+        vlanId: vlanId,
         hasWired: hasWired,
         s390Subchannels: s390Subchannels,
         speed: speed,
@@ -1852,6 +1874,28 @@ void main() {
     expect(device.tun.multiQueue, isTrue);
     expect(device.tun.noPi, isTrue);
     expect(device.tun.vnetHdr, isTrue);
+
+    await client.close();
+  });
+
+  test('vlan device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+    await nm.addDevice(hasVlan: true, parent: d, vlanId: 42);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(2));
+    var device = client.devices[1];
+    expect(device.vlan, isNotNull);
+    expect(device.vlan.vlanId, equals(42));
+    expect(device.vlan.parent.hwAddress, equals('DE:71:CE:00:00:01'));
 
     await client.close();
   });

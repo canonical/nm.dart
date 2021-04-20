@@ -1123,6 +1123,10 @@ class NetworkManagerDeviceBluetooth {
     }
     return flags;
   }
+
+  /// Bluetooth name of the device.
+  String get name =>
+      _object.getStringProperty(_bluetoothDeviceInterfaceName, 'Name') ?? '';
 }
 
 /// Information for bridge network devices.

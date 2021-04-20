@@ -481,6 +481,9 @@ List<NetworkManagerWifiAcessPointSecurityFlag>
   return flags;
 }
 
+/// Tunnel modes.
+enum NetworkManagerTunnelMode { tun, tap }
+
 /// Capabilities of a [NetworkManagerDeviceBluetooth].
 enum NetworkManagerBluetoothCapability { dun, tun }
 
@@ -1239,9 +1242,11 @@ class NetworkManagerDeviceTun {
   int get group =>
       _object.getInt64Property(_tunDeviceInterfaceName, 'Group') ?? 0;
 
-  /// Tunnel mode, either 'tun' or 'tap'.
-  String get mode =>
-      _object.getStringProperty(_tunDeviceInterfaceName, 'Mode') ?? '';
+  /// Tunnel mode.
+  NetworkManagerTunnelMode get mode => {
+        'tun': NetworkManagerTunnelMode.tun,
+        'tap': NetworkManagerTunnelMode.tap
+      }[_object.getStringProperty(_tunDeviceInterfaceName, 'Mode')]!;
 
   /// True if no protocol info is prepended to the tunnel packets.
   bool get noPi =>

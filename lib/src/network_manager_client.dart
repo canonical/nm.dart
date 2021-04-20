@@ -1389,9 +1389,8 @@ class NetworkManagerDeviceWireless {
           options.map(
               (name, value) => MapEntry(DBusString(name), DBusVariant(value))))
     ]);
-    var values = result.returnValues;
-    if (values.isNotEmpty) {
-      throw 'RequestScan returned invalid result: $values';
+    if (result.signature != DBusSignature('')) {
+      throw 'org.freedesktop.NetworkManager.Device.Wireless.RequestScan returned invalid result: ${result.returnValues}';
     }
   }
 }

@@ -134,9 +134,20 @@ class MockNetworkManagerConnectionSettings extends MockNetworkManagerObject {
   final int flags;
   final bool unsaved;
 
+  var deleted = false;
+  var saved = false;
+  Map<String, Map<String, DBusValue>> secrets;
+  Map<String, Map<String, DBusValue>> settings;
+
   MockNetworkManagerConnectionSettings(int id,
-      {this.filename = '', this.flags = 0, this.unsaved = false})
-      : super(DBusObjectPath('/org/freedesktop/NetworkManager/Settings/$id'));
+      {this.filename = '',
+      this.flags = 0,
+      Map<String, Map<String, DBusValue>>? secrets,
+      Map<String, Map<String, DBusValue>>? settings,
+      this.unsaved = false})
+      : secrets = secrets ?? <String, Map<String, DBusValue>>{},
+        settings = settings ?? <String, Map<String, DBusValue>>{},
+        super(DBusObjectPath('/org/freedesktop/NetworkManager/Settings/$id'));
 
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
@@ -146,6 +157,70 @@ class MockNetworkManagerConnectionSettings extends MockNetworkManagerObject {
           'Unsaved': DBusBoolean(unsaved)
         }
       };
+
+  @override
+  Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
+    if (methodCall.interface !=
+        'org.freedesktop.NetworkManager.Settings.Connection') {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
+
+    switch (methodCall.name) {
+      case 'ClearSecrets':
+        secrets = {};
+        return DBusMethodSuccessResponse([]);
+      case 'Delete':
+        deleted = true;
+        return DBusMethodSuccessResponse([]);
+      case 'GetSecrets':
+        //FIXME var settingName = (methodCall.values[0] as DBusString).value;
+        return DBusMethodSuccessResponse([
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              secrets.map((group, properties) => MapEntry(
+                  DBusString(group),
+                  DBusDict(
+                      DBusSignature('s'),
+                      DBusSignature('v'),
+                      properties.map((key, value) =>
+                          MapEntry(DBusString(key), DBusVariant(value)))))))
+        ]);
+      case 'GetSettings':
+        return DBusMethodSuccessResponse([
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              settings.map((group, properties) => MapEntry(
+                  DBusString(group),
+                  DBusDict(
+                      DBusSignature('s'),
+                      DBusSignature('v'),
+                      properties.map((key, value) =>
+                          MapEntry(DBusString(key), DBusVariant(value)))))))
+        ]);
+      case 'Save':
+        saved = true;
+        return DBusMethodSuccessResponse([]);
+      case 'Update':
+        settings = (methodCall.values[0] as DBusDict).children.map(
+            (group, properties) => MapEntry(
+                (group as DBusString).value,
+                (properties as DBusDict).children.map((key, value) => MapEntry(
+                    (key as DBusString).value, (value as DBusVariant).value))));
+        saved = true;
+        return DBusMethodSuccessResponse([]);
+      case 'UpdateUnsaved':
+        settings = (methodCall.values[0] as DBusDict).children.map(
+            (group, properties) => MapEntry(
+                (group as DBusString).value,
+                (properties as DBusDict).children.map((key, value) => MapEntry(
+                    (key as DBusString).value, (value as DBusVariant).value))));
+        return DBusMethodSuccessResponse([]);
+      default:
+        return DBusMethodErrorResponse.unknownMethod();
+    }
+  }
 }
 
 class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
@@ -715,13 +790,21 @@ class MockNetworkManagerServer extends DBusClient {
   }
 
   Future<MockNetworkManagerConnectionSettings> addConnectionSettings(
-      {String filename = '', int flags = 0, bool unsaved = false}) async {
-    var settings = MockNetworkManagerConnectionSettings(_nextSettingsId,
-        filename: filename, flags: flags, unsaved: unsaved);
+      {String filename = '',
+      int flags = 0,
+      Map<String, Map<String, DBusValue>>? secrets,
+      Map<String, Map<String, DBusValue>>? settings,
+      bool unsaved = false}) async {
+    var s = MockNetworkManagerConnectionSettings(_nextSettingsId,
+        filename: filename,
+        flags: flags,
+        secrets: secrets,
+        settings: settings,
+        unsaved: unsaved);
     _nextSettingsId++;
-    await registerObject(settings);
-    connectionSettings.add(settings);
-    return settings;
+    await registerObject(s);
+    connectionSettings.add(s);
+    return s;
   }
 
   Future<MockNetworkManagerDevice> addDevice({
@@ -945,6 +1028,187 @@ void main() {
           NetworkManagerConnectionFlag.volatile,
           NetworkManagerConnectionFlag.external
         }));
+
+    await client.close();
+  });
+
+  test('settings save', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var s = await nm.addConnectionSettings();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    expect(s.saved, isFalse);
+    await connection.save();
+    expect(s.saved, isTrue);
+
+    await client.close();
+  });
+
+  test('settings delete', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var s = await nm.addConnectionSettings();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    expect(s.deleted, isFalse);
+    await connection.delete();
+    expect(s.deleted, isTrue);
+
+    await client.close();
+  });
+
+  test('settings get', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addConnectionSettings(settings: {
+      'group1': {'setting1a': DBusString('value')},
+      'group2': {'setting2a': DBusUint32(42)}
+    });
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    expect(
+        await connection.getSettings(),
+        equals({
+          'group1': {'setting1a': DBusString('value')},
+          'group2': {'setting2a': DBusUint32(42)}
+        }));
+
+    await client.close();
+  });
+
+  test('settings get secrets', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addConnectionSettings(secrets: {
+      'group1': {'secret1a': DBusString('value')},
+      'group2': {'secret2a': DBusUint32(42)}
+    });
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    expect(
+        await connection.getSecrets(),
+        equals({
+          'group1': {'secret1a': DBusString('value')},
+          'group2': {'secret2a': DBusUint32(42)}
+        }));
+
+    await client.close();
+  });
+
+  test('settings clear secrets', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var s = await nm.addConnectionSettings(secrets: {
+      'group1': {'secret1a': DBusString('value')},
+      'group2': {'secret2a': DBusUint32(42)}
+    });
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    await connection.clearSecrets();
+    expect(s.secrets, equals({}));
+
+    await client.close();
+  });
+
+  test('settings update', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var s = await nm.addConnectionSettings(settings: {
+      'group1': {'setting1a': DBusString('value')},
+      'group2': {'setting2a': DBusUint32(42)}
+    });
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    expect(s.saved, isFalse);
+    await connection.update({
+      'group3': {'setting3a': DBusUint32(123)}
+    });
+    expect(
+        s.settings,
+        equals({
+          'group3': {'setting3a': DBusUint32(123)}
+        }));
+    expect(s.saved, isTrue);
+
+    await client.close();
+  });
+
+  test('settings update unsaved', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var s = await nm.addConnectionSettings(settings: {
+      'group1': {'setting1a': DBusString('value')},
+      'group2': {'setting2a': DBusUint32(42)}
+    });
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.settings.connections, hasLength(1));
+    var connection = client.settings.connections[0];
+    expect(s.saved, isFalse);
+    await connection.updateUnsaved({
+      'group3': {'setting3a': DBusUint32(123)}
+    });
+    expect(
+        s.settings,
+        equals({
+          'group3': {'setting3a': DBusUint32(123)}
+        }));
+    expect(s.saved, isFalse);
 
     await client.close();
   });

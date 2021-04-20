@@ -308,6 +308,10 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final int state;
   final String udi;
 
+  final bool hasBluetooth;
+  final int btCapabilities;
+  final String name;
+
   final bool hasBridge;
   final List<MockNetworkManagerDevice> slaves;
 
@@ -374,6 +378,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.real = true,
       this.state = 0,
       this.udi = '',
+      this.hasBluetooth = false,
+      this.btCapabilities = 0,
+      this.name = '',
       this.hasBridge = false,
       this.slaves = const [],
       this.hasGeneric = false,
@@ -436,6 +443,13 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'Udi': DBusString(udi)
       }
     };
+    if (hasBluetooth) {
+      interfacesAndProperties_[
+          'org.freedesktop.NetworkManager.Device.Bluetooth'] = {
+        'BtCapabilities': DBusUint32(btCapabilities),
+        'Name': DBusString(name)
+      };
+    }
     if (hasBridge) {
       interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Bridge'] =
           {
@@ -503,6 +517,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   Future<DBusMethodResponse> setProperty(
       String interface, String name, DBusValue value) async {
     if (interface == 'org.freedesktop.NetworkManager.Device') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasBluetooth &&
+        interface == 'org.freedesktop.NetworkManager.Device.Bluetooth') {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasBridge &&
         interface == 'org.freedesktop.NetworkManager.Device.Bridge') {
@@ -963,6 +980,9 @@ class MockNetworkManagerServer extends DBusClient {
       bool real = true,
       int state = 0,
       String udi = '',
+      bool hasBluetooth = false,
+      int btCapabilities = 0,
+      String name = '',
       bool hasBridge = false,
       List<MockNetworkManagerDevice> slaves = const [],
       bool hasGeneric = false,
@@ -1018,6 +1038,9 @@ class MockNetworkManagerServer extends DBusClient {
         real: real,
         state: state,
         udi: udi,
+        hasBluetooth: hasBluetooth,
+        btCapabilities: btCapabilities,
+        name: name,
         hasBridge: hasBridge,
         slaves: slaves,
         hasGeneric: hasGeneric,
@@ -1685,6 +1708,32 @@ void main() {
     expect(d.deleted, isFalse);
     await device.delete();
     expect(d.deleted, isTrue);
+
+    await client.close();
+  });
+
+  test('bluetooth device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(hasBluetooth: true, btCapabilities: 0x3, name: 'NAME');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.bluetooth, isNotNull);
+    expect(
+        device.bluetooth.btCapabilities,
+        equals({
+          NetworkManagerBluetoothCapability.dun,
+          NetworkManagerBluetoothCapability.tun
+        }));
+    expect(device.bluetooth.name, equals('NAME'));
 
     await client.close();
   });

@@ -308,6 +308,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final int state;
   final String udi;
 
+  final bool hasBridge;
+  final List<MockNetworkManagerDevice> slaves;
+
   final bool hasGeneric;
   final String typeDescription;
 
@@ -359,6 +362,8 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.real = true,
       this.state = 0,
       this.udi = '',
+      this.hasBridge = false,
+      this.slaves = const [],
       this.hasGeneric = false,
       this.typeDescription = '',
       this.hasWired = false,
@@ -409,6 +414,13 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'Udi': DBusString(udi)
       }
     };
+    if (hasBridge) {
+      interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Bridge'] =
+          {
+        'Slaves':
+            DBusArray(DBusSignature('o'), slaves.map((slave) => slave.path))
+      };
+    }
     if (hasGeneric) {
       interfacesAndProperties_[
           'org.freedesktop.NetworkManager.Device.Generic'] = {
@@ -453,6 +465,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   Future<DBusMethodResponse> setProperty(
       String interface, String name, DBusValue value) async {
     if (interface == 'org.freedesktop.NetworkManager.Device') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasBridge &&
+        interface == 'org.freedesktop.NetworkManager.Device.Bridge') {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasGeneric &&
         interface == 'org.freedesktop.NetworkManager.Device.Generic') {
@@ -904,6 +919,8 @@ class MockNetworkManagerServer extends DBusClient {
       bool real = true,
       int state = 0,
       String udi = '',
+      bool hasBridge = false,
+      List<MockNetworkManagerDevice> slaves = const [],
       bool hasGeneric = false,
       String typeDescription = '',
       bool hasWired = false,
@@ -947,6 +964,8 @@ class MockNetworkManagerServer extends DBusClient {
         real: real,
         state: state,
         udi: udi,
+        hasBridge: hasBridge,
+        slaves: slaves,
         hasGeneric: hasGeneric,
         typeDescription: typeDescription,
         hasWired: hasWired,
@@ -1735,6 +1754,30 @@ void main() {
           NetworkManagerDeviceWifiCapability.rsn,
           NetworkManagerDeviceWifiCapability.mesh
         }));
+
+    await client.close();
+  });
+
+  test('bridge device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+    var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
+    await nm.addDevice(hasBridge: true, slaves: [d1, d2]);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(3));
+    var device = client.devices[2];
+    expect(device.bridge, isNotNull);
+    expect(device.bridge.slaves, hasLength(2));
+    expect(device.bridge.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.bridge.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
 
     await client.close();
   });

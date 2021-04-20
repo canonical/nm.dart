@@ -763,6 +763,9 @@ class NetworkManagerDevice {
   /// Information for Bluetooth devices or null.
   final NetworkManagerDeviceBluetooth bluetooth;
 
+  /// Information for bridge devices or null.
+  final NetworkManagerDeviceBridge bridge;
+
   /// Generic device information or null.
   final NetworkManagerDeviceGeneric generic;
 
@@ -783,6 +786,7 @@ class NetworkManagerDevice {
 
   NetworkManagerDevice(this._client, this._object)
       : bluetooth = NetworkManagerDeviceBluetooth(_object),
+        bridge = NetworkManagerDeviceBridge(_client, _object),
         generic = NetworkManagerDeviceGeneric(_object),
         statistics = NetworkManagerDeviceStatistics(_object),
         tun = NetworkManagerDeviceTun(_object),
@@ -1115,6 +1119,38 @@ class NetworkManagerDeviceBluetooth {
       flags.add(NetworkManagerBluetoothCapability.tun);
     }
     return flags;
+  }
+}
+
+/// Information for bridge network devices.
+class NetworkManagerDeviceBridge {
+  final String _bridgeDeviceInterfaceName =
+      'org.freedesktop.NetworkManager.Device.Bridge';
+
+  final NetworkManagerClient _client;
+  final _NetworkManagerObject _object;
+
+  NetworkManagerDeviceBridge(this._client, this._object);
+
+  /// Stream of property names as their values change.
+  Stream<List<String>> get propertiesChanged =>
+      _object.interfaces[_bridgeDeviceInterfaceName]
+          ?.propertiesChangedStreamController.stream ??
+      Stream<List<String>>.empty();
+
+  /// Devices which are currently enslaved to this device.
+  List<NetworkManagerDevice> get slaves {
+    var objectPaths = _object.getObjectPathArrayProperty(
+            _bridgeDeviceInterfaceName, 'Slaves') ??
+        [];
+    var devices = <NetworkManagerDevice>[];
+    for (var objectPath in objectPaths) {
+      var device = _client._getDevice(objectPath);
+      if (device != null) {
+        devices.add(device);
+      }
+    }
+    return devices;
   }
 }
 

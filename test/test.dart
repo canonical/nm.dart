@@ -314,6 +314,14 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final bool hasGeneric;
   final String typeDescription;
 
+  final bool hasTun;
+  final int group;
+  final bool multiQueue;
+  final bool noPi;
+  final int owner;
+  final String tunMode;
+  final bool vnetHdr;
+
   final bool hasWired;
   final List<String> s390Subchannels;
   final int speed;
@@ -366,6 +374,13 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.slaves = const [],
       this.hasGeneric = false,
       this.typeDescription = '',
+      this.hasTun = false,
+      this.group = -1,
+      this.multiQueue = false,
+      this.noPi = false,
+      this.owner = -1,
+      this.tunMode = '',
+      this.vnetHdr = false,
       this.hasWired = false,
       this.speed = 0,
       this.s390Subchannels = const [],
@@ -427,6 +442,16 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'TypeDescription': DBusString(typeDescription)
       };
     }
+    if (hasTun) {
+      interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Tun'] = {
+        'Group': DBusInt64(group),
+        'Mode': DBusString(tunMode),
+        'MultiQueue': DBusBoolean(multiQueue),
+        'NoPi': DBusBoolean(noPi),
+        'Owner': DBusInt64(owner),
+        'VnetHdr': DBusBoolean(vnetHdr)
+      };
+    }
     if (hasWired) {
       interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Wired'] =
           {
@@ -471,6 +496,9 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasGeneric &&
         interface == 'org.freedesktop.NetworkManager.Device.Generic') {
+      return DBusMethodErrorResponse.propertyReadOnly();
+    } else if (hasTun &&
+        interface == 'org.freedesktop.NetworkManager.Device.Tun') {
       return DBusMethodErrorResponse.propertyReadOnly();
     } else if (hasWired &&
         interface == 'org.freedesktop.NetworkManager.Device.Wired') {
@@ -923,6 +951,13 @@ class MockNetworkManagerServer extends DBusClient {
       List<MockNetworkManagerDevice> slaves = const [],
       bool hasGeneric = false,
       String typeDescription = '',
+      bool hasTun = false,
+      int group = -1,
+      bool multiQueue = false,
+      bool noPi = false,
+      int owner = -1,
+      String tunMode = '',
+      bool vnetHdr = false,
       bool hasWired = false,
       int speed = 0,
       List<String> s390Subchannels = const [],
@@ -968,6 +1003,13 @@ class MockNetworkManagerServer extends DBusClient {
         slaves: slaves,
         hasGeneric: hasGeneric,
         typeDescription: typeDescription,
+        hasTun: hasTun,
+        group: group,
+        multiQueue: multiQueue,
+        noPi: noPi,
+        owner: owner,
+        tunMode: tunMode,
+        vnetHdr: vnetHdr,
         hasWired: hasWired,
         s390Subchannels: s390Subchannels,
         speed: speed,
@@ -1778,6 +1820,38 @@ void main() {
     expect(device.bridge.slaves, hasLength(2));
     expect(device.bridge.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
     expect(device.bridge.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
+
+    await client.close();
+  });
+
+  test('tun device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(
+        hasTun: true,
+        owner: 1000,
+        group: 1001,
+        tunMode: 'tap',
+        multiQueue: true,
+        noPi: true,
+        vnetHdr: true);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.tun, isNotNull);
+    expect(device.tun.owner, equals(1000));
+    expect(device.tun.group, equals(1001));
+    expect(device.tun.mode, equals(NetworkManagerTunnelMode.tap));
+    expect(device.tun.multiQueue, isTrue);
+    expect(device.tun.noPi, isTrue);
+    expect(device.tun.vnetHdr, isTrue);
 
     await client.close();
   });

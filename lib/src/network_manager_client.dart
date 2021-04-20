@@ -1279,10 +1279,10 @@ class NetworkManagerDeviceVlan {
       Stream<List<String>>.empty();
 
   /// Parent device of this VLAN device.
-  NetworkManagerDevice? get parent {
+  NetworkManagerDevice get parent {
     var objectPath =
         _object.getObjectPathProperty(_vlanDeviceInterfaceName, 'Parent');
-    return _client._getDevice(objectPath);
+    return _client._getDevice(objectPath)!;
   }
 
   /// The VLAN ID in use.

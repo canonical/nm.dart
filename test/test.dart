@@ -1746,6 +1746,30 @@ void main() {
     await client.close();
   });
 
+  test('bridge device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+    var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
+    await nm.addDevice(hasBridge: true, slaves: [d1, d2]);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(3));
+    var device = client.devices[2];
+    expect(device.bridge, isNotNull);
+    expect(device.bridge!.slaves, hasLength(2));
+    expect(device.bridge!.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.bridge!.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
+
+    await client.close();
+  });
+
   test('generic device', () async {
     var server = DBusServer();
     var clientAddress =
@@ -1762,6 +1786,60 @@ void main() {
     var device = client.devices[0];
     expect(device.generic, isNotNull);
     expect(device.generic!.typeDescription, equals('TYPE-DESCRIPTION'));
+
+    await client.close();
+  });
+
+  test('tun device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(
+        hasTun: true,
+        owner: 1000,
+        group: 1001,
+        tunMode: 'tap',
+        multiQueue: true,
+        noPi: true,
+        vnetHdr: true);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.tun, isNotNull);
+    expect(device.tun!.owner, equals(1000));
+    expect(device.tun!.group, equals(1001));
+    expect(device.tun!.mode, equals(NetworkManagerTunnelMode.tap));
+    expect(device.tun!.multiQueue, isTrue);
+    expect(device.tun!.noPi, isTrue);
+    expect(device.tun!.vnetHdr, isTrue);
+
+    await client.close();
+  });
+
+  test('vlan device', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+    await nm.addDevice(hasVlan: true, parent: d, vlanId: 42);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(2));
+    var device = client.devices[1];
+    expect(device.vlan, isNotNull);
+    expect(device.vlan!.vlanId, equals(42));
+    expect(device.vlan!.parent.hwAddress, equals('DE:71:CE:00:00:01'));
 
     await client.close();
   });
@@ -1875,84 +1953,6 @@ void main() {
           NetworkManagerDeviceWifiCapability.rsn,
           NetworkManagerDeviceWifiCapability.mesh
         }));
-
-    await client.close();
-  });
-
-  test('bridge device', () async {
-    var server = DBusServer();
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress);
-    await nm.start();
-    var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
-    var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
-    await nm.addDevice(hasBridge: true, slaves: [d1, d2]);
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    await client.connect();
-
-    expect(client.devices, hasLength(3));
-    var device = client.devices[2];
-    expect(device.bridge, isNotNull);
-    expect(device.bridge!.slaves, hasLength(2));
-    expect(device.bridge!.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
-    expect(device.bridge!.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
-
-    await client.close();
-  });
-
-  test('tun device', () async {
-    var server = DBusServer();
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress);
-    await nm.start();
-    await nm.addDevice(
-        hasTun: true,
-        owner: 1000,
-        group: 1001,
-        tunMode: 'tap',
-        multiQueue: true,
-        noPi: true,
-        vnetHdr: true);
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    await client.connect();
-
-    expect(client.devices, hasLength(1));
-    var device = client.devices[0];
-    expect(device.tun, isNotNull);
-    expect(device.tun!.owner, equals(1000));
-    expect(device.tun!.group, equals(1001));
-    expect(device.tun!.mode, equals(NetworkManagerTunnelMode.tap));
-    expect(device.tun!.multiQueue, isTrue);
-    expect(device.tun!.noPi, isTrue);
-    expect(device.tun!.vnetHdr, isTrue);
-
-    await client.close();
-  });
-
-  test('vlan device', () async {
-    var server = DBusServer();
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress);
-    await nm.start();
-    var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
-    await nm.addDevice(hasVlan: true, parent: d, vlanId: 42);
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    await client.connect();
-
-    expect(client.devices, hasLength(2));
-    var device = client.devices[1];
-    expect(device.vlan, isNotNull);
-    expect(device.vlan!.vlanId, equals(42));
-    expect(device.vlan!.parent.hwAddress, equals('DE:71:CE:00:00:01'));
 
     await client.close();
   });

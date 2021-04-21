@@ -1077,6 +1077,10 @@ class MockNetworkManagerServer extends DBusClient {
     return device;
   }
 
+  Future<void> removeDevice(MockNetworkManagerDevice device) async {
+    await unregisterObject(device);
+  }
+
   Future<MockNetworkManagerActiveConnection> addActiveConnection(
       {bool default4 = false,
       bool default6 = false,
@@ -1110,6 +1114,11 @@ class MockNetworkManagerServer extends DBusClient {
     await registerObject(activeConnection);
     activeConnections.add(activeConnection);
     return activeConnection;
+  }
+
+  Future<void> removeActiveConnection(
+      MockNetworkManagerActiveConnection connection) async {
+    await unregisterObject(connection);
   }
 }
 
@@ -1443,6 +1452,43 @@ void main() {
     expect(client.devices[2].hwAddress, equals('DE:71:CE:00:00:03'));
 
     await client.close();
+  });
+
+  test('device added', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    client.deviceAdded.listen(expectAsync1((device) {
+      expect(device.hwAddress, equals('DE:71:CE:00:00:01'));
+    }));
+
+    await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+  });
+
+  test('device removed', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+    var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+
+    client.deviceRemoved.listen(expectAsync1((device) {
+      expect(device.hwAddress, equals('DE:71:CE:00:00:01'));
+    }));
+
+    await nm.removeDevice(d);
   });
 
   test('device properties', () async {
@@ -2019,6 +2065,43 @@ void main() {
     expect(client.activeConnections[2].id, equals('connection3'));
 
     await client.close();
+  });
+
+  test('active connection added', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    client.activeConnectionAdded.listen(expectAsync1((connection) {
+      expect(connection.id, equals('connection'));
+    }));
+
+    await nm.addActiveConnection(id: 'connection');
+  });
+
+  test('active connection removed', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+    var d = await nm.addActiveConnection(id: 'connection');
+
+    client.activeConnectionRemoved.listen(expectAsync1((connection) {
+      expect(connection.id, equals('connection'));
+    }));
+
+    await nm.removeActiveConnection(d);
   });
 
   test('active connection properties', () async {

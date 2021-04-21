@@ -764,38 +764,54 @@ class NetworkManagerDevice {
   final _NetworkManagerObject _object;
 
   /// Information for Bluetooth devices or null.
-  final NetworkManagerDeviceBluetooth bluetooth;
+  NetworkManagerDeviceBluetooth? get bluetooth => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Bluetooth')
+      ? NetworkManagerDeviceBluetooth(_object)
+      : null;
 
   /// Information for bridge devices or null.
-  final NetworkManagerDeviceBridge bridge;
+  NetworkManagerDeviceBridge? get bridge => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Bridge')
+      ? NetworkManagerDeviceBridge(_client, _object)
+      : null;
 
   /// Generic device information or null.
-  final NetworkManagerDeviceGeneric generic;
+  NetworkManagerDeviceGeneric? get generic => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Generic')
+      ? NetworkManagerDeviceGeneric(_object)
+      : null;
 
   /// Device statistics or null.
-  final NetworkManagerDeviceStatistics statistics;
+  NetworkManagerDeviceStatistics? get statistics => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Statistics')
+      ? NetworkManagerDeviceStatistics(_object)
+      : null;
 
   /// TUN device information or null.
-  final NetworkManagerDeviceTun tun;
+  NetworkManagerDeviceTun? get tun => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Tun')
+      ? NetworkManagerDeviceTun(_object)
+      : null;
 
   /// Information for Virtual LAN devices or null.
-  final NetworkManagerDeviceVlan vlan;
+  NetworkManagerDeviceVlan? get vlan => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Vlan')
+      ? NetworkManagerDeviceVlan(_client, _object)
+      : null;
 
   /// Information for wired devices (e.g. Ethernet) or null.
-  final NetworkManagerDeviceWired wired;
+  NetworkManagerDeviceWired? get wired => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Wired')
+      ? NetworkManagerDeviceWired(_object)
+      : null;
 
   /// Information for wireless devices (e.g WiFi) or null.
-  final NetworkManagerDeviceWireless wireless;
+  NetworkManagerDeviceWireless? get wireless => _object.interfaces
+          .containsKey('org.freedesktop.NetworkManager.Device.Wireless')
+      ? NetworkManagerDeviceWireless(_client, _object)
+      : null;
 
-  NetworkManagerDevice(this._client, this._object)
-      : bluetooth = NetworkManagerDeviceBluetooth(_object),
-        bridge = NetworkManagerDeviceBridge(_client, _object),
-        generic = NetworkManagerDeviceGeneric(_object),
-        statistics = NetworkManagerDeviceStatistics(_object),
-        tun = NetworkManagerDeviceTun(_object),
-        vlan = NetworkManagerDeviceVlan(_client, _object),
-        wired = NetworkManagerDeviceWired(_object),
-        wireless = NetworkManagerDeviceWireless(_client, _object);
+  NetworkManagerDevice(this._client, this._object);
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChanged =>

@@ -1480,6 +1480,14 @@ void main() {
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
+    expect(device.bluetooth, isNull);
+    expect(device.bridge, isNull);
+    expect(device.generic, isNull);
+    expect(device.statistics, isNull);
+    expect(device.tun, isNull);
+    expect(device.wired, isNull);
+    expect(device.wireless, isNull);
+    expect(device.vlan, isNull);
     expect(device.autoconnect, isTrue);
     expect(
         device.capabilities,
@@ -1728,12 +1736,12 @@ void main() {
     var device = client.devices[0];
     expect(device.bluetooth, isNotNull);
     expect(
-        device.bluetooth.btCapabilities,
+        device.bluetooth?.btCapabilities,
         equals({
           NetworkManagerBluetoothCapability.dun,
           NetworkManagerBluetoothCapability.tun
         }));
-    expect(device.bluetooth.name, equals('NAME'));
+    expect(device.bluetooth?.name, equals('NAME'));
 
     await client.close();
   });
@@ -1753,7 +1761,7 @@ void main() {
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
     expect(device.generic, isNotNull);
-    expect(device.generic.typeDescription, equals('TYPE-DESCRIPTION'));
+    expect(device.generic!.typeDescription, equals('TYPE-DESCRIPTION'));
 
     await client.close();
   });
@@ -1774,8 +1782,8 @@ void main() {
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
     expect(device.wired, isNotNull);
-    expect(device.wired.permHwAddress, equals('DE:71:CE:00:00:01'));
-    expect(device.wired.speed, equals(100));
+    expect(device.wired!.permHwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.wired!.speed, equals(100));
 
     await client.close();
   });
@@ -1816,15 +1824,15 @@ void main() {
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
     expect(device.wireless, isNotNull);
-    expect(device.wireless.accessPoints, hasLength(3));
-    expect(
-        device.wireless.accessPoints[0].hwAddress, equals('AC:CE:55:00:00:01'));
-    expect(
-        device.wireless.accessPoints[1].hwAddress, equals('AC:CE:55:00:00:02'));
-    expect(
-        device.wireless.accessPoints[2].hwAddress, equals('AC:CE:55:00:00:03'));
-    expect(device.wireless.activeAccessPoint, isNotNull);
-    var ap = device.wireless.activeAccessPoint!;
+    expect(device.wireless!.accessPoints, hasLength(3));
+    expect(device.wireless!.accessPoints[0].hwAddress,
+        equals('AC:CE:55:00:00:01'));
+    expect(device.wireless!.accessPoints[1].hwAddress,
+        equals('AC:CE:55:00:00:02'));
+    expect(device.wireless!.accessPoints[2].hwAddress,
+        equals('AC:CE:55:00:00:03'));
+    expect(device.wireless!.activeAccessPoint, isNotNull);
+    var ap = device.wireless!.activeAccessPoint!;
     expect(
         ap.flags,
         equals({
@@ -1854,12 +1862,12 @@ void main() {
           NetworkManagerWifiAcessPointSecurityFlag.groupTKIP,
           NetworkManagerWifiAcessPointSecurityFlag.keyManagementPSK
         }));
-    expect(device.wireless.bitrate, equals(135000));
-    expect(device.wireless.lastScan, equals(123456789));
-    expect(device.wireless.mode, equals(NetworkManagerWifiMode.infra));
-    expect(device.wireless.permHwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.wireless!.bitrate, equals(135000));
+    expect(device.wireless!.lastScan, equals(123456789));
+    expect(device.wireless!.mode, equals(NetworkManagerWifiMode.infra));
+    expect(device.wireless!.permHwAddress, equals('DE:71:CE:00:00:01'));
     expect(
-        device.wireless.wirelessCapabilities,
+        device.wireless!.wirelessCapabilities,
         equals({
           NetworkManagerDeviceWifiCapability.cipherWEP40,
           NetworkManagerDeviceWifiCapability.cipherWEP104,
@@ -1888,9 +1896,9 @@ void main() {
     expect(client.devices, hasLength(3));
     var device = client.devices[2];
     expect(device.bridge, isNotNull);
-    expect(device.bridge.slaves, hasLength(2));
-    expect(device.bridge.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
-    expect(device.bridge.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
+    expect(device.bridge!.slaves, hasLength(2));
+    expect(device.bridge!.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.bridge!.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
 
     await client.close();
   });
@@ -1917,12 +1925,12 @@ void main() {
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
     expect(device.tun, isNotNull);
-    expect(device.tun.owner, equals(1000));
-    expect(device.tun.group, equals(1001));
-    expect(device.tun.mode, equals(NetworkManagerTunnelMode.tap));
-    expect(device.tun.multiQueue, isTrue);
-    expect(device.tun.noPi, isTrue);
-    expect(device.tun.vnetHdr, isTrue);
+    expect(device.tun!.owner, equals(1000));
+    expect(device.tun!.group, equals(1001));
+    expect(device.tun!.mode, equals(NetworkManagerTunnelMode.tap));
+    expect(device.tun!.multiQueue, isTrue);
+    expect(device.tun!.noPi, isTrue);
+    expect(device.tun!.vnetHdr, isTrue);
 
     await client.close();
   });
@@ -1943,8 +1951,8 @@ void main() {
     expect(client.devices, hasLength(2));
     var device = client.devices[1];
     expect(device.vlan, isNotNull);
-    expect(device.vlan.vlanId, equals(42));
-    expect(device.vlan.parent.hwAddress, equals('DE:71:CE:00:00:01'));
+    expect(device.vlan!.vlanId, equals(42));
+    expect(device.vlan!.parent.hwAddress, equals('DE:71:CE:00:00:01'));
 
     await client.close();
   });
@@ -1965,12 +1973,12 @@ void main() {
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
     expect(device.statistics, isNotNull);
-    expect(device.statistics.refreshRateMs, equals(100));
-    expect(device.statistics.rxBytes, equals(1024));
-    expect(device.statistics.txBytes, equals(2048));
+    expect(device.statistics!.refreshRateMs, equals(100));
+    expect(device.statistics!.rxBytes, equals(1024));
+    expect(device.statistics!.txBytes, equals(2048));
 
-    await device.statistics.setRefreshRateMs(10);
-    expect(device.statistics.refreshRateMs, equals(100));
+    await device.statistics!.setRefreshRateMs(10);
+    expect(device.statistics!.refreshRateMs, equals(100));
 
     await client.close();
   });

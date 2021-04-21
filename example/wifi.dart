@@ -16,14 +16,16 @@ void main() async {
     return;
   }
 
-  print('Scanning WiFi device ${device.hwAddress}...');
-  await device.wireless.requestScan();
+  var wireless = device.wireless!;
 
-  device.wireless.propertiesChanged.listen((propertyNames) {
+  print('Scanning WiFi device ${device.hwAddress}...');
+  await wireless.requestScan();
+
+  wireless.propertiesChanged.listen((propertyNames) {
     if (propertyNames.contains('LastScan')) {
       /// Get APs with names.
       var accessPoints =
-          device.wireless.accessPoints.where((a) => a.ssid.isNotEmpty).toList();
+          wireless.accessPoints.where((a) => a.ssid.isNotEmpty).toList();
 
       // Sort by signal strength.
       accessPoints.sort((a, b) => b.strength.compareTo(a.strength));

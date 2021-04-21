@@ -594,6 +594,10 @@ class NetworkManagerSettings {
     }
     return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
   }
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerSettings && other._object == _object;
 }
 
 /// Settings for a connection.
@@ -747,6 +751,10 @@ class NetworkManagerSettingsConnection {
   String get filename =>
       _object.getStringProperty(_settingsConnectionInterfaceName, 'Filename') ??
       '';
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerSettingsConnection && other._object == _object;
 }
 
 /// DNS configuration and state.
@@ -773,6 +781,10 @@ class NetworkManagerDnsManager {
   List<Map<String, dynamic>> get configuration =>
       _object.getDataListProperty(_dnsManagerInterfaceName, 'Configuration') ??
       [];
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDnsManager && other._object == _object;
 }
 
 /// A device managed by NetworkManager.
@@ -1125,6 +1137,10 @@ class NetworkManagerDevice {
   /// Hardware address for this device.
   String get hwAddress =>
       _object.getStringProperty(_deviceInterfaceName, 'HwAddress') ?? '';
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDevice && other._object == _object;
 }
 
 /// Information for Bluetooth devices.
@@ -1157,6 +1173,10 @@ class NetworkManagerDeviceBluetooth {
   /// Bluetooth name of the device.
   String get name =>
       _object.getStringProperty(_bluetoothDeviceInterfaceName, 'Name') ?? '';
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceBluetooth && other._object == _object;
 }
 
 /// Information for bridge network devices.
@@ -1186,6 +1206,10 @@ class NetworkManagerDeviceBridge {
     }
     return devices;
   }
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceBridge && other._object == _object;
 }
 
 /// Information for generic devices.
@@ -1205,6 +1229,10 @@ class NetworkManagerDeviceGeneric {
       _object.getStringProperty(
           _genericDeviceInterfaceName, 'TypeDescription') ??
       '';
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceGeneric && other._object == _object;
 }
 
 /// Statistics for devices.
@@ -1238,6 +1266,10 @@ class NetworkManagerDeviceStatistics {
   /// How many bytes have been received.
   int get rxBytes =>
       _object.getUint64Property(_statisticsDeviceInterfaceName, 'RxBytes') ?? 0;
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceStatistics && other._object == _object;
 }
 
 /// Information for userspace tunneling devices.
@@ -1282,6 +1314,10 @@ class NetworkManagerDeviceTun {
   bool get multiQueue =>
       _object.getBooleanProperty(_tunDeviceInterfaceName, 'MultiQueue') ??
       false;
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceTun && other._object == _object;
 }
 
 /// Information for Virtual LAN devices.
@@ -1307,6 +1343,10 @@ class NetworkManagerDeviceVlan {
   /// The VLAN ID in use.
   int get vlanId =>
       _object.getUint32Property(_vlanDeviceInterfaceName, 'VlanId') ?? 0;
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceVlan && other._object == _object;
 }
 
 /// Information for wired network devices.
@@ -1329,6 +1369,10 @@ class NetworkManagerDeviceWired {
       _object.getStringArrayProperty(
           _wiredDeviceInterfaceName, 'S390Subchannels') ??
       [];
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceWired && other._object == _object;
 }
 
 /// Information for wireless network devices.
@@ -1457,6 +1501,10 @@ class NetworkManagerDeviceWireless {
       throw '$_wirelessDeviceInterfaceName.RequestScan returned invalid result: ${result.returnValues}';
     }
   }
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDeviceWireless && other._object == _object;
 }
 
 /// Active connection.
@@ -1613,6 +1661,10 @@ class NetworkManagerActiveConnection {
     );
     return _client._getDevice(objectPath);
   }
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerActiveConnection && other._object == _object;
 }
 
 /// IPv4 configuration.
@@ -1667,6 +1719,10 @@ class NetworkManagerIP4Config {
       _object.getStringArrayProperty(
           _ip4ConfigInterfaceName, 'WinsServerData') ??
       [];
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerIP4Config && other._object == _object;
 }
 
 /// DCHPv4 configuration.
@@ -1693,6 +1749,10 @@ class NetworkManagerDHCP4Config {
     return (value as DBusDict).children.map((key, value) => MapEntry(
         (key as DBusString).value, (value as DBusVariant).value.toNative()));
   }
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDHCP4Config && other._object == _object;
 }
 
 /// IPv6 configuration.
@@ -1741,6 +1801,10 @@ class NetworkManagerIP6Config {
   /// Relative priority of DNS servers.
   int get dnsPriority =>
       _object.getInt32Property(_ip6ConfigInterfaceName, 'DnsPriority') ?? 0;
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerIP6Config && other._object == _object;
 }
 
 /// DCHPv6 configuration.
@@ -1767,6 +1831,10 @@ class NetworkManagerDHCP6Config {
     return (value as DBusDict).children.map((key, value) => MapEntry(
         (key as DBusString).value, (value as DBusVariant).value.toNative()));
   }
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerDHCP6Config && other._object == _object;
 }
 
 /// WiFi access point.
@@ -1857,6 +1925,10 @@ class NetworkManagerAccessPoint {
   /// Last time this access point was seen in a scan in seconds since boot.
   int get lastSeen =>
       _object.getInt32Property(_accessPointInterfaceName, 'LastSeen') ?? 0;
+
+  @override
+  bool operator ==(other) =>
+      other is NetworkManagerAccessPoint && other._object == _object;
 }
 
 class _NetworkManagerInterface {

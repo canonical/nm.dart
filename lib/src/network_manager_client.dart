@@ -2,6 +2,34 @@ import 'dart:async';
 
 import 'package:dbus/dbus.dart';
 
+/// D-Bus interface names
+const _managerInterfaceName = 'org.freedesktop.NetworkManager';
+const _settingsInterfaceName = 'org.freedesktop.NetworkManager.Settings';
+const _settingsConnectionInterfaceName =
+    'org.freedesktop.NetworkManager.Settings.Connection';
+const _dnsManagerInterfaceName = 'org.freedesktop.NetworkManager.DnsManager';
+const _deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
+const _bluetoothDeviceInterfaceName =
+    'org.freedesktop.NetworkManager.Device.Bluetooth';
+const _bridgeDeviceInterfaceName =
+    'org.freedesktop.NetworkManager.Device.Bridge';
+const _genericDeviceInterfaceName =
+    'org.freedesktop.NetworkManager.Device.Generic';
+const _statisticsDeviceInterfaceName =
+    'org.freedesktop.NetworkManager.Device.Statistics';
+const _tunDeviceInterfaceName = 'org.freedesktop.NetworkManager.Device.Tun';
+const _vlanDeviceInterfaceName = 'org.freedesktop.NetworkManager.Device.Vlan';
+const _wiredDeviceInterfaceName = 'org.freedesktop.NetworkManager.Device.Wired';
+const _wirelessDeviceInterfaceName =
+    'org.freedesktop.NetworkManager.Device.Wireless';
+const _activeConnectionInterfaceName =
+    'org.freedesktop.NetworkManager.Connection.Active';
+const _ip4ConfigInterfaceName = 'org.freedesktop.NetworkManager.IP4Config';
+const _dhcp4ConfigInterfaceName = 'org.freedesktop.NetworkManager.DHCP4Config';
+const _ip6ConfigInterfaceName = 'org.freedesktop.NetworkManager.IP6Config';
+const _dhcp6ConfigInterfaceName = 'org.freedesktop.NetworkManager.DHCP6Config';
+const _accessPointInterfaceName = 'org.freedesktop.NetworkManager.AccessPoint';
+
 /// Internet connectivity states.
 enum NetworkManagerConnectivityState { unknown, none, portal, limited, full }
 
@@ -489,9 +517,6 @@ enum NetworkManagerBluetoothCapability { dun, tun }
 
 /// Settings profile manager.
 class NetworkManagerSettings {
-  final String _settingsInterfaceName =
-      'org.freedesktop.NetworkManager.Settings';
-
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
@@ -543,7 +568,7 @@ class NetworkManagerSettings {
                       MapEntry(DBusString(key), DBusVariant(value)))))))
     ]);
     if (result.signature != DBusSignature('o')) {
-      throw 'org.freedesktop.NetworkManager.Settings.AddConnection returned invalid result: ${result.returnValues}';
+      throw '$_settingsInterfaceName.AddConnection returned invalid result: ${result.returnValues}';
     }
     return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
   }
@@ -565,7 +590,7 @@ class NetworkManagerSettings {
                       MapEntry(DBusString(key), DBusVariant(value)))))))
     ]);
     if (result.signature != DBusSignature('o')) {
-      throw 'org.freedesktop.NetworkManager.Settings.AddConnection returned invalid result: ${result.returnValues}';
+      throw '$_settingsInterfaceName.AddConnectionUnsaved returned invalid result: ${result.returnValues}';
     }
     return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
   }
@@ -573,9 +598,6 @@ class NetworkManagerSettings {
 
 /// Settings for a connection.
 class NetworkManagerSettingsConnection {
-  final String _settingsConnectionInterfaceName =
-      'org.freedesktop.NetworkManager.Settings.Connection';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerSettingsConnection(this._object);
@@ -606,7 +628,7 @@ class NetworkManagerSettingsConnection {
       )
     ]);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.Update returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..Update returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -631,7 +653,7 @@ class NetworkManagerSettingsConnection {
       )
     ]);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.UpdateUnsaved returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..UpdateUnsaved returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -640,7 +662,7 @@ class NetworkManagerSettingsConnection {
     var result = await _object
         .callMethod(_settingsConnectionInterfaceName, 'Delete', []);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.Delete returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..Delete returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -649,7 +671,7 @@ class NetworkManagerSettingsConnection {
     var result = await _object
         .callMethod(_settingsConnectionInterfaceName, 'GetSettings', []);
     if (result.signature != DBusSignature('a{sa{sv}}')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.GetSettings returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..GetSettings returned invalid result: ${result.returnValues}';
     }
     return (result.returnValues[0] as DBusDict).children.map(
           (key, value) => MapEntry(
@@ -666,7 +688,7 @@ class NetworkManagerSettingsConnection {
     var result = await _object.callMethod(_settingsConnectionInterfaceName,
         'GetSecrets', [DBusString(settingName)]);
     if (result.signature != DBusSignature('a{sa{sv}}')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.GetSecrets returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..GetSecrets returned invalid result: ${result.returnValues}';
     }
     return (result.returnValues[0] as DBusDict).children.map((key, value) =>
         MapEntry(
@@ -680,7 +702,7 @@ class NetworkManagerSettingsConnection {
     var result = await _object
         .callMethod(_settingsConnectionInterfaceName, 'ClearSecrets', []);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.ClearSecrets returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..ClearSecrets returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -689,7 +711,7 @@ class NetworkManagerSettingsConnection {
     var result =
         await _object.callMethod(_settingsConnectionInterfaceName, 'Save', []);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Settings.Connection.Save returned invalid result: ${result.returnValues}';
+      throw '$_settingsConnectionInterfaceName..Save returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -729,9 +751,6 @@ class NetworkManagerSettingsConnection {
 
 /// DNS configuration and state.
 class NetworkManagerDnsManager {
-  final String _dnsManagerInterfaceName =
-      'org.freedesktop.NetworkManager.DnsManager';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDnsManager(this._object);
@@ -758,58 +777,56 @@ class NetworkManagerDnsManager {
 
 /// A device managed by NetworkManager.
 class NetworkManagerDevice {
-  final String _deviceInterfaceName = 'org.freedesktop.NetworkManager.Device';
-
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
   /// Information for Bluetooth devices or null.
-  NetworkManagerDeviceBluetooth? get bluetooth => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Bluetooth')
-      ? NetworkManagerDeviceBluetooth(_object)
-      : null;
+  NetworkManagerDeviceBluetooth? get bluetooth =>
+      _object.interfaces.containsKey(_bluetoothDeviceInterfaceName)
+          ? NetworkManagerDeviceBluetooth(_object)
+          : null;
 
   /// Information for bridge devices or null.
-  NetworkManagerDeviceBridge? get bridge => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Bridge')
-      ? NetworkManagerDeviceBridge(_client, _object)
-      : null;
+  NetworkManagerDeviceBridge? get bridge =>
+      _object.interfaces.containsKey(_bridgeDeviceInterfaceName)
+          ? NetworkManagerDeviceBridge(_client, _object)
+          : null;
 
   /// Generic device information or null.
-  NetworkManagerDeviceGeneric? get generic => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Generic')
-      ? NetworkManagerDeviceGeneric(_object)
-      : null;
+  NetworkManagerDeviceGeneric? get generic =>
+      _object.interfaces.containsKey(_genericDeviceInterfaceName)
+          ? NetworkManagerDeviceGeneric(_object)
+          : null;
 
   /// Device statistics or null.
-  NetworkManagerDeviceStatistics? get statistics => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Statistics')
-      ? NetworkManagerDeviceStatistics(_object)
-      : null;
+  NetworkManagerDeviceStatistics? get statistics =>
+      _object.interfaces.containsKey(_statisticsDeviceInterfaceName)
+          ? NetworkManagerDeviceStatistics(_object)
+          : null;
 
   /// TUN device information or null.
-  NetworkManagerDeviceTun? get tun => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Tun')
-      ? NetworkManagerDeviceTun(_object)
-      : null;
+  NetworkManagerDeviceTun? get tun =>
+      _object.interfaces.containsKey(_tunDeviceInterfaceName)
+          ? NetworkManagerDeviceTun(_object)
+          : null;
 
   /// Information for Virtual LAN devices or null.
-  NetworkManagerDeviceVlan? get vlan => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Vlan')
-      ? NetworkManagerDeviceVlan(_client, _object)
-      : null;
+  NetworkManagerDeviceVlan? get vlan =>
+      _object.interfaces.containsKey(_vlanDeviceInterfaceName)
+          ? NetworkManagerDeviceVlan(_client, _object)
+          : null;
 
   /// Information for wired devices (e.g. Ethernet) or null.
-  NetworkManagerDeviceWired? get wired => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Wired')
-      ? NetworkManagerDeviceWired(_object)
-      : null;
+  NetworkManagerDeviceWired? get wired =>
+      _object.interfaces.containsKey(_wiredDeviceInterfaceName)
+          ? NetworkManagerDeviceWired(_object)
+          : null;
 
   /// Information for wireless devices (e.g WiFi) or null.
-  NetworkManagerDeviceWireless? get wireless => _object.interfaces
-          .containsKey('org.freedesktop.NetworkManager.Device.Wireless')
-      ? NetworkManagerDeviceWireless(_client, _object)
-      : null;
+  NetworkManagerDeviceWireless? get wireless =>
+      _object.interfaces.containsKey(_wirelessDeviceInterfaceName)
+          ? NetworkManagerDeviceWireless(_client, _object)
+          : null;
 
   NetworkManagerDevice(this._client, this._object);
 
@@ -824,7 +841,7 @@ class NetworkManagerDevice {
     var result =
         await _object.callMethod(_deviceInterfaceName, 'Disconnect', []);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Device.Disconnect returned invalid result: ${result.returnValues}';
+      throw '$_deviceInterfaceName.Disconnect returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -833,7 +850,7 @@ class NetworkManagerDevice {
   Future<void> delete() async {
     var result = await _object.callMethod(_deviceInterfaceName, 'Delete', []);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Device.Delete returned invalid result: ${result.returnValues}';
+      throw '$_deviceInterfaceName.Delete returned invalid result: ${result.returnValues}';
     }
   }
 
@@ -1112,9 +1129,6 @@ class NetworkManagerDevice {
 
 /// Information for Bluetooth devices.
 class NetworkManagerDeviceBluetooth {
-  final String _bluetoothDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Bluetooth';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceBluetooth(this._object);
@@ -1147,9 +1161,6 @@ class NetworkManagerDeviceBluetooth {
 
 /// Information for bridge network devices.
 class NetworkManagerDeviceBridge {
-  final String _bridgeDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Bridge';
-
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
@@ -1179,9 +1190,6 @@ class NetworkManagerDeviceBridge {
 
 /// Information for generic devices.
 class NetworkManagerDeviceGeneric {
-  final String _genericDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Generic';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceGeneric(this._object);
@@ -1201,9 +1209,6 @@ class NetworkManagerDeviceGeneric {
 
 /// Statistics for devices.
 class NetworkManagerDeviceStatistics {
-  final String _statisticsDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Statistics';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceStatistics(this._object);
@@ -1237,9 +1242,6 @@ class NetworkManagerDeviceStatistics {
 
 /// Information for userspace tunneling devices.
 class NetworkManagerDeviceTun {
-  final String _tunDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Tun';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceTun(this._object);
@@ -1284,9 +1286,6 @@ class NetworkManagerDeviceTun {
 
 /// Information for Virtual LAN devices.
 class NetworkManagerDeviceVlan {
-  final String _vlanDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Vlan';
-
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
@@ -1312,9 +1311,6 @@ class NetworkManagerDeviceVlan {
 
 /// Information for wired network devices.
 class NetworkManagerDeviceWired {
-  final String _wiredDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Wired';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDeviceWired(this._object);
@@ -1337,9 +1333,6 @@ class NetworkManagerDeviceWired {
 
 /// Information for wireless network devices.
 class NetworkManagerDeviceWireless {
-  final String _wirelessDeviceInterfaceName =
-      'org.freedesktop.NetworkManager.Device.Wireless';
-
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
@@ -1461,16 +1454,13 @@ class NetworkManagerDeviceWireless {
               (name, value) => MapEntry(DBusString(name), DBusVariant(value))))
     ]);
     if (result.signature != DBusSignature('')) {
-      throw 'org.freedesktop.NetworkManager.Device.Wireless.RequestScan returned invalid result: ${result.returnValues}';
+      throw '$_wirelessDeviceInterfaceName.RequestScan returned invalid result: ${result.returnValues}';
     }
   }
 }
 
 /// Active connection.
 class NetworkManagerActiveConnection {
-  final String _activeConnectionInterfaceName =
-      'org.freedesktop.NetworkManager.Connection.Active';
-
   final NetworkManagerClient _client;
   final _NetworkManagerObject _object;
 
@@ -1627,9 +1617,6 @@ class NetworkManagerActiveConnection {
 
 /// IPv4 configuration.
 class NetworkManagerIP4Config {
-  final String _ip4ConfigInterfaceName =
-      'org.freedesktop.NetworkManager.IP4Config';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerIP4Config(this._object);
@@ -1684,9 +1671,6 @@ class NetworkManagerIP4Config {
 
 /// DCHPv4 configuration.
 class NetworkManagerDHCP4Config {
-  final String _dhcp4ConfigInterfaceName =
-      'org.freedesktop.NetworkManager.DHCP4Config';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDHCP4Config(this._object);
@@ -1713,9 +1697,6 @@ class NetworkManagerDHCP4Config {
 
 /// IPv6 configuration.
 class NetworkManagerIP6Config {
-  final String _ip6ConfigInterfaceName =
-      'org.freedesktop.NetworkManager.IP6Config';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerIP6Config(this._object);
@@ -1764,9 +1745,6 @@ class NetworkManagerIP6Config {
 
 /// DCHPv6 configuration.
 class NetworkManagerDHCP6Config {
-  final String _dhcp6ConfigInterfaceName =
-      'org.freedesktop.NetworkManager.DHCP6Config';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerDHCP6Config(this._object);
@@ -1793,9 +1771,6 @@ class NetworkManagerDHCP6Config {
 
 /// WiFi access point.
 class NetworkManagerAccessPoint {
-  final String _accessPointInterfaceName =
-      'org.freedesktop.NetworkManager.AccessPoint';
-
   final _NetworkManagerObject _object;
 
   NetworkManagerAccessPoint(this._object);
@@ -2093,8 +2068,6 @@ class _NetworkManagerObject extends DBusRemoteObject {
 
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
-  final String _managerInterfaceName = 'org.freedesktop.NetworkManager';
-
   /// The bus this client is connected to.
   final DBusClient _bus;
   final bool _closeBus;
@@ -2121,7 +2094,7 @@ class NetworkManagerClient {
 
   /// Stream of property names as their values change.
   Stream<List<String>> get propertiesChanged =>
-      _manager?.interfaces['org.freedesktop.NetworkManager']
+      _manager?.interfaces[_managerInterfaceName]
           ?.propertiesChangedStreamController.stream ??
       Stream<List<String>>.empty();
 

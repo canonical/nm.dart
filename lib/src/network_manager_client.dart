@@ -1922,6 +1922,22 @@ class _NetworkManagerObject extends DBusRemoteObject {
     });
   }
 
+  /// Returns true if removing [interfaceNames] would remove all interfaces on this object.
+  bool wouldRemoveAllInterfaces(List<String> interfaceNames) {
+    for (var interface in interfaces.keys) {
+      if (!interfaceNames.contains(interface)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void removeInterfaces(List<String> interfaceNames) {
+    for (var interfaceName in interfaceNames) {
+      interfaces.remove(interfaceName);
+    }
+  }
+
   void updateProperties(
       String interfaceName, Map<String, DBusValue> changedProperties) {
     var interface = interfaces[interfaceName];
@@ -2183,6 +2199,14 @@ class NetworkManagerClient {
       } else if (signal is DBusObjectManagerInterfacesRemovedSignal) {
         var object = _objects[signal.changedPath];
         if (object != null) {
+          // If all the interface are removed, then this object has been removed.
+          // Keep the previous values around for the client to use.
+          if (object.wouldRemoveAllInterfaces(signal.interfaces)) {
+            _objects.remove(object);
+          } else {
+            object.removeInterfaces(signal.interfaces);
+          }
+
           if (signal.interfaces.contains(_deviceInterfaceName)) {
             _deviceRemovedStreamController
                 .add(NetworkManagerDevice(this, object));
@@ -2191,13 +2215,6 @@ class NetworkManagerClient {
             _activeConnectionRemovedStreamController
                 .add(NetworkManagerActiveConnection(this, object));
           }
-          // Note that if not all the interfaces were removed then the object still exists.
-          // But in the case of BlueZ the only objects we care about only drop interfaces
-          // when they are completely removed.
-          // Since we don't take a copy of the existing object we don't remove the interfaces
-          // as the BlueZClient consumer will want the last values when they read the object
-          // from the stream.
-          _objects.remove(object);
         }
       } else if (signal is DBusPropertiesChangedSignal) {
         var object = _objects[signal.path];

@@ -559,13 +559,8 @@ class NetworkManagerSettings {
       DBusDict(
           DBusSignature('s'),
           DBusSignature('a{sv}'),
-          connection.map((key, value) => MapEntry(
-              DBusString(key),
-              DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  value.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))))
+          connection.map((key, value) =>
+              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
     ]);
     if (result.signature != DBusSignature('o')) {
       throw '$_settingsInterfaceName.AddConnection returned invalid result: ${result.returnValues}';
@@ -581,13 +576,8 @@ class NetworkManagerSettings {
       DBusDict(
           DBusSignature('s'),
           DBusSignature('a{sv}'),
-          connection.map((key, value) => MapEntry(
-              DBusString(key),
-              DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  value.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))))
+          connection.map((key, value) =>
+              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
     ]);
     if (result.signature != DBusSignature('o')) {
       throw '$_settingsInterfaceName.AddConnectionUnsaved returned invalid result: ${result.returnValues}';
@@ -617,19 +607,10 @@ class NetworkManagerSettingsConnection {
     var result =
         await _object.callMethod(_settingsConnectionInterfaceName, 'Update', [
       DBusDict(
-        DBusSignature('s'),
-        DBusSignature('a{sv}'),
-        properties.map(
-          (key, value) => MapEntry(
-            DBusString(key),
-            DBusDict(
-              DBusSignature('s'),
-              DBusSignature('v'),
-              value.map((k, v) => MapEntry(DBusString(k), DBusVariant(v))),
-            ),
-          ),
-        ),
-      )
+          DBusSignature('s'),
+          DBusSignature('a{sv}'),
+          properties.map((key, value) =>
+              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
     ]);
     if (result.signature != DBusSignature('')) {
       throw '$_settingsConnectionInterfaceName..Update returned invalid result: ${result.returnValues}';
@@ -642,19 +623,10 @@ class NetworkManagerSettingsConnection {
     var result = await _object
         .callMethod(_settingsConnectionInterfaceName, 'UpdateUnsaved', [
       DBusDict(
-        DBusSignature('s'),
-        DBusSignature('a{sv}'),
-        properties.map(
-          (key, value) => MapEntry(
-            DBusString(key),
-            DBusDict(
-              DBusSignature('s'),
-              DBusSignature('v'),
-              value.map((k, v) => MapEntry(DBusString(k), DBusVariant(v))),
-            ),
-          ),
-        ),
-      )
+          DBusSignature('s'),
+          DBusSignature('a{sv}'),
+          properties.map((key, value) =>
+              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
     ]);
     if (result.signature != DBusSignature('')) {
       throw '$_settingsConnectionInterfaceName..UpdateUnsaved returned invalid result: ${result.returnValues}';
@@ -1485,18 +1457,10 @@ class NetworkManagerDeviceWireless {
     var options = <String, DBusValue>{};
     if (ssids != null) {
       options['ssids'] = DBusArray(
-          DBusSignature('ay'),
-          ssids.map((ssid) =>
-              DBusArray(DBusSignature('y'), ssid.map((v) => DBusByte(v)))));
+          DBusSignature('ay'), ssids.map((ssid) => DBusArray.byte(ssid)));
     }
-    var result =
-        await _object.callMethod(_wirelessDeviceInterfaceName, 'RequestScan', [
-      DBusDict(
-          DBusSignature('s'),
-          DBusSignature('v'),
-          options.map(
-              (name, value) => MapEntry(DBusString(name), DBusVariant(value))))
-    ]);
+    var result = await _object.callMethod(_wirelessDeviceInterfaceName,
+        'RequestScan', [DBusDict.stringVariant(options)]);
     if (result.signature != DBusSignature('')) {
       throw '$_wirelessDeviceInterfaceName.RequestScan returned invalid result: ${result.returnValues}';
     }

@@ -19,13 +19,12 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
         'org.freedesktop.NetworkManager': {
           'ActivatingConnection':
               server.activatingConnection?.path ?? DBusObjectPath('/'),
-          'ActiveConnections': DBusArray(DBusSignature('o'),
+          'ActiveConnections': DBusArray.objectPath(
               server.activeConnections.map((device) => device.path)),
-          'AllDevices': DBusArray(DBusSignature('o'),
+          'AllDevices': DBusArray.objectPath(
               server.allDevices.map((device) => device.path)),
-          'Capabilities': DBusArray(DBusSignature('u'),
-              server.capabilities.map((cap) => DBusUint32(cap))),
-          'Checkpoints': DBusArray(DBusSignature('o'), []), // FIXME
+          'Capabilities': DBusArray.uint32(server.capabilities),
+          'Checkpoints': DBusArray.objectPath([]), // FIXME
           'Connectivity': DBusUint32(server.connectivity),
           'ConnectivityCheckAvailable':
               DBusBoolean(server.connectivityCheckAvailable),
@@ -69,11 +68,11 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
       case 'Enable':
         return DBusMethodSuccessResponse([]);
       case 'GetAllDevices':
-        return DBusMethodSuccessResponse([DBusArray(DBusSignature('o'), [])]);
+        return DBusMethodSuccessResponse([DBusArray.objectPath([])]);
       case 'GetDeviceByIpIface':
         return DBusMethodSuccessResponse([DBusObjectPath('/')]);
       case 'GetDevices':
-        return DBusMethodSuccessResponse([DBusArray(DBusSignature('o'), [])]);
+        return DBusMethodSuccessResponse([DBusArray.objectPath([])]);
       case 'GetPermissions':
         return DBusMethodSuccessResponse(
             [DBusDict(DBusSignature('s'), DBusSignature('s'), {})]);
@@ -99,7 +98,7 @@ class MockNetworkManagerSettings extends MockNetworkManagerObject {
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
         'org.freedesktop.NetworkManager.Settings': {
           'CanModify': DBusBoolean(server.settingsCanModify),
-          'Connections': DBusArray(DBusSignature('o'),
+          'Connections': DBusArray.objectPath(
               server.connectionSettings.map((setting) => setting.path)),
           'Hostname': DBusString(server.hostname)
         }
@@ -120,7 +119,7 @@ class MockNetworkManagerSettings extends MockNetworkManagerObject {
         return DBusMethodSuccessResponse([connection.path]);
       case 'ListConnections':
         return DBusMethodSuccessResponse([
-          DBusArray(DBusSignature('o'),
+          DBusArray.objectPath(
               server.connectionSettings.map((setting) => setting.path))
         ]);
       default:
@@ -179,12 +178,7 @@ class MockNetworkManagerConnectionSettings extends MockNetworkManagerObject {
               DBusSignature('s'),
               DBusSignature('a{sv}'),
               secrets.map((group, properties) => MapEntry(
-                  DBusString(group),
-                  DBusDict(
-                      DBusSignature('s'),
-                      DBusSignature('v'),
-                      properties.map((key, value) =>
-                          MapEntry(DBusString(key), DBusVariant(value)))))))
+                  DBusString(group), DBusDict.stringVariant(properties))))
         ]);
       case 'GetSettings':
         return DBusMethodSuccessResponse([
@@ -192,12 +186,7 @@ class MockNetworkManagerConnectionSettings extends MockNetworkManagerObject {
               DBusSignature('s'),
               DBusSignature('a{sv}'),
               settings.map((group, properties) => MapEntry(
-                  DBusString(group),
-                  DBusDict(
-                      DBusSignature('s'),
-                      DBusSignature('v'),
-                      properties.map((key, value) =>
-                          MapEntry(DBusString(key), DBusVariant(value)))))))
+                  DBusString(group), DBusDict.stringVariant(properties))))
         ]);
       case 'Save':
         saved = true;
@@ -452,10 +441,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
     }
     if (hasBridge) {
       interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Bridge'] =
-          {
-        'Slaves':
-            DBusArray(DBusSignature('o'), slaves.map((slave) => slave.path))
-      };
+          {'Slaves': DBusArray.objectPath(slaves.map((slave) => slave.path))};
     }
     if (hasGeneric) {
       interfacesAndProperties_[
@@ -482,8 +468,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
     if (hasWired) {
       interfacesAndProperties_['org.freedesktop.NetworkManager.Device.Wired'] =
           {
-        'S390Subchannels': DBusArray(DBusSignature('s'),
-            s390Subchannels.map((channel) => DBusString(channel))),
+        'S390Subchannels': DBusArray.string(s390Subchannels),
         'Speed': DBusUint32(speed),
         'PermHwAddress': DBusString(permHwAddress)
       };
@@ -491,7 +476,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
     if (hasWireless) {
       interfacesAndProperties_[
           'org.freedesktop.NetworkManager.Device.Wireless'] = {
-        'AccessPoints': DBusArray(DBusSignature('o'),
+        'AccessPoints': DBusArray.objectPath(
             accessPoints.map((accessPoint) => accessPoint.path)),
         'ActiveAccessPoint': activeAccessPoint?.path ?? DBusObjectPath('/'),
         'Bitrate': DBusUint32(bitrate),
@@ -607,7 +592,7 @@ class MockNetworkManagerAccessPoint extends MockNetworkManagerObject {
           'MaxBitrate': DBusUint32(maxBitrate),
           'Mode': DBusUint32(mode),
           'RsnFlags': DBusUint32(rsnFlags),
-          'Ssid': DBusArray(DBusSignature('y'), ssid.map((v) => DBusByte(v))),
+          'Ssid': DBusArray.byte(ssid),
           'Strength': DBusByte(strength),
           'WpaFlags': DBusUint32(wpaFlags)
         }
@@ -640,37 +625,18 @@ class MockNetworkManagerIP4Config extends MockNetworkManagerObject {
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
         'org.freedesktop.NetworkManager.IP4Config': {
-          'AddressData': DBusArray(
-              DBusSignature('a{sv}'),
-              addressData.map((data) => DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  data.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))),
-          'DnsOptions': DBusArray(DBusSignature('s'),
-              dnsOptions.map((option) => DBusString(option))),
+          'AddressData': DBusArray(DBusSignature('a{sv}'),
+              addressData.map((data) => DBusDict.stringVariant(data))),
+          'DnsOptions': DBusArray.string(dnsOptions),
           'DnsPriority': DBusInt32(dnsPriority),
-          'Domains': DBusArray(
-              DBusSignature('s'), domains.map((domain) => DBusString(domain))),
+          'Domains': DBusArray.string(domains),
           'Gateway': DBusString(gateway),
-          'NameserverData': DBusArray(
-              DBusSignature('a{sv}'),
-              nameserverData.map((data) => DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  data.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))),
-          'RouteData': DBusArray(
-              DBusSignature('a{sv}'),
-              routeData.map((data) => DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  data.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))),
-          'Searches': DBusArray(
-              DBusSignature('s'), searches.map((search) => DBusString(search))),
-          'WinsServerData': DBusArray(DBusSignature('s'),
-              winsServerData.map((server) => DBusString(server)))
+          'NameserverData': DBusArray(DBusSignature('a{sv}'),
+              nameserverData.map((data) => DBusDict.stringVariant(data))),
+          'RouteData': DBusArray(DBusSignature('a{sv}'),
+              routeData.map((data) => DBusDict.stringVariant(data))),
+          'Searches': DBusArray.string(searches),
+          'WinsServerData': DBusArray.string(winsServerData)
         }
       };
 }
@@ -699,35 +665,17 @@ class MockNetworkManagerIP6Config extends MockNetworkManagerObject {
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
         'org.freedesktop.NetworkManager.IP6Config': {
-          'AddressData': DBusArray(
-              DBusSignature('a{sv}'),
-              addressData.map((data) => DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  data.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))),
-          'DnsOptions': DBusArray(DBusSignature('s'),
-              dnsOptions.map((option) => DBusString(option))),
+          'AddressData': DBusArray(DBusSignature('a{sv}'),
+              addressData.map((data) => DBusDict.stringVariant(data))),
+          'DnsOptions': DBusArray.string(dnsOptions),
           'DnsPriority': DBusInt32(dnsPriority),
-          'Domains': DBusArray(
-              DBusSignature('s'), domains.map((domain) => DBusString(domain))),
+          'Domains': DBusArray.string(domains),
           'Gateway': DBusString(gateway),
-          'NameserverData': DBusArray(
-              DBusSignature('a{sv}'),
-              nameserverData.map((data) => DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  data.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))),
-          'RouteData': DBusArray(
-              DBusSignature('a{sv}'),
-              routeData.map((data) => DBusDict(
-                  DBusSignature('s'),
-                  DBusSignature('v'),
-                  data.map((key, value) =>
-                      MapEntry(DBusString(key), DBusVariant(value)))))),
-          'Searches': DBusArray(
-              DBusSignature('s'), searches.map((search) => DBusString(search)))
+          'NameserverData': DBusArray(DBusSignature('a{sv}'),
+              nameserverData.map((data) => DBusDict.stringVariant(data))),
+          'RouteData': DBusArray(DBusSignature('a{sv}'),
+              routeData.map((data) => DBusDict.stringVariant(data))),
+          'Searches': DBusArray.string(searches)
         }
       };
 }
@@ -742,11 +690,7 @@ class MockNetworkManagerDHCP4Config extends MockNetworkManagerObject {
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
         'org.freedesktop.NetworkManager.DHCP4Config': {
-          'Options': DBusDict(
-              DBusSignature('s'),
-              DBusSignature('v'),
-              options.map((key, value) =>
-                  MapEntry(DBusString(key), DBusVariant(value))))
+          'Options': DBusDict.stringVariant(options)
         }
       };
 }
@@ -761,11 +705,7 @@ class MockNetworkManagerDHCP6Config extends MockNetworkManagerObject {
   @override
   Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
         'org.freedesktop.NetworkManager.DHCP6Config': {
-          'Options': DBusDict(
-              DBusSignature('s'),
-              DBusSignature('v'),
-              options.map((key, value) =>
-                  MapEntry(DBusString(key), DBusVariant(value))))
+          'Options': DBusDict.stringVariant(options)
         }
       };
 }

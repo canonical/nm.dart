@@ -2496,6 +2496,39 @@ class NetworkManagerClient {
         object ?? _NetworkManagerObject(_bus, DBusObjectPath('/'), {}));
   }
 
+  /// Activates a connection for [device].
+  ///
+  /// A specific [connection] may be specified, or else it is detected automatically.
+  ///
+  /// Note that when activating a wireless connection, the [accessPoint] must be specified.
+  Future<NetworkManagerActiveConnection?> activateConnection(
+      {required NetworkManagerDevice device,
+      NetworkManagerSettingsConnection? connection,
+      NetworkManagerAccessPoint? accessPoint}) async {
+    assert(device.wireless == null || accessPoint != null);
+    if (_manager == null) {
+      return null;
+    }
+    var result = await _manager!
+        .callMethod(_managerInterfaceName, 'ActivateConnection', [
+      connection?._object.path ?? DBusObjectPath('/'),
+      device._object.path,
+      accessPoint?._object.path ?? DBusObjectPath('/'),
+    ]);
+    if (result.signature != DBusSignature('o')) {
+      throw '$_managerInterfaceName.ActivateConnection returned invalid result: ${result.returnValues}';
+    }
+    return _getActiveConnection(result.returnValues[0] as DBusObjectPath);
+  }
+
+  /// Deactivates an active [connection].
+  Future<void> deactivateConnection(
+      NetworkManagerActiveConnection connection) async {
+    await _manager?.callMethod(_managerInterfaceName, 'DeactivateConnection', [
+      connection._object.path,
+    ]);
+  }
+
   /// Terminates all active connections. If a client remains unclosed, the Dart process may not terminate.
   Future<void> close() async {
     if (_objectManagerSubscription != null) {

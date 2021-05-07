@@ -60,10 +60,20 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
 
     switch (methodCall.name) {
       case 'ActivateConnection':
-        return DBusMethodSuccessResponse([DBusObjectPath('/')]);
+        var path = methodCall.values[0] as DBusObjectPath;
+        var index = server.connectionSettings
+            .indexWhere((s) => s.path == path || path == DBusObjectPath('/'));
+        await server.addActiveConnection(
+            id: server.connectionSettings[index].path.value);
+        return DBusMethodSuccessResponse(
+            [server.activeConnections[index].path]);
       case 'CheckConnectivity':
         return DBusMethodSuccessResponse([DBusUint32(server.connectivity)]);
       case 'DeactivateConnection':
+        var path = methodCall.values[0] as DBusObjectPath;
+        var connection =
+            server.activeConnections.singleWhere((c) => c.path == path);
+        await server.removeActiveConnection(connection);
         return DBusMethodSuccessResponse([]);
       case 'Enable':
         return DBusMethodSuccessResponse([]);
@@ -1059,6 +1069,7 @@ class MockNetworkManagerServer extends DBusClient {
   Future<void> removeActiveConnection(
       MockNetworkManagerActiveConnection connection) async {
     await unregisterObject(connection);
+    activeConnections.remove(connection);
   }
 }
 
@@ -2160,6 +2171,96 @@ void main() {
     expect(connection, isNotNull);
     expect(nm.connectionSettings, hasLength(1));
     expect(nm.connectionSettings[0].unsaved, isTrue);
+
+    await client.close();
+  });
+
+  Future<void> verifyActiveConnections(
+      DBusAddress clientAddress, List<String> expectedIds) async {
+    // active connections are cached => use a temp extra client to verify
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+    expect(client.activeConnections.map((c) => c.id), equals(expectedIds));
+    await client.close();
+  }
+
+  test('activate ethernet connection', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(deviceType: NetworkManagerDeviceType.ethernet.index);
+    var s1 = await nm.addConnectionSettings();
+    var s2 = await nm.addConnectionSettings();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(client.settings.connections, hasLength(2));
+
+    var connection1 = await client.activateConnection(device: device);
+    expect(connection1, isNotNull);
+    expect(connection1!.id, equals(s1.path.value));
+    await verifyActiveConnections(clientAddress, [s1.path.value]);
+
+    var connection2 = await client.activateConnection(
+        device: device, connection: client.settings.connections[1]);
+    expect(connection2, isNotNull);
+    expect(connection2!.id, equals(s2.path.value));
+    await verifyActiveConnections(
+        clientAddress, [s1.path.value, s2.path.value]);
+
+    await client.deactivateConnection(connection1);
+    await verifyActiveConnections(clientAddress, [s2.path.value]);
+
+    await client.deactivateConnection(connection2);
+    await verifyActiveConnections(clientAddress, []);
+
+    await client.close();
+  });
+
+  test('activate wifi connection', () async {
+    var server = DBusServer();
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    await nm.start();
+    await nm.addDevice(
+      deviceType: NetworkManagerDeviceType.wifi.index,
+      hasWireless: true,
+      accessPoints: [await nm.addAccessPoint(hwAddress: 'ap1')],
+    );
+    var s = await nm.addConnectionSettings();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+
+    expect(client.settings.connections, hasLength(1));
+    var settings = client.settings.connections[0];
+
+    expect(device.wireless!.accessPoints, hasLength(1));
+    var ap = device.wireless!.accessPoints[0];
+
+    var connection = await client.activateConnection(
+        device: device, connection: settings, accessPoint: ap);
+    expect(connection, isNotNull);
+    expect(connection!.id, equals(s.path.value));
+    await verifyActiveConnections(clientAddress, [s.path.value]);
+
+    await client.deactivateConnection(connection);
+    await verifyActiveConnections(clientAddress, []);
+
+    await expectLater(
+        () => client.activateConnection(device: device, connection: settings),
+        throwsA(isA<AssertionError>()));
 
     await client.close();
   });

@@ -445,10 +445,10 @@ enum NetworkManagerDeviceWifiCapability {
 }
 
 /// Flags for a [NetworkManagerAccessPoint].
-enum NetworkManagerWifiAcessPointFlag { privacy, wps, wpsPushButton, wpsPin }
+enum NetworkManagerWifiAccessPointFlag { privacy, wps, wpsPushButton, wpsPin }
 
 /// Security flags for a [NetworkManagerAccessPoint].
-enum NetworkManagerWifiAcessPointSecurityFlag {
+enum NetworkManagerWifiAccessPointSecurityFlag {
   pairWEP40,
   pairWEP104,
   pairTKIP,
@@ -464,47 +464,47 @@ enum NetworkManagerWifiAcessPointSecurityFlag {
   keyManagementOWE_TM
 }
 
-List<NetworkManagerWifiAcessPointSecurityFlag>
-    _decodeWifiAcessPointSecurityFlags(int value) {
-  var flags = <NetworkManagerWifiAcessPointSecurityFlag>[];
+List<NetworkManagerWifiAccessPointSecurityFlag>
+    _decodeWifiAccessPointSecurityFlags(int value) {
+  var flags = <NetworkManagerWifiAccessPointSecurityFlag>[];
   if ((value & 0x1) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairWEP40);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairWEP40);
   }
   if ((value & 0x2) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairWEP104);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairWEP104);
   }
   if ((value & 0x4) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairTKIP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairTKIP);
   }
   if ((value & 0x8) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.pairCCMP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairCCMP);
   }
   if ((value & 0x10) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupWEP40);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupWEP40);
   }
   if ((value & 0x20) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupWEP104);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupWEP104);
   }
   if ((value & 0x40) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupTKIP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupTKIP);
   }
   if ((value & 0x80) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.groupCCMP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupCCMP);
   }
   if ((value & 0x100) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementPSK);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementPSK);
   }
   if ((value & 0x200) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagement802_1X);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagement802_1X);
   }
   if ((value & 0x400) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementSAE);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementSAE);
   }
   if ((value & 0x800) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementOWE);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementOWE);
   }
   if ((value & 0x1000) != 0) {
-    flags.add(NetworkManagerWifiAcessPointSecurityFlag.keyManagementOWE_TM);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementOWE_TM);
   }
   return flags;
 }
@@ -1865,37 +1865,37 @@ class NetworkManagerAccessPoint {
       Stream<List<String>>.empty();
 
   /// Capabilities of this access point.
-  List<NetworkManagerWifiAcessPointFlag> get flags {
+  List<NetworkManagerWifiAccessPointFlag> get flags {
     var value =
         _object.getUint32Property(_accessPointInterfaceName, 'Flags') ?? 0;
-    var flags = <NetworkManagerWifiAcessPointFlag>[];
+    var flags = <NetworkManagerWifiAccessPointFlag>[];
     if ((value & 0x01) != 0) {
-      flags.add(NetworkManagerWifiAcessPointFlag.privacy);
+      flags.add(NetworkManagerWifiAccessPointFlag.privacy);
     }
     if ((value & 0x02) != 0) {
-      flags.add(NetworkManagerWifiAcessPointFlag.wps);
+      flags.add(NetworkManagerWifiAccessPointFlag.wps);
     }
     if ((value & 0x04) != 0) {
-      flags.add(NetworkManagerWifiAcessPointFlag.wpsPushButton);
+      flags.add(NetworkManagerWifiAccessPointFlag.wpsPushButton);
     }
     if ((value & 0x08) != 0) {
-      flags.add(NetworkManagerWifiAcessPointFlag.wpsPin);
+      flags.add(NetworkManagerWifiAccessPointFlag.wpsPin);
     }
     return flags;
   }
 
   /// WPA security capabilities of this access point.
-  List<NetworkManagerWifiAcessPointSecurityFlag> get wpaFlags {
+  List<NetworkManagerWifiAccessPointSecurityFlag> get wpaFlags {
     var value =
         _object.getUint32Property(_accessPointInterfaceName, 'WpaFlags') ?? 0;
-    return _decodeWifiAcessPointSecurityFlags(value);
+    return _decodeWifiAccessPointSecurityFlags(value);
   }
 
   /// RSN security capabilities of this access point.
-  List<NetworkManagerWifiAcessPointSecurityFlag> get rsnFlags {
+  List<NetworkManagerWifiAccessPointSecurityFlag> get rsnFlags {
     var value =
         _object.getUint32Property(_accessPointInterfaceName, 'RsnFlags') ?? 0;
-    return _decodeWifiAcessPointSecurityFlags(value);
+    return _decodeWifiAccessPointSecurityFlags(value);
   }
 
   /// SSID advertised by the access point.

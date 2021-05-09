@@ -1900,10 +1900,10 @@ void main() {
     expect(
         ap.flags,
         equals({
-          NetworkManagerWifiAcessPointFlag.privacy,
-          NetworkManagerWifiAcessPointFlag.wps,
-          NetworkManagerWifiAcessPointFlag.wpsPushButton,
-          NetworkManagerWifiAcessPointFlag.wpsPin
+          NetworkManagerWifiAccessPointFlag.privacy,
+          NetworkManagerWifiAccessPointFlag.wps,
+          NetworkManagerWifiAccessPointFlag.wpsPushButton,
+          NetworkManagerWifiAccessPointFlag.wpsPin
         }));
     expect(ap.frequency, equals(5745));
     expect(ap.hwAddress, equals('AC:CE:55:00:00:01'));
@@ -1913,18 +1913,18 @@ void main() {
     expect(
         ap.rsnFlags,
         equals({
-          NetworkManagerWifiAcessPointSecurityFlag.pairCCMP,
-          NetworkManagerWifiAcessPointSecurityFlag.groupCCMP,
-          NetworkManagerWifiAcessPointSecurityFlag.keyManagementPSK
+          NetworkManagerWifiAccessPointSecurityFlag.pairCCMP,
+          NetworkManagerWifiAccessPointSecurityFlag.groupCCMP,
+          NetworkManagerWifiAccessPointSecurityFlag.keyManagementPSK
         }));
     expect(ap.ssid, equals([104, 101, 108, 108, 111]));
     expect(ap.strength, equals(59));
     expect(
         ap.wpaFlags,
         equals({
-          NetworkManagerWifiAcessPointSecurityFlag.pairTKIP,
-          NetworkManagerWifiAcessPointSecurityFlag.groupTKIP,
-          NetworkManagerWifiAcessPointSecurityFlag.keyManagementPSK
+          NetworkManagerWifiAccessPointSecurityFlag.pairTKIP,
+          NetworkManagerWifiAccessPointSecurityFlag.groupTKIP,
+          NetworkManagerWifiAccessPointSecurityFlag.keyManagementPSK
         }));
     expect(device.wireless!.bitrate, equals(135000));
     expect(device.wireless!.lastScan, equals(123456789));

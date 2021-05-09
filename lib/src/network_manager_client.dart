@@ -588,6 +588,9 @@ class NetworkManagerSettings {
   @override
   bool operator ==(other) =>
       other is NetworkManagerSettings && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Settings for a connection.
@@ -727,6 +730,9 @@ class NetworkManagerSettingsConnection {
   @override
   bool operator ==(other) =>
       other is NetworkManagerSettingsConnection && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// DNS configuration and state.
@@ -757,6 +763,9 @@ class NetworkManagerDnsManager {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDnsManager && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// A device managed by NetworkManager.
@@ -1113,6 +1122,9 @@ class NetworkManagerDevice {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDevice && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for Bluetooth devices.
@@ -1149,6 +1161,9 @@ class NetworkManagerDeviceBluetooth {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceBluetooth && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for bridge network devices.
@@ -1182,6 +1197,9 @@ class NetworkManagerDeviceBridge {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceBridge && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for generic devices.
@@ -1205,6 +1223,9 @@ class NetworkManagerDeviceGeneric {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceGeneric && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Statistics for devices.
@@ -1242,6 +1263,9 @@ class NetworkManagerDeviceStatistics {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceStatistics && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for userspace tunneling devices.
@@ -1290,6 +1314,9 @@ class NetworkManagerDeviceTun {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceTun && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for Virtual LAN devices.
@@ -1319,6 +1346,9 @@ class NetworkManagerDeviceVlan {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceVlan && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for wired network devices.
@@ -1345,6 +1375,9 @@ class NetworkManagerDeviceWired {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceWired && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Information for wireless network devices.
@@ -1469,6 +1502,9 @@ class NetworkManagerDeviceWireless {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceWireless && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// Active connection.
@@ -1629,6 +1665,9 @@ class NetworkManagerActiveConnection {
   @override
   bool operator ==(other) =>
       other is NetworkManagerActiveConnection && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// IPv4 configuration.
@@ -1687,6 +1726,9 @@ class NetworkManagerIP4Config {
   @override
   bool operator ==(other) =>
       other is NetworkManagerIP4Config && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// DCHPv4 configuration.
@@ -1717,6 +1759,9 @@ class NetworkManagerDHCP4Config {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDHCP4Config && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// IPv6 configuration.
@@ -1769,6 +1814,9 @@ class NetworkManagerIP6Config {
   @override
   bool operator ==(other) =>
       other is NetworkManagerIP6Config && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// DCHPv6 configuration.
@@ -1799,6 +1847,9 @@ class NetworkManagerDHCP6Config {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDHCP6Config && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 /// WiFi access point.
@@ -1893,6 +1944,9 @@ class NetworkManagerAccessPoint {
   @override
   bool operator ==(other) =>
       other is NetworkManagerAccessPoint && other._object == _object;
+
+  @override
+  String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
 class _NetworkManagerInterface {

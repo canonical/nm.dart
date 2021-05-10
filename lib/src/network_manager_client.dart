@@ -2501,14 +2501,11 @@ class NetworkManagerClient {
   /// A specific [connection] may be specified, or else it is detected automatically.
   ///
   /// Note that when activating a wireless connection, the [accessPoint] must be specified.
-  Future<NetworkManagerActiveConnection?> activateConnection(
+  Future<NetworkManagerActiveConnection> activateConnection(
       {required NetworkManagerDevice device,
       NetworkManagerSettingsConnection? connection,
       NetworkManagerAccessPoint? accessPoint}) async {
     assert(device.wireless == null || accessPoint != null);
-    if (_manager == null) {
-      return null;
-    }
     var result = await _manager!
         .callMethod(_managerInterfaceName, 'ActivateConnection', [
       connection?._object.path ?? DBusObjectPath('/'),
@@ -2518,7 +2515,7 @@ class NetworkManagerClient {
     if (result.signature != DBusSignature('o')) {
       throw '$_managerInterfaceName.ActivateConnection returned invalid result: ${result.returnValues}';
     }
-    return _getActiveConnection(result.returnValues[0] as DBusObjectPath);
+    return _getActiveConnection(result.returnValues[0] as DBusObjectPath)!;
   }
 
   /// Deactivates an active [connection].

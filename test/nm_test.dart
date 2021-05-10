@@ -2203,14 +2203,12 @@ void main() {
     expect(client.settings.connections, hasLength(2));
 
     var connection1 = await client.activateConnection(device: device);
-    expect(connection1, isNotNull);
-    expect(connection1!.id, equals(s1.path.value));
+    expect(connection1.id, equals(s1.path.value));
     await verifyActiveConnections(clientAddress, [s1.path.value]);
 
     var connection2 = await client.activateConnection(
         device: device, connection: client.settings.connections[1]);
-    expect(connection2, isNotNull);
-    expect(connection2!.id, equals(s2.path.value));
+    expect(connection2.id, equals(s2.path.value));
     await verifyActiveConnections(
         clientAddress, [s1.path.value, s2.path.value]);
 
@@ -2251,8 +2249,7 @@ void main() {
 
     var connection = await client.activateConnection(
         device: device, connection: settings, accessPoint: ap);
-    expect(connection, isNotNull);
-    expect(connection!.id, equals(s.path.value));
+    expect(connection.id, equals(s.path.value));
     await verifyActiveConnections(clientAddress, [s.path.value]);
 
     await client.deactivateConnection(connection);

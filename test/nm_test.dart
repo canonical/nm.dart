@@ -1063,6 +1063,7 @@ class MockNetworkManagerServer extends DBusClient {
     _nextActiveConnectionId++;
     await registerObject(activeConnection);
     activeConnections.add(activeConnection);
+    await emitActiveConnectionsChanged();
     return activeConnection;
   }
 
@@ -1070,6 +1071,18 @@ class MockNetworkManagerServer extends DBusClient {
       MockNetworkManagerActiveConnection connection) async {
     await unregisterObject(connection);
     activeConnections.remove(connection);
+    await emitActiveConnectionsChanged();
+  }
+
+  Future<void> emitActiveConnectionsChanged() async {
+    _manager.emitPropertiesChanged(
+      'org.freedesktop.NetworkManager',
+      changedProperties: {
+        'ActiveConnections': DBusArray.objectPath(
+          activeConnections.map((connection) => connection.path),
+        ),
+      },
+    );
   }
 }
 
@@ -2175,15 +2188,6 @@ void main() {
     await client.close();
   });
 
-  Future<void> verifyActiveConnections(
-      DBusAddress clientAddress, List<String> expectedIds) async {
-    // active connections are cached => use a temp extra client to verify
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    await client.connect();
-    expect(client.activeConnections.map((c) => c.id), equals(expectedIds));
-    await client.close();
-  }
-
   test('activate ethernet connection', () async {
     var server = DBusServer();
     var clientAddress =
@@ -2204,19 +2208,26 @@ void main() {
 
     var connection1 = await client.activateConnection(device: device);
     expect(connection1.id, equals(s1.path.value));
-    await verifyActiveConnections(clientAddress, [s1.path.value]);
+    await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
+    expect(client.activeConnections, hasLength(1));
+    expect(client.activeConnections[0].id, equals(s1.path.value));
 
     var connection2 = await client.activateConnection(
         device: device, connection: client.settings.connections[1]);
     expect(connection2.id, equals(s2.path.value));
-    await verifyActiveConnections(
-        clientAddress, [s1.path.value, s2.path.value]);
+
+    await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
+    expect(client.activeConnections, hasLength(2));
+    expect(client.activeConnections[1].id, equals(s2.path.value));
 
     await client.deactivateConnection(connection1);
-    await verifyActiveConnections(clientAddress, [s2.path.value]);
+    await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
+    expect(client.activeConnections, hasLength(1));
+    expect(client.activeConnections[0].id, equals(s2.path.value));
 
     await client.deactivateConnection(connection2);
-    await verifyActiveConnections(clientAddress, []);
+    await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
+    expect(client.activeConnections, isEmpty);
 
     await client.close();
   });
@@ -2250,10 +2261,13 @@ void main() {
     var connection = await client.activateConnection(
         device: device, connection: settings, accessPoint: ap);
     expect(connection.id, equals(s.path.value));
-    await verifyActiveConnections(clientAddress, [s.path.value]);
+    await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
+    expect(client.activeConnections, hasLength(1));
+    expect(client.activeConnections[0].id, equals(s.path.value));
 
     await client.deactivateConnection(connection);
-    await verifyActiveConnections(clientAddress, []);
+    await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
+    expect(client.activeConnections, isEmpty);
 
     await expectLater(
         () => client.activateConnection(device: device, connection: settings),

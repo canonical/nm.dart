@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0
+
+* Add NetworkManagerClient.activate/deactivateConnection().
+* Fix typo in NetworkManagerWifiAccessPointFlag, NetworkManagerWifiAccessPointSecurityFlag enum names.
+* Reliably detect when an object is removed, rather than just some of its interfaces.
+* Add more toString() methods for easier debugging.
+* Use dbus 0.5.
+* Rename test file so can just run 'dart test'.
+
 ## 0.2.0
 
 * Various new API additions and fixes.

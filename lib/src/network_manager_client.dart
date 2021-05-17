@@ -554,34 +554,34 @@ class NetworkManagerSettings {
   /// Add new connection and save it to disk.
   Future<NetworkManagerSettingsConnection> addConnection(
       Map<String, Map<String, DBusValue>> connection) async {
-    var result =
-        await _object.callMethod(_settingsInterfaceName, 'AddConnection', [
-      DBusDict(
-          DBusSignature('s'),
-          DBusSignature('a{sv}'),
-          connection.map((key, value) =>
-              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
-    ]);
-    if (result.signature != DBusSignature('o')) {
-      throw '$_settingsInterfaceName.AddConnection returned invalid result: ${result.returnValues}';
-    }
+    var result = await _object.callMethod(
+        _settingsInterfaceName,
+        'AddConnection',
+        [
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              connection.map((key, value) =>
+                  MapEntry(DBusString(key), DBusDict.stringVariant(value))))
+        ],
+        replySignature: DBusSignature('o'));
     return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
   }
 
   /// Add new connection but do not save it to disk immediately.
   Future<NetworkManagerSettingsConnection> addConnectionUnsaved(
       Map<String, Map<String, DBusValue>> connection) async {
-    var result = await _object
-        .callMethod(_settingsInterfaceName, 'AddConnectionUnsaved', [
-      DBusDict(
-          DBusSignature('s'),
-          DBusSignature('a{sv}'),
-          connection.map((key, value) =>
-              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
-    ]);
-    if (result.signature != DBusSignature('o')) {
-      throw '$_settingsInterfaceName.AddConnectionUnsaved returned invalid result: ${result.returnValues}';
-    }
+    var result = await _object.callMethod(
+        _settingsInterfaceName,
+        'AddConnectionUnsaved',
+        [
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              connection.map((key, value) =>
+                  MapEntry(DBusString(key), DBusDict.stringVariant(value))))
+        ],
+        replySignature: DBusSignature('o'));
     return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
   }
 
@@ -607,51 +607,46 @@ class NetworkManagerSettingsConnection {
 
   /// Updates the settings for this connection, writing them to persistent storage.
   Future<void> update(Map<String, Map<String, DBusValue>> properties) async {
-    var result =
-        await _object.callMethod(_settingsConnectionInterfaceName, 'Update', [
-      DBusDict(
-          DBusSignature('s'),
-          DBusSignature('a{sv}'),
-          properties.map((key, value) =>
-              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
-    ]);
-    if (result.signature != DBusSignature('')) {
-      throw '$_settingsConnectionInterfaceName..Update returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(
+        _settingsConnectionInterfaceName,
+        'Update',
+        [
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              properties.map((key, value) =>
+                  MapEntry(DBusString(key), DBusDict.stringVariant(value))))
+        ],
+        replySignature: DBusSignature(''));
   }
 
   /// Updates the settings for this connection, not writing them to persistent storage.
   Future<void> updateUnsaved(
       Map<String, Map<String, DBusValue>> properties) async {
-    var result = await _object
-        .callMethod(_settingsConnectionInterfaceName, 'UpdateUnsaved', [
-      DBusDict(
-          DBusSignature('s'),
-          DBusSignature('a{sv}'),
-          properties.map((key, value) =>
-              MapEntry(DBusString(key), DBusDict.stringVariant(value))))
-    ]);
-    if (result.signature != DBusSignature('')) {
-      throw '$_settingsConnectionInterfaceName..UpdateUnsaved returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(
+        _settingsConnectionInterfaceName,
+        'UpdateUnsaved',
+        [
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              properties.map((key, value) =>
+                  MapEntry(DBusString(key), DBusDict.stringVariant(value))))
+        ],
+        replySignature: DBusSignature(''));
   }
 
   /// Deletes this network connection settings.
   Future<void> delete() async {
-    var result = await _object
-        .callMethod(_settingsConnectionInterfaceName, 'Delete', []);
-    if (result.signature != DBusSignature('')) {
-      throw '$_settingsConnectionInterfaceName..Delete returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(_settingsConnectionInterfaceName, 'Delete', [],
+        replySignature: DBusSignature(''));
   }
 
   /// Gets the settings belonging to this network connection.
   Future<Map<String, Map<String, DBusValue>>> getSettings() async {
-    var result = await _object
-        .callMethod(_settingsConnectionInterfaceName, 'GetSettings', []);
-    if (result.signature != DBusSignature('a{sa{sv}}')) {
-      throw '$_settingsConnectionInterfaceName..GetSettings returned invalid result: ${result.returnValues}';
-    }
+    var result = await _object.callMethod(
+        _settingsConnectionInterfaceName, 'GetSettings', [],
+        replySignature: DBusSignature('a{sa{sv}}'));
     return (result.returnValues[0] as DBusDict).children.map(
           (key, value) => MapEntry(
             (key as DBusString).value,
@@ -665,10 +660,8 @@ class NetworkManagerSettingsConnection {
   Future<Map<String, Map<String, DBusValue>>> getSecrets(
       [String settingName = '']) async {
     var result = await _object.callMethod(_settingsConnectionInterfaceName,
-        'GetSecrets', [DBusString(settingName)]);
-    if (result.signature != DBusSignature('a{sa{sv}}')) {
-      throw '$_settingsConnectionInterfaceName..GetSecrets returned invalid result: ${result.returnValues}';
-    }
+        'GetSecrets', [DBusString(settingName)],
+        replySignature: DBusSignature('a{sa{sv}}'));
     return (result.returnValues[0] as DBusDict).children.map((key, value) =>
         MapEntry(
             (key as DBusString).value,
@@ -678,20 +671,15 @@ class NetworkManagerSettingsConnection {
 
   /// Clears the secrets belonging to this network connection.
   Future<void> clearSecrets() async {
-    var result = await _object
-        .callMethod(_settingsConnectionInterfaceName, 'ClearSecrets', []);
-    if (result.signature != DBusSignature('')) {
-      throw '$_settingsConnectionInterfaceName..ClearSecrets returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(
+        _settingsConnectionInterfaceName, 'ClearSecrets', [],
+        replySignature: DBusSignature(''));
   }
 
   /// Saves the connection settings to persistent storage.
   Future<void> save() async {
-    var result =
-        await _object.callMethod(_settingsConnectionInterfaceName, 'Save', []);
-    if (result.signature != DBusSignature('')) {
-      throw '$_settingsConnectionInterfaceName..Save returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(_settingsConnectionInterfaceName, 'Save', [],
+        replySignature: DBusSignature(''));
   }
 
   // FIXME: Update2
@@ -831,20 +819,15 @@ class NetworkManagerDevice {
 
   /// Disconnects a device and prevents the device from automatically activating further connections without user intervention.
   Future<void> disconnect() async {
-    var result =
-        await _object.callMethod(_deviceInterfaceName, 'Disconnect', []);
-    if (result.signature != DBusSignature('')) {
-      throw '$_deviceInterfaceName.Disconnect returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(_deviceInterfaceName, 'Disconnect', [],
+        replySignature: DBusSignature(''));
   }
 
   /// Deletes a software device from NetworkManager and removes the interface from the system.
   /// The method returns an error when called for a hardware device.
   Future<void> delete() async {
-    var result = await _object.callMethod(_deviceInterfaceName, 'Delete', []);
-    if (result.signature != DBusSignature('')) {
-      throw '$_deviceInterfaceName.Delete returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(_deviceInterfaceName, 'Delete', [],
+        replySignature: DBusSignature(''));
   }
 
   /// UDI for this device.
@@ -1492,11 +1475,9 @@ class NetworkManagerDeviceWireless {
       options['ssids'] = DBusArray(
           DBusSignature('ay'), ssids.map((ssid) => DBusArray.byte(ssid)));
     }
-    var result = await _object.callMethod(_wirelessDeviceInterfaceName,
-        'RequestScan', [DBusDict.stringVariant(options)]);
-    if (result.signature != DBusSignature('')) {
-      throw '$_wirelessDeviceInterfaceName.RequestScan returned invalid result: ${result.returnValues}';
-    }
+    await _object.callMethod(_wirelessDeviceInterfaceName, 'RequestScan',
+        [DBusDict.stringVariant(options)],
+        replySignature: DBusSignature(''));
   }
 
   @override
@@ -2506,24 +2487,28 @@ class NetworkManagerClient {
       NetworkManagerSettingsConnection? connection,
       NetworkManagerAccessPoint? accessPoint}) async {
     assert(device.wireless == null || accessPoint != null);
-    var result = await _manager!
-        .callMethod(_managerInterfaceName, 'ActivateConnection', [
-      connection?._object.path ?? DBusObjectPath('/'),
-      device._object.path,
-      accessPoint?._object.path ?? DBusObjectPath('/'),
-    ]);
-    if (result.signature != DBusSignature('o')) {
-      throw '$_managerInterfaceName.ActivateConnection returned invalid result: ${result.returnValues}';
-    }
+    var result = await _manager!.callMethod(
+        _managerInterfaceName,
+        'ActivateConnection',
+        [
+          connection?._object.path ?? DBusObjectPath('/'),
+          device._object.path,
+          accessPoint?._object.path ?? DBusObjectPath('/'),
+        ],
+        replySignature: DBusSignature('o'));
     return _getActiveConnection(result.returnValues[0] as DBusObjectPath)!;
   }
 
   /// Deactivates an active [connection].
   Future<void> deactivateConnection(
       NetworkManagerActiveConnection connection) async {
-    await _manager?.callMethod(_managerInterfaceName, 'DeactivateConnection', [
-      connection._object.path,
-    ]);
+    await _manager?.callMethod(
+        _managerInterfaceName,
+        'DeactivateConnection',
+        [
+          connection._object.path,
+        ],
+        replySignature: DBusSignature(''));
   }
 
   /// Terminates all active connections. If a client remains unclosed, the Dart process may not terminate.

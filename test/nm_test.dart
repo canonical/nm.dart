@@ -122,8 +122,10 @@ class MockNetworkManagerSettings extends MockNetworkManagerObject {
 
     switch (methodCall.name) {
       case 'AddConnection':
+        print('server AddConnection1');
         var connection = await server.addConnectionSettings();
         // FIXME: Object not registered before path returned?
+        print('server AddConnection2');
         return DBusMethodSuccessResponse([connection.path]);
       case 'AddConnectionUnsaved':
         var connection = await server.addConnectionSettings(unsaved: true);
@@ -894,6 +896,7 @@ class MockNetworkManagerServer extends DBusClient {
       Map<String, Map<String, DBusValue>>? secrets,
       Map<String, Map<String, DBusValue>>? settings,
       bool unsaved = false}) async {
+    print('server addConnectionSettings1');
     var s = MockNetworkManagerConnectionSettings(_nextSettingsId,
         filename: filename,
         flags: flags,
@@ -902,7 +905,9 @@ class MockNetworkManagerServer extends DBusClient {
         unsaved: unsaved);
     _nextSettingsId++;
     await registerObject(s);
+    print('server addConnectionSettings2');
     connectionSettings.add(s);
+    print('server addConnectionSettings3');
     return s;
   }
 

@@ -554,6 +554,7 @@ class NetworkManagerSettings {
   /// Add new connection and save it to disk.
   Future<NetworkManagerSettingsConnection> addConnection(
       Map<String, Map<String, DBusValue>> connection) async {
+    print('addConnection1');
     var result = await _object.callMethod(
         _settingsInterfaceName,
         'AddConnection',
@@ -565,7 +566,10 @@ class NetworkManagerSettings {
                   MapEntry(DBusString(key), DBusDict.stringVariant(value))))
         ],
         replySignature: DBusSignature('o'));
-    return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
+    print('addConnection2');
+    var objectPath = result.returnValues[0] as DBusObjectPath;
+    print('addConnection $objectPath');
+    return _client._getConnection(objectPath)!;
   }
 
   /// Add new connection but do not save it to disk immediately.
@@ -582,7 +586,9 @@ class NetworkManagerSettings {
                   MapEntry(DBusString(key), DBusDict.stringVariant(value))))
         ],
         replySignature: DBusSignature('o'));
-    return _client._getConnection(result.returnValues[0] as DBusObjectPath)!;
+    var objectPath = result.returnValues[0] as DBusObjectPath;
+    print('addConnectionUnsaved $objectPath');
+    return _client._getConnection(objectPath)!;
   }
 
   @override
@@ -2222,6 +2228,7 @@ class NetworkManagerClient {
           object = _NetworkManagerObject(
               _bus, signal.changedPath, signal.interfacesAndProperties);
           _objects[signal.changedPath] = object;
+          print('++ ${signal.changedPath}');
           if (object.interfaces.containsKey(_deviceInterfaceName)) {
             _deviceAddedStreamController
                 .add(NetworkManagerDevice(this, object));

@@ -123,9 +123,11 @@ class MockNetworkManagerSettings extends MockNetworkManagerObject {
     switch (methodCall.name) {
       case 'AddConnection':
         var connection = await server.addConnectionSettings();
+        // FIXME: Object not registered before path returned?
         return DBusMethodSuccessResponse([connection.path]);
       case 'AddConnectionUnsaved':
         var connection = await server.addConnectionSettings(unsaved: true);
+        // FIXME: Object not registered before path returned?
         return DBusMethodSuccessResponse([connection.path]);
       case 'ListConnections':
         return DBusMethodSuccessResponse([

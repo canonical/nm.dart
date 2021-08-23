@@ -2148,7 +2148,7 @@ class _NetworkManagerObject extends DBusRemoteObject {
 
   _NetworkManagerObject(DBusClient client, DBusObjectPath path,
       Map<String, Map<String, DBusValue>> interfacesAndProperties)
-      : super(client, 'org.freedesktop.NetworkManager', path) {
+      : super(client, name: 'org.freedesktop.NetworkManager', path: path) {
     updateInterfaces(interfacesAndProperties);
   }
 }
@@ -2199,8 +2199,8 @@ class NetworkManagerClient {
         _closeBus = bus == null {
     _root = DBusRemoteObjectManager(
       _bus,
-      'org.freedesktop.NetworkManager',
-      DBusObjectPath('/org/freedesktop'),
+      name: 'org.freedesktop.NetworkManager',
+      path: DBusObjectPath('/org/freedesktop'),
     );
   }
 

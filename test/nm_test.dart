@@ -1075,7 +1075,7 @@ class MockNetworkManagerServer extends DBusClient {
   }
 
   Future<void> emitActiveConnectionsChanged() async {
-    _manager.emitPropertiesChanged(
+    await _manager.emitPropertiesChanged(
       'org.freedesktop.NetworkManager',
       changedProperties: {
         'ActiveConnections': DBusArray.objectPath(

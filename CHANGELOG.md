@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.0
+
+* Fix detection of removed device/connection device when they re-appear.
+
 ## 0.3.0
 
 * Add NetworkManagerClient.activate/deactivateConnection().

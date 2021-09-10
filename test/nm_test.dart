@@ -2316,9 +2316,5 @@ void main() {
     await client.deactivateConnection(connection);
     await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
     expect(client.activeConnections, isEmpty);
-
-    await expectLater(
-        () => client.activateConnection(device: device, connection: settings),
-        throwsA(isA<AssertionError>()));
   });
 }

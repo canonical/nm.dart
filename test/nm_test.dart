@@ -1089,22 +1089,24 @@ class MockNetworkManagerServer extends DBusClient {
 void main() {
   test('version', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress, version: '1.2.3');
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.version, equals('1.2.3'));
-
-    await client.close();
   });
 
   test('connectivity', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
@@ -1113,57 +1115,61 @@ void main() {
         connectivityCheckEnabled: true,
         connectivityCheckUri: 'http://example.com',
         connectivity: 4);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.connectivityCheckAvailable, isTrue);
     expect(client.connectivityCheckEnabled, isTrue);
     expect(client.connectivityCheckUri, equals('http://example.com'));
     expect(client.connectivity, NetworkManagerConnectivityState.full);
-
-    await client.close();
   });
 
   test('hostname', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress, hostname: 'HOSTNAME');
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.hostname, equals('HOSTNAME'));
-
-    await client.close();
   });
 
   test('no settings', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, isEmpty);
-
-    await client.close();
   });
 
   test('settings', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress, settingsCanModify: true);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addConnectionSettings(
         filename:
@@ -1176,6 +1182,7 @@ void main() {
         flags: 0xf);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.canModify, isTrue);
@@ -1195,20 +1202,21 @@ void main() {
           NetworkManagerConnectionFlag.volatile,
           NetworkManagerConnectionFlag.external
         }));
-
-    await client.close();
   });
 
   test('settings save', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var s = await nm.addConnectionSettings();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
@@ -1216,20 +1224,21 @@ void main() {
     expect(s.saved, isFalse);
     await connection.save();
     expect(s.saved, isTrue);
-
-    await client.close();
   });
 
   test('settings delete', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var s = await nm.addConnectionSettings();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
@@ -1237,16 +1246,16 @@ void main() {
     expect(s.deleted, isFalse);
     await connection.delete();
     expect(s.deleted, isTrue);
-
-    await client.close();
   });
 
   test('settings get', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addConnectionSettings(settings: {
       'group1': {'setting1a': DBusString('value')},
@@ -1254,6 +1263,7 @@ void main() {
     });
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
@@ -1264,16 +1274,16 @@ void main() {
           'group1': {'setting1a': DBusString('value')},
           'group2': {'setting2a': DBusUint32(42)}
         }));
-
-    await client.close();
   });
 
   test('settings get secrets', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addConnectionSettings(secrets: {
       'group1': {'secret1a': DBusString('value')},
@@ -1281,6 +1291,7 @@ void main() {
     });
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
@@ -1291,16 +1302,16 @@ void main() {
           'group1': {'secret1a': DBusString('value')},
           'group2': {'secret2a': DBusUint32(42)}
         }));
-
-    await client.close();
   });
 
   test('settings clear secrets', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var s = await nm.addConnectionSettings(secrets: {
       'group1': {'secret1a': DBusString('value')},
@@ -1308,22 +1319,23 @@ void main() {
     });
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
     var connection = client.settings.connections[0];
     await connection.clearSecrets();
     expect(s.secrets, equals({}));
-
-    await client.close();
   });
 
   test('settings update', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var s = await nm.addConnectionSettings(settings: {
       'group1': {'setting1a': DBusString('value')},
@@ -1331,6 +1343,7 @@ void main() {
     });
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
@@ -1345,16 +1358,16 @@ void main() {
           'group3': {'setting3a': DBusUint32(123)}
         }));
     expect(s.saved, isTrue);
-
-    await client.close();
   });
 
   test('settings update unsaved', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var s = await nm.addConnectionSettings(settings: {
       'group1': {'setting1a': DBusString('value')},
@@ -1362,6 +1375,7 @@ void main() {
     });
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.settings.connections, hasLength(1));
@@ -1376,57 +1390,60 @@ void main() {
           'group3': {'setting3a': DBusUint32(123)}
         }));
     expect(s.saved, isFalse);
-
-    await client.close();
   });
 
   test('no devices', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, isEmpty);
-
-    await client.close();
   });
 
   test('devices', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
     await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
     await nm.addDevice(hwAddress: 'DE:71:CE:00:00:03');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(3));
     expect(client.devices[0].hwAddress, equals('DE:71:CE:00:00:01'));
     expect(client.devices[1].hwAddress, equals('DE:71:CE:00:00:02'));
     expect(client.devices[2].hwAddress, equals('DE:71:CE:00:00:03'));
-
-    await client.close();
   });
 
   test('device added', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     client.deviceAdded.listen(expectAsync1((device) {
@@ -1438,13 +1455,16 @@ void main() {
 
   test('device removed', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
     var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
 
@@ -1457,10 +1477,12 @@ void main() {
 
   test('device properties', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
         autoconnect: true,
@@ -1486,6 +1508,7 @@ void main() {
         udi: 'UDI');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1538,16 +1561,16 @@ void main() {
     expect(device.real, isTrue);
     expect(device.state, equals(NetworkManagerDeviceState.activated));
     expect(device.udi, equals('UDI'));
-
-    await client.close();
   });
 
   test('device ip config', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var ip4c = await nm.addIp4Config(
         addressData: [
@@ -1594,6 +1617,7 @@ void main() {
     await nm.addDevice(ip4Config: ip4c, ip6Config: ip6c);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1648,16 +1672,16 @@ void main() {
           {'dest': 'fe80::', 'prefix': 64, 'metric': 600},
         ]));
     expect(ip6Config.searches, equals(['search6a', 'search6b']));
-
-    await client.close();
   });
 
   test('device dhcp config', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var dhcp4c = await nm.addDhcp4Config(options: {
       'option4a': DBusString('192.168.0.1'),
@@ -1670,6 +1694,7 @@ void main() {
     await nm.addDevice(dhcp4Config: dhcp4c, dhcp6Config: dhcp6c);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1684,20 +1709,21 @@ void main() {
           'option6a': '2001:0db8:85a3:0000:0000:8a2e:0370:1234',
           'option6b': 42
         }));
-
-    await client.close();
   });
 
   test('device disconnect', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var d = await nm.addDevice();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1705,20 +1731,21 @@ void main() {
     expect(d.disconnected, isFalse);
     await device.disconnect();
     expect(d.disconnected, isTrue);
-
-    await client.close();
   });
 
   test('device delete', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var d = await nm.addDevice();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1726,20 +1753,21 @@ void main() {
     expect(d.deleted, isFalse);
     await device.delete();
     expect(d.deleted, isTrue);
-
-    await client.close();
   });
 
   test('bluetooth device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(hasBluetooth: true, btCapabilities: 0x3, name: 'NAME');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1752,22 +1780,23 @@ void main() {
           NetworkManagerBluetoothCapability.tun
         }));
     expect(device.bluetooth?.name, equals('NAME'));
-
-    await client.close();
   });
 
   test('bridge device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
     var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
     await nm.addDevice(hasBridge: true, slaves: [d1, d2]);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(3));
@@ -1776,36 +1805,37 @@ void main() {
     expect(device.bridge!.slaves, hasLength(2));
     expect(device.bridge!.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
     expect(device.bridge!.slaves[1].hwAddress, equals('DE:71:CE:00:00:02'));
-
-    await client.close();
   });
 
   test('generic device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(hasGeneric: true, typeDescription: 'TYPE-DESCRIPTION');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
     expect(device.generic, isNotNull);
     expect(device.generic!.typeDescription, equals('TYPE-DESCRIPTION'));
-
-    await client.close();
   });
 
   test('tun device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
         hasTun: true,
@@ -1817,6 +1847,7 @@ void main() {
         vnetHdr: true);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1828,21 +1859,22 @@ void main() {
     expect(device.tun!.multiQueue, isTrue);
     expect(device.tun!.noPi, isTrue);
     expect(device.tun!.vnetHdr, isTrue);
-
-    await client.close();
   });
 
   test('vlan device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
     await nm.addDevice(hasVlan: true, parent: d, vlanId: 42);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(2));
@@ -1850,21 +1882,22 @@ void main() {
     expect(device.vlan, isNotNull);
     expect(device.vlan!.vlanId, equals(42));
     expect(device.vlan!.parent.hwAddress, equals('DE:71:CE:00:00:01'));
-
-    await client.close();
   });
 
   test('wired device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
         hasWired: true, permHwAddress: 'DE:71:CE:00:00:01', speed: 100);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1872,16 +1905,16 @@ void main() {
     expect(device.wired, isNotNull);
     expect(device.wired!.permHwAddress, equals('DE:71:CE:00:00:01'));
     expect(device.wired!.speed, equals(100));
-
-    await client.close();
   });
 
   test('wireless device', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var ap1 = await nm.addAccessPoint(
         flags: 0xf,
@@ -1907,6 +1940,7 @@ void main() {
         wirelessCapabilities: 0x1027);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1963,21 +1997,22 @@ void main() {
           NetworkManagerDeviceWifiCapability.rsn,
           NetworkManagerDeviceWifiCapability.mesh
         }));
-
-    await client.close();
   });
 
   test('device statistics', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
         hasStatistics: true, refreshRateMs: 100, rxBytes: 1024, txBytes: 2048);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -1989,57 +2024,60 @@ void main() {
 
     await device.statistics!.setRefreshRateMs(10);
     expect(device.statistics!.refreshRateMs, equals(100));
-
-    await client.close();
   });
 
   test('no active connections', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.activeConnections, isEmpty);
-
-    await client.close();
   });
 
   test('active connections', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addActiveConnection(id: 'connection1');
     await nm.addActiveConnection(id: 'connection2');
     await nm.addActiveConnection(id: 'connection3');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.activeConnections, hasLength(3));
     expect(client.activeConnections[0].id, equals('connection1'));
     expect(client.activeConnections[1].id, equals('connection2'));
     expect(client.activeConnections[2].id, equals('connection3'));
-
-    await client.close();
   });
 
   test('active connection added', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     client.activeConnectionAdded.listen(expectAsync1((connection) {
@@ -2051,13 +2089,16 @@ void main() {
 
   test('active connection removed', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
     var d = await nm.addActiveConnection(id: 'connection');
 
@@ -2070,10 +2111,12 @@ void main() {
 
   test('active connection properties', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
     var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
@@ -2104,6 +2147,7 @@ void main() {
         vpn: true);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.activeConnections, hasLength(1));
@@ -2146,60 +2190,63 @@ void main() {
     expect(connection.type, equals('802-3-ethernet'));
     expect(connection.uuid, equals('123e4567-e89b-12d3-a456-426614174000'));
     expect(connection.vpn, isTrue);
-
-    await client.close();
   });
 
   test('add connection', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     var connection = await client.settings.addConnection({});
     expect(connection, isNotNull);
     expect(nm.connectionSettings, hasLength(1));
     expect(nm.connectionSettings[0].unsaved, isFalse);
-
-    await client.close();
   });
 
   test('add connection unsaved', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     var connection = await client.settings.addConnectionUnsaved({});
     expect(connection, isNotNull);
     expect(nm.connectionSettings, hasLength(1));
     expect(nm.connectionSettings[0].unsaved, isTrue);
-
-    await client.close();
   });
 
   test('activate ethernet connection', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(deviceType: NetworkManagerDeviceType.ethernet.index);
     var s1 = await nm.addConnectionSettings();
     var s2 = await nm.addConnectionSettings();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -2228,16 +2275,16 @@ void main() {
     await client.deactivateConnection(connection2);
     await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
     expect(client.activeConnections, isEmpty);
-
-    await client.close();
   });
 
   test('activate wifi connection', () async {
     var server = DBusServer();
+    addTearDown(() async => await server.close());
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
     var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
       deviceType: NetworkManagerDeviceType.wifi.index,
@@ -2247,6 +2294,7 @@ void main() {
     var s = await nm.addConnectionSettings();
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
     await client.connect();
 
     expect(client.devices, hasLength(1));
@@ -2272,7 +2320,5 @@ void main() {
     await expectLater(
         () => client.activateConnection(device: device, connection: settings),
         throwsA(isA<AssertionError>()));
-
-    await client.close();
   });
 }

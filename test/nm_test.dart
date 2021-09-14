@@ -42,7 +42,6 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
           'Startup': DBusBoolean(server.startup),
           'State': DBusUint32(server.state),
           'Version': DBusString(server.version),
-          'WimaxEnabled': DBusBoolean(server.wimaxEnabled),
           'WimaxHardwareEnabled': DBusBoolean(server.wimaxHardwareEnabled),
           'WirelessEnabled': DBusBoolean(server.wirelessEnabled),
           'WirelessHardwareEnabled':
@@ -62,6 +61,25 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
     switch (name) {
       case 'ConnectivityCheckEnabled':
         server.connectivityCheckEnabled = (value as DBusBoolean).value;
+        await emitPropertiesChanged('org.freedesktop.NetworkManager',
+            changedProperties: {
+              'ConnectivityCheckEnabled':
+                  DBusBoolean(server.connectivityCheckEnabled)
+            });
+        return DBusMethodSuccessResponse();
+      case 'WirelessEnabled':
+        server.wirelessEnabled = (value as DBusBoolean).value;
+        await emitPropertiesChanged('org.freedesktop.NetworkManager',
+            changedProperties: {
+              'WirelessEnabled': DBusBoolean(server.wirelessEnabled)
+            });
+        return DBusMethodSuccessResponse();
+      case 'WwanEnabled':
+        server.wwanEnabled = (value as DBusBoolean).value;
+        await emitPropertiesChanged('org.freedesktop.NetworkManager',
+            changedProperties: {
+              'WwanEnabled': DBusBoolean(server.wwanEnabled)
+            });
         return DBusMethodSuccessResponse();
       default:
         return DBusMethodErrorResponse.unknownProperty();
@@ -751,9 +769,9 @@ class MockNetworkManagerServer extends DBusClient {
   final String version;
   final bool wimaxEnabled;
   final bool wimaxHardwareEnabled;
-  final bool wirelessEnabled;
+  bool wirelessEnabled;
   final bool wirelessHardwareEnabled;
-  final bool wwanEnabled;
+  bool wwanEnabled;
   final bool wwanHardwareEnabled;
 
   final DBusObject _root;
@@ -1159,8 +1177,37 @@ void main() {
     await client.connect();
 
     expect(nm.connectivityCheckEnabled, isFalse);
+    expect(client.connectivityCheckEnabled, isFalse);
     await client.setConnectivityCheckEnabled(true);
     expect(nm.connectivityCheckEnabled, isTrue);
+    expect(client.connectivityCheckEnabled, isTrue);
+  });
+
+  test('wireless - enable', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(nm.wirelessEnabled, isFalse);
+    expect(client.wirelessEnabled, isFalse);
+    await client.setWirelessEnabled(true);
+    expect(nm.wirelessEnabled, isTrue);
+    expect(client.wirelessEnabled, isTrue);
+
+    expect(nm.wwanEnabled, isFalse);
+    expect(nm.wwanEnabled, isFalse);
+    await client.setWwanEnabled(true);
+    expect(nm.wwanEnabled, isTrue);
+    expect(client.wwanEnabled, isTrue);
   });
 
   test('hostname', () async {

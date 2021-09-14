@@ -53,6 +53,22 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
       };
 
   @override
+  Future<DBusMethodResponse> setProperty(
+      String interface, String name, DBusValue value) async {
+    if (interface != 'org.freedesktop.NetworkManager') {
+      return DBusMethodErrorResponse.unknownInterface();
+    }
+
+    switch (name) {
+      case 'ConnectivityCheckEnabled':
+        server.connectivityCheckEnabled = (value as DBusBoolean).value;
+        return DBusMethodSuccessResponse();
+      default:
+        return DBusMethodErrorResponse.unknownProperty();
+    }
+  }
+
+  @override
   Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
     if (methodCall.interface != 'org.freedesktop.NetworkManager') {
       return DBusMethodErrorResponse.unknownInterface();
@@ -724,7 +740,7 @@ class MockNetworkManagerServer extends DBusClient {
   final List<int> capabilities;
   final int connectivity;
   final bool connectivityCheckAvailable;
-  final bool connectivityCheckEnabled;
+  bool connectivityCheckEnabled;
   final String connectivityCheckUri;
   final String hostname;
   final int metered;
@@ -1126,6 +1142,25 @@ void main() {
     expect(client.connectivityCheckEnabled, isTrue);
     expect(client.connectivityCheckUri, equals('http://example.com'));
     expect(client.connectivity, NetworkManagerConnectivityState.full);
+  });
+
+  test('connectivity - enable', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(nm.connectivityCheckEnabled, isFalse);
+    await client.setConnectivityCheckEnabled(true);
+    expect(nm.connectivityCheckEnabled, isTrue);
   });
 
   test('hostname', () async {

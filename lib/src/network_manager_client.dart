@@ -2477,6 +2477,28 @@ class NetworkManagerClient {
         object ?? _NetworkManagerObject(_bus, DBusObjectPath('/'), {}));
   }
 
+  /// Adds a new connection for [device] and activates it.
+  Future<NetworkManagerSettingsConnection> addAndActivateConnection(
+      {Map<String, Map<String, DBusValue>> connection = const {},
+      required NetworkManagerDevice device,
+      NetworkManagerAccessPoint? accessPoint}) async {
+    assert(device.wireless == null || accessPoint != null);
+    var result = await _manager!.callMethod(
+        _managerInterfaceName,
+        'AddAndActivateConnection',
+        [
+          DBusDict(
+              DBusSignature('s'),
+              DBusSignature('a{sv}'),
+              connection.map((key, value) =>
+                  MapEntry(DBusString(key), DBusDict.stringVariant(value)))),
+          device._object.path,
+          accessPoint?._object.path ?? DBusObjectPath('/'),
+        ],
+        replySignature: DBusSignature('oo'));
+    return _getConnection(result.returnValues[0] as DBusObjectPath)!;
+  }
+
   /// Activates a connection for [device].
   ///
   /// A specific [connection] may be specified, or else it is detected automatically.

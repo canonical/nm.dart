@@ -101,6 +101,19 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
             id: server.connectionSettings[index].path.value);
         return DBusMethodSuccessResponse(
             [server.activeConnections[index].path]);
+      case 'AddAndActivateConnection':
+        var connection = await server.addConnectionSettings(
+          settings: (methodCall.values[0] as DBusDict).children.map(
+              (group, properties) => MapEntry(
+                  (group as DBusString).value,
+                  (properties as DBusDict).children.map((key, value) =>
+                      MapEntry((key as DBusString).value,
+                          (value as DBusVariant).value)))),
+        );
+        var activeConnection =
+            await server.addActiveConnection(id: connection.path.value);
+        return DBusMethodSuccessResponse(
+            [connection.path, activeConnection.path]);
       case 'CheckConnectivity':
         return DBusMethodSuccessResponse([DBusUint32(server.connectivity)]);
       case 'DeactivateConnection':
@@ -2398,5 +2411,31 @@ void main() {
     await client.deactivateConnection(connection);
     await expectLater(client.propertiesChanged, emits(['ActiveConnections']));
     expect(client.activeConnections, isEmpty);
+  });
+
+  test('add and activate connection', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addDevice(deviceType: NetworkManagerDeviceType.ethernet.index);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+
+    var connection = await client.addAndActivateConnection(connection: {
+      'foo': {'bar': DBusString('baz')}
+    }, device: device);
+    final settings = await connection.getSettings();
+    expect(settings.containsKey('foo'), isTrue);
+    expect(settings['foo']!['bar'], equals(DBusString('baz')));
   });
 }

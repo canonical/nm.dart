@@ -102,6 +102,8 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
         return DBusMethodSuccessResponse(
             [server.activeConnections[index].path]);
       case 'AddAndActivateConnection':
+        final device = server.devices.firstWhere(
+            (device) => device.path == methodCall.values[1] as DBusObjectPath);
         var connection = await server.addConnectionSettings(
           settings: (methodCall.values[0] as DBusDict).children.map(
               (group, properties) => MapEntry(
@@ -110,8 +112,8 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
                       MapEntry((key as DBusString).value,
                           (value as DBusVariant).value)))),
         );
-        var activeConnection =
-            await server.addActiveConnection(id: connection.path.value);
+        var activeConnection = await server
+            .addActiveConnection(id: connection.path.value, devices: [device]);
         return DBusMethodSuccessResponse(
             [connection.path, activeConnection.path]);
       case 'CheckConnectivity':
@@ -2431,11 +2433,9 @@ void main() {
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
 
-    var connection = await client.addAndActivateConnection(connection: {
-      'foo': {'bar': DBusString('baz')}
-    }, device: device);
-    final settings = await connection.getSettings();
-    expect(settings.containsKey('foo'), isTrue);
-    expect(settings['foo']!['bar'], equals(DBusString('baz')));
+    var activeConnection =
+        await client.addAndActivateConnection(device: device);
+    expect(activeConnection.devices, hasLength(1));
+    expect(activeConnection.devices[0].path, equals(device.path));
   });
 }

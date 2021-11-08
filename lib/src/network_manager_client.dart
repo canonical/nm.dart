@@ -2478,7 +2478,12 @@ class NetworkManagerClient {
   }
 
   /// Adds a new connection for [device] and activates it.
-  Future<NetworkManagerSettingsConnection> addAndActivateConnection(
+  ///
+  /// Optionally, [connection] settings may be specified as a template. Missing
+  /// settings are automatically filled in.
+  ///
+  /// Note that when activating a wireless connection, the [accessPoint] must be specified.
+  Future<NetworkManagerActiveConnection> addAndActivateConnection(
       {Map<String, Map<String, DBusValue>> connection = const {},
       required NetworkManagerDevice device,
       NetworkManagerAccessPoint? accessPoint}) async {
@@ -2496,7 +2501,9 @@ class NetworkManagerClient {
           accessPoint?._object.path ?? DBusObjectPath('/'),
         ],
         replySignature: DBusSignature('oo'));
-    return _getConnection(result.returnValues[0] as DBusObjectPath)!;
+    var path = result.returnValues[1] as DBusObjectPath;
+    return activeConnectionAdded
+        .firstWhere((connection) => connection._object.path == path);
   }
 
   /// Activates a connection for [device].

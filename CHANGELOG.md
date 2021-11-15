@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.1
+
+* Add NetworkManagerClient.addAndActivateConnection().
+* Improve test coverage.
+
 ## 0.4.0
 
 * Fix detection of removed device/connection device when they re-appear.

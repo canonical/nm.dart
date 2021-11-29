@@ -30,6 +30,39 @@ const _ip6ConfigInterfaceName = 'org.freedesktop.NetworkManager.IP6Config';
 const _dhcp6ConfigInterfaceName = 'org.freedesktop.NetworkManager.DHCP6Config';
 const _accessPointInterfaceName = 'org.freedesktop.NetworkManager.AccessPoint';
 
+/// Overall networking states.
+enum NetworkManagerState {
+  unknown,
+  asleep,
+  disconnected,
+  disconnecting,
+  connecting,
+  connectedLocal,
+  connectedSite,
+  connectedGlobal,
+}
+
+NetworkManagerState _decodeState(int value) {
+  switch (value) {
+    case 10:
+      return NetworkManagerState.asleep;
+    case 20:
+      return NetworkManagerState.disconnected;
+    case 30:
+      return NetworkManagerState.disconnecting;
+    case 40:
+      return NetworkManagerState.connecting;
+    case 50:
+      return NetworkManagerState.connectedLocal;
+    case 60:
+      return NetworkManagerState.connectedSite;
+    case 70:
+      return NetworkManagerState.connectedGlobal;
+    default:
+      return NetworkManagerState.unknown;
+  }
+}
+
 /// Internet connectivity states.
 enum NetworkManagerConnectivityState { unknown, none, portal, limited, full }
 
@@ -2454,6 +2487,13 @@ class NetworkManagerClient {
           'ConnectivityCheckUri',
         ) ??
         '';
+  }
+
+  /// The overall networking state.
+  NetworkManagerState get state {
+    var value =
+        _manager?.getUint32Property(_managerInterfaceName, 'State') ?? 0;
+    return _decodeState(value);
   }
 
   // FIXME: GlobalDnsConfiguration

@@ -1153,6 +1153,23 @@ void main() {
     expect(client.version, equals('1.2.3'));
   });
 
+  test('state', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress, state: 40);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.state, equals(NetworkManagerState.connecting));
+  });
+
   test('connectivity', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());

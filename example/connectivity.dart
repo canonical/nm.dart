@@ -3,6 +3,7 @@ import 'package:nm/nm.dart';
 void main() async {
   var client = NetworkManagerClient();
   await client.connect();
+  print('Networking state is ${client.state}');
   client.propertiesChanged.listen((propertyNames) {
     print(propertyNames);
     if (propertyNames.contains('NetworkingEnabled') ||

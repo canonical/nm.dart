@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.2
+
+* Add NetworkManagerClient.state.
+* Fix device state reason.
+
 ## 0.4.1
 
 * Add NetworkManagerClient.addAndActivateConnection().

@@ -354,6 +354,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final String physicalPortId;
   final bool real;
   final int state;
+  final int stateReason;
   final String udi;
 
   final bool hasBluetooth;
@@ -425,6 +426,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.physicalPortId = '',
       this.real = true,
       this.state = 0,
+      this.stateReason = -1,
       this.udi = '',
       this.hasBluetooth = false,
       this.btCapabilities = 0,
@@ -488,6 +490,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
         'PhysicalPortId': DBusString(physicalPortId),
         'Real': DBusBoolean(real),
         'State': DBusUint32(state),
+        'StateReason': DBusStruct([DBusUint32(state), DBusUint32(stateReason)]),
         'Udi': DBusString(udi)
       }
     };
@@ -978,6 +981,7 @@ class MockNetworkManagerServer extends DBusClient {
       String physicalPortId = '',
       bool real = true,
       int state = 0,
+      int stateReason = 0,
       String udi = '',
       bool hasBluetooth = false,
       int btCapabilities = 0,
@@ -1036,6 +1040,7 @@ class MockNetworkManagerServer extends DBusClient {
         physicalPortId: physicalPortId,
         real: real,
         state: state,
+        stateReason: stateReason,
         udi: udi,
         hasBluetooth: hasBluetooth,
         btCapabilities: btCapabilities,
@@ -1619,6 +1624,7 @@ void main() {
         physicalPortId: 'PHYSICAL-PORT-ID',
         real: true,
         state: 100,
+        stateReason: 0,
         udi: 'UDI');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
@@ -1674,6 +1680,10 @@ void main() {
     expect(device.physicalPortId, equals('PHYSICAL-PORT-ID'));
     expect(device.real, isTrue);
     expect(device.state, equals(NetworkManagerDeviceState.activated));
+    expect(
+        device.stateReason.state, equals(NetworkManagerDeviceState.activated));
+    expect(device.stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.none));
     expect(device.udi, equals('UDI'));
   });
 

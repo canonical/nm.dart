@@ -920,7 +920,7 @@ class NetworkManagerDevice {
   /// The state of this connection and the reason for that state.
   NetworkManagerDeviceStateAndReason get stateReason {
     var value = _object.getCachedProperty(_deviceInterfaceName, 'StateReason');
-    if (value == null || value.signature != DBusSignature('uu')) {
+    if (value == null || value.signature != DBusSignature('(uu)')) {
       return NetworkManagerDeviceStateAndReason(
           NetworkManagerDeviceState.unknown,
           NetworkManagerDeviceStateReason.unknown);

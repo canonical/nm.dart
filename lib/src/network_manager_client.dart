@@ -2521,13 +2521,10 @@ class NetworkManagerClient {
   ///
   /// Optionally, [connection] settings may be specified as a template. Missing
   /// settings are automatically filled in.
-  ///
-  /// Note that when activating a wireless connection, the [accessPoint] must be specified.
   Future<NetworkManagerActiveConnection> addAndActivateConnection(
       {Map<String, Map<String, DBusValue>> connection = const {},
       required NetworkManagerDevice device,
       NetworkManagerAccessPoint? accessPoint}) async {
-    assert(device.wireless == null || accessPoint != null);
     var result = await _manager!.callMethod(
         _managerInterfaceName,
         'AddAndActivateConnection',
@@ -2549,13 +2546,10 @@ class NetworkManagerClient {
   /// Activates a connection for [device].
   ///
   /// A specific [connection] may be specified, or else it is detected automatically.
-  ///
-  /// Note that when activating a wireless connection, the [accessPoint] must be specified.
   Future<NetworkManagerActiveConnection> activateConnection(
       {required NetworkManagerDevice device,
       NetworkManagerSettingsConnection? connection,
       NetworkManagerAccessPoint? accessPoint}) async {
-    assert(device.wireless == null || accessPoint != null);
     var result = await _manager!.callMethod(
         _managerInterfaceName,
         'ActivateConnection',

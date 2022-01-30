@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3
+
+* Remove wrong assertions when activating WiFi connections with hidden access points.
+
 ## 0.4.2
 
 * Add NetworkManagerClient.state.

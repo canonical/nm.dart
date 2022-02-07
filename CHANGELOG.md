@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.4
+
+* Only list as supporting Linux.
+
 ## 0.4.3
 
 * Remove wrong assertions when activating WiFi connections with hidden access points.

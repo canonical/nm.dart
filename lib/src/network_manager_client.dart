@@ -89,9 +89,9 @@ enum NetworkManagerDeviceState {
   disconnected,
   prepare,
   config,
-  need_auth,
-  ip_config,
-  ip_check,
+  needAuth,
+  ipConfig,
+  ipCheck,
   secondaries,
   activated,
   deactivating,
@@ -111,11 +111,11 @@ NetworkManagerDeviceState _decodeDeviceState(int value) {
     case 50:
       return NetworkManagerDeviceState.config;
     case 60:
-      return NetworkManagerDeviceState.need_auth;
+      return NetworkManagerDeviceState.needAuth;
     case 70:
-      return NetworkManagerDeviceState.ip_config;
+      return NetworkManagerDeviceState.ipConfig;
     case 80:
-      return NetworkManagerDeviceState.ip_check;
+      return NetworkManagerDeviceState.ipCheck;
     case 90:
       return NetworkManagerDeviceState.secondaries;
     case 100:
@@ -174,7 +174,7 @@ enum NetworkManagerDeviceStateReason {
   carrier,
   connectionAssumed,
   supplicantAvailable,
-  ModemNotFound,
+  modemNotFound,
   btFailed,
   gsmSimNotInserted,
   gsmSimPinRequired,
@@ -183,9 +183,9 @@ enum NetworkManagerDeviceStateReason {
   infinibandMode,
   dependencyFailed,
   br2684Failed,
-  ModemManagerUnavailable,
+  modemManagerUnavailable,
   ssidNotFound,
-  SecondaryConnectionFailed,
+  secondaryConnectionFailed,
   dcbFcoeFailed,
   teamdControlFailed,
   modemFailed,
@@ -290,7 +290,7 @@ NetworkManagerDeviceStateReason _decodeDeviceStateReason(int value) {
     case 42:
       return NetworkManagerDeviceStateReason.supplicantAvailable;
     case 43:
-      return NetworkManagerDeviceStateReason.ModemNotFound;
+      return NetworkManagerDeviceStateReason.modemNotFound;
     case 44:
       return NetworkManagerDeviceStateReason.btFailed;
     case 45:
@@ -308,11 +308,11 @@ NetworkManagerDeviceStateReason _decodeDeviceStateReason(int value) {
     case 51:
       return NetworkManagerDeviceStateReason.br2684Failed;
     case 52:
-      return NetworkManagerDeviceStateReason.ModemManagerUnavailable;
+      return NetworkManagerDeviceStateReason.modemManagerUnavailable;
     case 53:
       return NetworkManagerDeviceStateReason.ssidNotFound;
     case 54:
-      return NetworkManagerDeviceStateReason.SecondaryConnectionFailed;
+      return NetworkManagerDeviceStateReason.secondaryConnectionFailed;
     case 55:
       return NetworkManagerDeviceStateReason.dcbFcoeFailed;
     case 56:
@@ -357,7 +357,7 @@ enum NetworkManagerDeviceType {
   ethernet,
   wifi,
   bluetooth,
-  olpc_mesh,
+  olpcMesh,
   wimax,
   modem,
   infiniband,
@@ -368,20 +368,20 @@ enum NetworkManagerDeviceType {
   generic,
   team,
   tun,
-  ip_tunnel,
-  macvlan,
+  ipTunnel,
+  macVlan,
   vxlan,
   veth,
   macsec,
   dummy,
   ppp,
-  ovs_interface,
-  ovs_port,
-  ovs_bridge,
+  ovsInterface,
+  ovsPort,
+  ovsBridge,
   wpan,
-  _6lowpan,
+  sixLoWpan,
   wireguard,
-  wifi_p2p,
+  wifiP2p,
   vrf
 }
 
@@ -462,10 +462,10 @@ NetworkManagerWifiMode _decodeWifiMode(int value) {
 
 /// Wifi capabilities.
 enum NetworkManagerDeviceWifiCapability {
-  cipherWEP40,
-  cipherWEP104,
-  cipherTKIP,
-  cipherCCMP,
+  cipherWep40,
+  cipherWep104,
+  cipherTkip,
+  cipherCcmp,
   wpa,
   rsn,
   ap,
@@ -482,62 +482,62 @@ enum NetworkManagerWifiAccessPointFlag { privacy, wps, wpsPushButton, wpsPin }
 
 /// Security flags for a [NetworkManagerAccessPoint].
 enum NetworkManagerWifiAccessPointSecurityFlag {
-  pairWEP40,
-  pairWEP104,
-  pairTKIP,
-  pairCCMP,
-  groupWEP40,
-  groupWEP104,
-  groupTKIP,
-  groupCCMP,
-  keyManagementPSK,
+  pairWep40,
+  pairWep104,
+  pairTkip,
+  pairCcmp,
+  groupWep40,
+  groupWep104,
+  groupTkip,
+  groupCcmp,
+  keyManagementPsk,
   keyManagement802_1X,
-  keyManagementSAE,
-  keyManagementOWE,
-  keyManagementOWE_TM
+  keyManagementSae,
+  keyManagementOwe,
+  keyManagementOweTm
 }
 
 List<NetworkManagerWifiAccessPointSecurityFlag>
     _decodeWifiAccessPointSecurityFlags(int value) {
   var flags = <NetworkManagerWifiAccessPointSecurityFlag>[];
   if ((value & 0x1) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairWEP40);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairWep40);
   }
   if ((value & 0x2) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairWEP104);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairWep104);
   }
   if ((value & 0x4) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairTKIP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairTkip);
   }
   if ((value & 0x8) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairCCMP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.pairCcmp);
   }
   if ((value & 0x10) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupWEP40);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupWep40);
   }
   if ((value & 0x20) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupWEP104);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupWep104);
   }
   if ((value & 0x40) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupTKIP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupTkip);
   }
   if ((value & 0x80) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupCCMP);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.groupCcmp);
   }
   if ((value & 0x100) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementPSK);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementPsk);
   }
   if ((value & 0x200) != 0) {
     flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagement802_1X);
   }
   if ((value & 0x400) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementSAE);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementSae);
   }
   if ((value & 0x800) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementOWE);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementOwe);
   }
   if ((value & 0x1000) != 0) {
-    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementOWE_TM);
+    flags.add(NetworkManagerWifiAccessPointSecurityFlag.keyManagementOweTm);
   }
   return flags;
 }
@@ -621,6 +621,9 @@ class NetworkManagerSettings {
   @override
   bool operator ==(other) =>
       other is NetworkManagerSettings && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -753,6 +756,9 @@ class NetworkManagerSettingsConnection {
       other is NetworkManagerSettingsConnection && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -784,6 +790,9 @@ class NetworkManagerDnsManager {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDnsManager && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1012,7 +1021,7 @@ class NetworkManagerDevice {
       case 5:
         return NetworkManagerDeviceType.bluetooth;
       case 6:
-        return NetworkManagerDeviceType.olpc_mesh;
+        return NetworkManagerDeviceType.olpcMesh;
       case 7:
         return NetworkManagerDeviceType.wimax;
       case 8:
@@ -1034,9 +1043,9 @@ class NetworkManagerDevice {
       case 16:
         return NetworkManagerDeviceType.tun;
       case 17:
-        return NetworkManagerDeviceType.ip_tunnel;
+        return NetworkManagerDeviceType.ipTunnel;
       case 18:
-        return NetworkManagerDeviceType.macvlan;
+        return NetworkManagerDeviceType.macVlan;
       case 19:
         return NetworkManagerDeviceType.vxlan;
       case 20:
@@ -1048,19 +1057,19 @@ class NetworkManagerDevice {
       case 23:
         return NetworkManagerDeviceType.ppp;
       case 24:
-        return NetworkManagerDeviceType.ovs_interface;
+        return NetworkManagerDeviceType.ovsInterface;
       case 25:
-        return NetworkManagerDeviceType.ovs_port;
+        return NetworkManagerDeviceType.ovsPort;
       case 26:
-        return NetworkManagerDeviceType.ovs_bridge;
+        return NetworkManagerDeviceType.ovsBridge;
       case 27:
         return NetworkManagerDeviceType.wpan;
       case 28:
-        return NetworkManagerDeviceType._6lowpan;
+        return NetworkManagerDeviceType.sixLoWpan;
       case 29:
         return NetworkManagerDeviceType.wireguard;
       case 30:
-        return NetworkManagerDeviceType.wifi_p2p;
+        return NetworkManagerDeviceType.wifiP2p;
       case 31:
         return NetworkManagerDeviceType.vrf;
       default:
@@ -1140,6 +1149,9 @@ class NetworkManagerDevice {
       other is NetworkManagerDevice && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1179,6 +1191,9 @@ class NetworkManagerDeviceBluetooth {
       other is NetworkManagerDeviceBluetooth && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1215,6 +1230,9 @@ class NetworkManagerDeviceBridge {
       other is NetworkManagerDeviceBridge && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1239,6 +1257,9 @@ class NetworkManagerDeviceGeneric {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceGeneric && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1279,6 +1300,9 @@ class NetworkManagerDeviceStatistics {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceStatistics && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1332,6 +1356,9 @@ class NetworkManagerDeviceTun {
       other is NetworkManagerDeviceTun && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1364,6 +1391,9 @@ class NetworkManagerDeviceVlan {
       other is NetworkManagerDeviceVlan && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1391,6 +1421,9 @@ class NetworkManagerDeviceWired {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceWired && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1456,16 +1489,16 @@ class NetworkManagerDeviceWireless {
         0;
     var flags = <NetworkManagerDeviceWifiCapability>[];
     if ((value & 0x1) != 0) {
-      flags.add(NetworkManagerDeviceWifiCapability.cipherWEP40);
+      flags.add(NetworkManagerDeviceWifiCapability.cipherWep40);
     }
     if ((value & 0x2) != 0) {
-      flags.add(NetworkManagerDeviceWifiCapability.cipherWEP104);
+      flags.add(NetworkManagerDeviceWifiCapability.cipherWep104);
     }
     if ((value & 0x4) != 0) {
-      flags.add(NetworkManagerDeviceWifiCapability.cipherTKIP);
+      flags.add(NetworkManagerDeviceWifiCapability.cipherTkip);
     }
     if ((value & 0x8) != 0) {
-      flags.add(NetworkManagerDeviceWifiCapability.cipherCCMP);
+      flags.add(NetworkManagerDeviceWifiCapability.cipherCcmp);
     }
     if ((value & 0x10) != 0) {
       flags.add(NetworkManagerDeviceWifiCapability.wpa);
@@ -1516,6 +1549,9 @@ class NetworkManagerDeviceWireless {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDeviceWireless && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1681,6 +1717,9 @@ class NetworkManagerActiveConnection {
       other is NetworkManagerActiveConnection && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1742,6 +1781,9 @@ class NetworkManagerIP4Config {
       other is NetworkManagerIP4Config && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1773,6 +1815,9 @@ class NetworkManagerDHCP4Config {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDHCP4Config && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1830,6 +1875,9 @@ class NetworkManagerIP6Config {
       other is NetworkManagerIP6Config && other._object == _object;
 
   @override
+  int get hashCode => _object.hashCode;
+
+  @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
 }
 
@@ -1861,6 +1909,9 @@ class NetworkManagerDHCP6Config {
   @override
   bool operator ==(other) =>
       other is NetworkManagerDHCP6Config && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';
@@ -1958,6 +2009,9 @@ class NetworkManagerAccessPoint {
   @override
   bool operator ==(other) =>
       other is NetworkManagerAccessPoint && other._object == _object;
+
+  @override
+  int get hashCode => _object.hashCode;
 
   @override
   String toString() => '$runtimeType(path: ${_object.path.value})';

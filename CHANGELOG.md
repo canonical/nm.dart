@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+
+* Fix constants not in camel case form.
+* Require dbus 0.7.
+
 ## 0.4.4
 
 * Only list as supporting Linux.

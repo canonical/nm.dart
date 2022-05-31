@@ -817,7 +817,7 @@ class MockNetworkManagerServer extends DBusClient {
   final bool networkingEnabled;
   final bool settingsCanModify;
   bool startup;
-  final int state;
+  int state;
   final String version;
   final bool wimaxEnabled;
   final bool wimaxHardwareEnabled;
@@ -1188,6 +1188,15 @@ class MockNetworkManagerServer extends DBusClient {
         changedProperties: {'Startup': DBusBoolean(startup)});
   }
 
+  Future<void> setState(int state) async {
+    if (this.state == state) {
+      return;
+    }
+    this.state = state;
+    await _manager.emitPropertiesChanged('org.freedesktop.NetworkManager',
+        changedProperties: {'State': DBusUint32(this.state)});
+  }
+
   Future<void> setWirelessHardwareEnabled(bool enabled) async {
     if (wirelessHardwareEnabled == enabled) {
       return;
@@ -1255,7 +1264,7 @@ void main() {
     var clientAddress =
         await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
 
-    var nm = MockNetworkManagerServer(clientAddress, state: 40);
+    var nm = MockNetworkManagerServer(clientAddress, state: 10);
     addTearDown(() async => await nm.close());
     await nm.start();
 
@@ -1263,7 +1272,28 @@ void main() {
     addTearDown(() async => await client.close());
     await client.connect();
 
+    expect(client.state, equals(NetworkManagerState.asleep));
+    await nm.setState(20);
+    await expectLater(client.propertiesChanged, emits(['State']));
+    expect(client.state, equals(NetworkManagerState.disconnected));
+    await nm.setState(30);
+    await expectLater(client.propertiesChanged, emits(['State']));
+    expect(client.state, equals(NetworkManagerState.disconnecting));
+    await nm.setState(40);
+    await expectLater(client.propertiesChanged, emits(['State']));
     expect(client.state, equals(NetworkManagerState.connecting));
+    await nm.setState(50);
+    await expectLater(client.propertiesChanged, emits(['State']));
+    expect(client.state, equals(NetworkManagerState.connectedLocal));
+    await nm.setState(60);
+    await expectLater(client.propertiesChanged, emits(['State']));
+    expect(client.state, equals(NetworkManagerState.connectedSite));
+    await nm.setState(70);
+    await expectLater(client.propertiesChanged, emits(['State']));
+    expect(client.state, equals(NetworkManagerState.connectedGlobal));
+    await nm.setState(0);
+    await expectLater(client.propertiesChanged, emits(['State']));
+    expect(client.state, equals(NetworkManagerState.unknown));
   });
 
   test('metered - networking enabled', () async {

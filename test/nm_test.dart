@@ -845,7 +845,7 @@ class MockNetworkManagerServer extends DBusClient {
       this.dnsRcManager = '',
       this.hostname = '',
       this.metered = 0,
-      this.networkingEnabled = false,
+      this.networkingEnabled = true,
       this.settingsCanModify = false,
       this.startup = true,
       this.state = 0,
@@ -1252,6 +1252,23 @@ void main() {
     await client.connect();
 
     expect(client.state, equals(NetworkManagerState.connecting));
+  });
+
+  test('metered - networking enabled', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress, networkingEnabled: true);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.networkingEnabled, isTrue);
   });
 
   test('metered - yes', () async {

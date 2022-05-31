@@ -1022,6 +1022,7 @@ class MockNetworkManagerServer extends DBusClient {
       MockNetworkManagerDHCP6Config? dhcp6Config,
       String driver = '',
       String driverVersion = '',
+      bool firmwareMissing = false,
       String firmwareVersion = '',
       String hwAddress = '',
       String interface = '',
@@ -1081,6 +1082,7 @@ class MockNetworkManagerServer extends DBusClient {
         dhcp6Config: dhcp6Config,
         driver: driver,
         driverVersion: driverVersion,
+        firmwareMissing: firmwareMissing,
         firmwareVersion: firmwareVersion,
         hwAddress: hwAddress,
         interface: interface,
@@ -1949,6 +1951,7 @@ void main() {
         deviceType: 1,
         driver: 'DRIVER',
         driverVersion: 'DRIVER-VERSION',
+        firmwareMissing: true,
         firmwareVersion: 'FIRMWARE-VERSION',
         hwAddress: 'DE:71:CE:00:00:01',
         interface: 'INTERFACE',
@@ -1995,6 +1998,7 @@ void main() {
     expect(device.dhcp6Config, isNull);
     expect(device.driver, equals('DRIVER'));
     expect(device.driverVersion, equals('DRIVER-VERSION'));
+    expect(device.firmwareMissing, isTrue);
     expect(device.firmwareVersion, equals('FIRMWARE-VERSION'));
     expect(device.hwAddress, equals('DE:71:CE:00:00:01'));
     expect(device.interface, equals('INTERFACE'));

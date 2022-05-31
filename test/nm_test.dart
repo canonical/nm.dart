@@ -147,6 +147,25 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
   }
 }
 
+class MockNetworkManagerDnsManager extends MockNetworkManagerObject {
+  final MockNetworkManagerServer server;
+
+  MockNetworkManagerDnsManager(this.server)
+      : super(DBusObjectPath('/org/freedesktop/NetworkManager/DnsManager'));
+
+  @override
+  Map<String, Map<String, DBusValue>> get interfacesAndProperties => {
+        'org.freedesktop.NetworkManager.DnsManager': {
+          'Configuration': DBusArray(
+              DBusSignature('a{sv}'),
+              server.dnsConfiguration
+                  .map((data) => DBusDict.stringVariant(data))),
+          'Mode': DBusString(server.dnsMode),
+          'RcManager': DBusString(server.dnsRcManager)
+        }
+      };
+}
+
 class MockNetworkManagerSettings extends MockNetworkManagerObject {
   final MockNetworkManagerServer server;
 
@@ -778,6 +797,9 @@ class MockNetworkManagerServer extends DBusClient {
   final bool connectivityCheckAvailable;
   bool connectivityCheckEnabled;
   final String connectivityCheckUri;
+  final List<Map<String, DBusValue>> dnsConfiguration;
+  final String dnsMode;
+  final String dnsRcManager;
   final String hostname;
   final int metered;
   final bool networkingEnabled;
@@ -795,6 +817,7 @@ class MockNetworkManagerServer extends DBusClient {
   final DBusObject _root;
   late final MockNetworkManagerManager _manager;
   late final MockNetworkManagerSettings _settings;
+  late final MockNetworkManagerDnsManager _dnsManager;
   var _nextIp4ConfigId = 1;
   var _nextIp6ConfigId = 1;
   var _nextDhcp4ConfigId = 1;
@@ -817,6 +840,9 @@ class MockNetworkManagerServer extends DBusClient {
       this.connectivityCheckAvailable = false,
       this.connectivityCheckEnabled = false,
       this.connectivityCheckUri = '',
+      this.dnsConfiguration = const [],
+      this.dnsMode = '',
+      this.dnsRcManager = '',
       this.hostname = '',
       this.metered = 0,
       this.networkingEnabled = false,
@@ -835,6 +861,7 @@ class MockNetworkManagerServer extends DBusClient {
         super(clientAddress) {
     _manager = MockNetworkManagerManager(this);
     _settings = MockNetworkManagerSettings(this);
+    _dnsManager = MockNetworkManagerDnsManager(this);
   }
 
   Future<void> start() async {
@@ -842,6 +869,7 @@ class MockNetworkManagerServer extends DBusClient {
     await registerObject(_root);
     await registerObject(_manager);
     await registerObject(_settings);
+    await registerObject(_dnsManager);
   }
 
   Future<MockNetworkManagerIP4Config> addIp4Config({
@@ -1509,6 +1537,56 @@ void main() {
           'group3': {'setting3a': DBusUint32(123)}
         }));
     expect(s.saved, isFalse);
+  });
+
+  test('DNS manager', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress,
+        dnsMode: 'systemd-resolved',
+        dnsRcManager: 'unmanaged',
+        dnsConfiguration: [
+          {
+            'nameservers': DBusArray.string(['8.8.8.8']),
+            'interface': DBusString('enp3s0'),
+            'priority': DBusUint32(100),
+            'vpn': DBusBoolean(false)
+          },
+          {
+            'nameservers': DBusArray.string(['8.8.8.8']),
+            'interface': DBusString('wlp5s0'),
+            'priority': DBusUint32(100),
+            'vpn': DBusBoolean(false)
+          }
+        ]);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.dnsManager.mode, equals('systemd-resolved'));
+    expect(client.dnsManager.rcManager, equals('unmanaged'));
+    expect(
+        client.dnsManager.configuration,
+        equals([
+          {
+            'nameservers': ['8.8.8.8'],
+            'interface': 'enp3s0',
+            'priority': 100,
+            'vpn': false
+          },
+          {
+            'nameservers': ['8.8.8.8'],
+            'interface': 'wlp5s0',
+            'priority': 100,
+            'vpn': false
+          }
+        ]));
   });
 
   test('no devices', () async {

@@ -419,6 +419,8 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final int rxBytes;
   final int txBytes;
 
+  bool scanRequested = false;
+  var scanOptions = <String, DBusValue>{};
   bool disconnected = false;
   bool deleted = false;
 
@@ -636,19 +638,31 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
 
   @override
   Future<DBusMethodResponse> handleMethodCall(DBusMethodCall methodCall) async {
-    if (methodCall.interface != 'org.freedesktop.NetworkManager.Device') {
+    if (methodCall.interface == 'org.freedesktop.NetworkManager.Device') {
+      switch (methodCall.name) {
+        case 'Disconnect':
+          disconnected = true;
+          return DBusMethodSuccessResponse([]);
+        case 'Delete':
+          deleted = true;
+          return DBusMethodSuccessResponse([]);
+        default:
+          return DBusMethodErrorResponse.unknownMethod();
+      }
+    } else if (hasWireless &&
+        methodCall.interface ==
+            'org.freedesktop.NetworkManager.Device.Wireless') {
+      switch (methodCall.name) {
+        case 'RequestScan':
+          var options = (methodCall.values[0] as DBusDict).mapStringVariant();
+          scanRequested = true;
+          scanOptions = options;
+          return DBusMethodSuccessResponse([]);
+        default:
+          return DBusMethodErrorResponse.unknownMethod();
+      }
+    } else {
       return DBusMethodErrorResponse.unknownInterface();
-    }
-
-    switch (methodCall.name) {
-      case 'Disconnect':
-        disconnected = true;
-        return DBusMethodSuccessResponse([]);
-      case 'Delete':
-        deleted = true;
-        return DBusMethodSuccessResponse([]);
-      default:
-        return DBusMethodErrorResponse.unknownMethod();
     }
   }
 }
@@ -2490,6 +2504,41 @@ void main() {
           NetworkManagerDeviceWifiCapability.cipherTkip,
           NetworkManagerDeviceWifiCapability.rsn,
           NetworkManagerDeviceWifiCapability.mesh
+        }));
+  });
+
+  test('wireless device - request scan', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    var d = await nm.addDevice(
+        hasWireless: true, permHwAddress: 'DE:71:CE:00:00:01');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.wireless, isNotNull);
+    expect(d.scanRequested, isFalse);
+    await device.wireless!.requestScan(ssids: [
+      [104, 101, 108, 108, 111],
+      [119, 111, 114, 108, 100]
+    ]);
+    expect(d.scanRequested, isTrue);
+    expect(
+        d.scanOptions,
+        equals({
+          'ssids': DBusArray(DBusSignature('ay'), [
+            DBusArray.byte([104, 101, 108, 108, 111]),
+            DBusArray.byte([119, 111, 114, 108, 100])
+          ])
         }));
   });
 

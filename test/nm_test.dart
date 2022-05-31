@@ -347,7 +347,7 @@ class MockNetworkManagerActiveConnection extends MockNetworkManagerObject {
 }
 
 class MockNetworkManagerDevice extends MockNetworkManagerObject {
-  final bool autoconnect;
+  bool autoconnect;
   final int capabilities;
   final int deviceType;
   final MockNetworkManagerDHCP4Config? dhcp4Config;
@@ -583,7 +583,12 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   Future<DBusMethodResponse> setProperty(
       String interface, String name, DBusValue value) async {
     if (interface == 'org.freedesktop.NetworkManager.Device') {
-      if (name == 'Managed') {
+      if (name == 'Autoconnect') {
+        autoconnect = (value as DBusBoolean).value;
+        await emitPropertiesChanged('org.freedesktop.NetworkManager.Device',
+            changedProperties: {'Autoconnect': DBusBoolean(autoconnect)});
+        return DBusMethodSuccessResponse();
+      } else if (name == 'Managed') {
         managed = (value as DBusBoolean).value;
         await emitPropertiesChanged('org.freedesktop.NetworkManager.Device',
             changedProperties: {'Managed': DBusBoolean(managed)});
@@ -1971,6 +1976,28 @@ void main() {
     expect(device.managed, isTrue);
     await device.setManaged(false);
     expect(device.managed, isFalse);
+  });
+
+  test('device - set autoconnect', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addDevice(autoconnect: true);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.autoconnect, isTrue);
+    await device.setAutoconnect(false);
+    expect(device.autoconnect, isFalse);
   });
 
   test('device ip config', () async {

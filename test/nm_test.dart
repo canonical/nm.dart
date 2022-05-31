@@ -364,7 +364,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   final MockNetworkManagerIP6Config? ip6Config;
   final int ip6Connectivity;
   final String ipInterface;
-  final bool managed;
+  bool managed;
   final int metered;
   final int mtu;
   final bool nmPluginMissing;
@@ -436,7 +436,7 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
       this.ip6Config,
       this.ip6Connectivity = 0,
       this.ipInterface = '',
-      this.managed = false,
+      this.managed = true,
       this.metered = 0,
       this.mtu = 0,
       this.nmPluginMissing = false,
@@ -583,7 +583,14 @@ class MockNetworkManagerDevice extends MockNetworkManagerObject {
   Future<DBusMethodResponse> setProperty(
       String interface, String name, DBusValue value) async {
     if (interface == 'org.freedesktop.NetworkManager.Device') {
-      return DBusMethodErrorResponse.propertyReadOnly();
+      if (name == 'Managed') {
+        managed = (value as DBusBoolean).value;
+        await emitPropertiesChanged('org.freedesktop.NetworkManager.Device',
+            changedProperties: {'Managed': DBusBoolean(managed)});
+        return DBusMethodSuccessResponse();
+      } else {
+        return DBusMethodErrorResponse.propertyReadOnly();
+      }
     } else if (hasBluetooth &&
         interface == 'org.freedesktop.NetworkManager.Device.Bluetooth') {
       return DBusMethodErrorResponse.propertyReadOnly();
@@ -1942,6 +1949,28 @@ void main() {
     expect(device.stateReason.reason,
         equals(NetworkManagerDeviceStateReason.none));
     expect(device.udi, equals('UDI'));
+  });
+
+  test('device - set managed', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addDevice(managed: true);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var device = client.devices[0];
+    expect(device.managed, isTrue);
+    await device.setManaged(false);
+    expect(device.managed, isFalse);
   });
 
   test('device ip config', () async {

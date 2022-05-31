@@ -127,11 +127,15 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
       case 'Enable':
         return DBusMethodSuccessResponse([]);
       case 'GetAllDevices':
-        return DBusMethodSuccessResponse([DBusArray.objectPath([])]);
+        return DBusMethodSuccessResponse([
+          DBusArray.objectPath(server.allDevices.map((device) => device.path))
+        ]);
       case 'GetDeviceByIpIface':
         return DBusMethodSuccessResponse([DBusObjectPath('/')]);
       case 'GetDevices':
-        return DBusMethodSuccessResponse([DBusArray.objectPath([])]);
+        return DBusMethodSuccessResponse([
+          DBusArray.objectPath(server.allDevices.map((device) => device.path))
+        ]);
       case 'GetPermissions':
         return DBusMethodSuccessResponse(
             [DBusDict(DBusSignature('s'), DBusSignature('s'), {})]);
@@ -1848,6 +1852,29 @@ void main() {
     expect(client.devices[0].hwAddress, equals('DE:71:CE:00:00:01'));
     expect(client.devices[1].hwAddress, equals('DE:71:CE:00:00:02'));
     expect(client.devices[2].hwAddress, equals('DE:71:CE:00:00:03'));
+  });
+
+  test('all devices', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
+    await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
+    await nm.addDevice(hwAddress: 'DE:71:CE:00:00:03');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.allDevices, hasLength(3));
+    expect(client.allDevices[0].hwAddress, equals('DE:71:CE:00:00:01'));
+    expect(client.allDevices[1].hwAddress, equals('DE:71:CE:00:00:02'));
+    expect(client.allDevices[2].hwAddress, equals('DE:71:CE:00:00:03'));
   });
 
   test('device added', () async {

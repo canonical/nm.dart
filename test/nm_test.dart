@@ -810,9 +810,9 @@ class MockNetworkManagerServer extends DBusClient {
   final bool wimaxEnabled;
   final bool wimaxHardwareEnabled;
   bool wirelessEnabled;
-  final bool wirelessHardwareEnabled;
+  bool wirelessHardwareEnabled;
   bool wwanEnabled;
-  final bool wwanHardwareEnabled;
+  bool wwanHardwareEnabled;
 
   final DBusObject _root;
   late final MockNetworkManagerManager _manager;
@@ -1166,6 +1166,28 @@ class MockNetworkManagerServer extends DBusClient {
       },
     );
   }
+
+  Future<void> setWirelessHardwareEnabled(bool enabled) async {
+    if (wirelessHardwareEnabled == enabled) {
+      return;
+    }
+    wirelessHardwareEnabled = enabled;
+    await _manager.emitPropertiesChanged('org.freedesktop.NetworkManager',
+        changedProperties: {
+          'WirelessHardwareEnabled': DBusBoolean(wirelessHardwareEnabled)
+        });
+  }
+
+  Future<void> setWwanHardwareEnabled(bool enabled) async {
+    if (wwanHardwareEnabled == enabled) {
+      return;
+    }
+    wwanHardwareEnabled = enabled;
+    await _manager.emitPropertiesChanged('org.freedesktop.NetworkManager',
+        changedProperties: {
+          'WwanHardwareEnabled': DBusBoolean(wwanHardwareEnabled)
+        });
+  }
 }
 
 void main() {
@@ -1273,6 +1295,32 @@ void main() {
     await client.setWwanEnabled(true);
     expect(nm.wwanEnabled, isTrue);
     expect(client.wwanEnabled, isTrue);
+  });
+
+  test('wireless - hardware enable', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.wirelessHardwareEnabled, isFalse);
+    await nm.setWirelessHardwareEnabled(true);
+    await expectLater(
+        client.propertiesChanged, emits(['WirelessHardwareEnabled']));
+    expect(client.wirelessHardwareEnabled, isTrue);
+
+    expect(client.wwanHardwareEnabled, isFalse);
+    await nm.setWwanHardwareEnabled(true);
+    await expectLater(client.propertiesChanged, emits(['WwanHardwareEnabled']));
+    expect(client.wwanHardwareEnabled, isTrue);
   });
 
   test('hostname', () async {

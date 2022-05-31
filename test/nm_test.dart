@@ -804,7 +804,7 @@ class MockNetworkManagerServer extends DBusClient {
   final int metered;
   final bool networkingEnabled;
   final bool settingsCanModify;
-  final bool startup;
+  bool startup;
   final int state;
   final String version;
   final bool wimaxEnabled;
@@ -847,7 +847,7 @@ class MockNetworkManagerServer extends DBusClient {
       this.metered = 0,
       this.networkingEnabled = false,
       this.settingsCanModify = false,
-      this.startup = false,
+      this.startup = true,
       this.state = 0,
       this.version = '',
       this.wimaxEnabled = false,
@@ -1167,6 +1167,15 @@ class MockNetworkManagerServer extends DBusClient {
     );
   }
 
+  Future<void> completeStartup() async {
+    if (!startup) {
+      return;
+    }
+    startup = false;
+    await _manager.emitPropertiesChanged('org.freedesktop.NetworkManager',
+        changedProperties: {'Startup': DBusBoolean(startup)});
+  }
+
   Future<void> setWirelessHardwareEnabled(bool enabled) async {
     if (wirelessHardwareEnabled == enabled) {
       return;
@@ -1206,6 +1215,26 @@ void main() {
     await client.connect();
 
     expect(client.version, equals('1.2.3'));
+  });
+
+  test('startup', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress, version: '1.2.3');
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.startup, isTrue);
+    await nm.completeStartup();
+    await expectLater(client.propertiesChanged, emits(['Startup']));
+    expect(client.startup, isFalse);
   });
 
   test('state', () async {

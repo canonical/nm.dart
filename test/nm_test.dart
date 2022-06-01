@@ -2640,6 +2640,164 @@ void main() {
     expect(client.devices[22].deviceType, equals(NetworkManagerDeviceType.vrf));
   });
 
+  test('device state reasons', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    for (var reason = 2; reason <= 67; reason++) {
+      await nm.addDevice(stateReason: reason);
+    }
+    await nm.addDevice(stateReason: 0);
+    await nm.addDevice(stateReason: 999);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(68));
+    expect(client.devices[0].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.nowManaged));
+    expect(client.devices[1].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.nowUnmanaged));
+    expect(client.devices[2].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.configFailed));
+    expect(client.devices[3].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.ipConfigUnavailable));
+    expect(client.devices[4].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.ipConfigExpired));
+    expect(client.devices[5].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.noSecrets));
+    expect(client.devices[6].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.supplicantDisconnect));
+    expect(client.devices[7].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.supplicantConfigFailed));
+    expect(client.devices[8].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.supplicantFailed));
+    expect(client.devices[9].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.supplicantTimeout));
+    expect(client.devices[10].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.pppStartFailed));
+    expect(client.devices[11].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.pppDisconnect));
+    expect(client.devices[12].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.pppFailed));
+    expect(client.devices[13].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.dhcpStartFailed));
+    expect(client.devices[14].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.dhcpError));
+    expect(client.devices[15].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.dhcpFailed));
+    expect(client.devices[16].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.sharedStartFailed));
+    expect(client.devices[17].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.sharedFailed));
+    expect(client.devices[18].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.autoIpStartFailed));
+    expect(client.devices[19].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.autoIpError));
+    expect(client.devices[20].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.autoIpFailed));
+    expect(client.devices[21].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemBusy));
+    expect(client.devices[22].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemNoDialTone));
+    expect(client.devices[23].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemNoCarrier));
+    expect(client.devices[24].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemDialTimeout));
+    expect(client.devices[25].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemDialFailed));
+    expect(client.devices[26].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemInitFailed));
+    expect(client.devices[27].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmApnFailed));
+    expect(client.devices[28].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmRegistrationNotSearching));
+    expect(client.devices[29].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmRegistrationDenied));
+    expect(client.devices[30].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmRegistrationTimeout));
+    expect(client.devices[31].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmRegistrationFailed));
+    expect(client.devices[32].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmPinCheckFailed));
+    expect(client.devices[33].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.firmwareMissing));
+    expect(client.devices[34].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.removed));
+    expect(client.devices[35].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.sleeping));
+    expect(client.devices[36].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.connectionRemoved));
+    expect(client.devices[37].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.userRequested));
+    expect(client.devices[38].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.carrier));
+    expect(client.devices[39].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.connectionAssumed));
+    expect(client.devices[40].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.supplicantAvailable));
+    expect(client.devices[41].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemNotFound));
+    expect(client.devices[42].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.btFailed));
+    expect(client.devices[43].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmSimNotInserted));
+    expect(client.devices[44].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmSimPinRequired));
+    expect(client.devices[45].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmSimPukRequired));
+    expect(client.devices[46].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.gsmSimWrong));
+    expect(client.devices[47].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.infinibandMode));
+    expect(client.devices[48].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.dependencyFailed));
+    expect(client.devices[49].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.br2684Failed));
+    expect(client.devices[50].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemManagerUnavailable));
+    expect(client.devices[51].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.ssidNotFound));
+    expect(client.devices[52].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.secondaryConnectionFailed));
+    expect(client.devices[53].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.dcbFcoeFailed));
+    expect(client.devices[54].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.teamdControlFailed));
+    expect(client.devices[55].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemFailed));
+    expect(client.devices[56].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.modemAvailable));
+    expect(client.devices[57].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.simPinIncorrect));
+    expect(client.devices[58].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.newActivation));
+    expect(client.devices[59].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.parentChanged));
+    expect(client.devices[60].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.parentManagedChanged));
+    expect(client.devices[61].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.ovsdbFailed));
+    expect(client.devices[62].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.ipAddressDuplicate));
+    expect(client.devices[63].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.ipMethodUnsupported));
+    expect(client.devices[64].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.sriovConfigurationFailed));
+    expect(client.devices[65].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.peerNotFound));
+    expect(client.devices[66].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.none));
+    expect(client.devices[67].stateReason.reason,
+        equals(NetworkManagerDeviceStateReason.unknown));
+  });
+
   test('device statistics', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());

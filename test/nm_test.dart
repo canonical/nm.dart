@@ -2276,7 +2276,8 @@ void main() {
     var nm = MockNetworkManagerServer(clientAddress);
     addTearDown(() async => await nm.close());
     await nm.start();
-    await nm.addDevice(hasBluetooth: true, btCapabilities: 0x3, name: 'NAME');
+    await nm.addDevice(
+        deviceType: 5, hasBluetooth: true, btCapabilities: 0x3, name: 'NAME');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
     addTearDown(() async => await client.close());
@@ -2284,6 +2285,7 @@ void main() {
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.bluetooth));
     expect(device.bluetooth, isNotNull);
     expect(
         device.bluetooth?.btCapabilities,
@@ -2305,7 +2307,7 @@ void main() {
     await nm.start();
     var d1 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
     var d2 = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:02');
-    await nm.addDevice(hasBridge: true, slaves: [d1, d2]);
+    await nm.addDevice(deviceType: 13, hasBridge: true, slaves: [d1, d2]);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
     addTearDown(() async => await client.close());
@@ -2313,6 +2315,7 @@ void main() {
 
     expect(client.devices, hasLength(3));
     var device = client.devices[2];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.bridge));
     expect(device.bridge, isNotNull);
     expect(device.bridge!.slaves, hasLength(2));
     expect(device.bridge!.slaves[0].hwAddress, equals('DE:71:CE:00:00:01'));
@@ -2328,7 +2331,8 @@ void main() {
     var nm = MockNetworkManagerServer(clientAddress);
     addTearDown(() async => await nm.close());
     await nm.start();
-    await nm.addDevice(hasGeneric: true, typeDescription: 'TYPE-DESCRIPTION');
+    await nm.addDevice(
+        deviceType: 14, hasGeneric: true, typeDescription: 'TYPE-DESCRIPTION');
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
     addTearDown(() async => await client.close());
@@ -2336,6 +2340,7 @@ void main() {
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.generic));
     expect(device.generic, isNotNull);
     expect(device.generic!.typeDescription, equals('TYPE-DESCRIPTION'));
   });
@@ -2350,6 +2355,7 @@ void main() {
     addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
+        deviceType: 16,
         hasTun: true,
         owner: 1000,
         group: 1001,
@@ -2364,6 +2370,7 @@ void main() {
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.tun));
     expect(device.tun, isNotNull);
     expect(device.tun!.owner, equals(1000));
     expect(device.tun!.group, equals(1001));
@@ -2383,7 +2390,7 @@ void main() {
     addTearDown(() async => await nm.close());
     await nm.start();
     var d = await nm.addDevice(hwAddress: 'DE:71:CE:00:00:01');
-    await nm.addDevice(hasVlan: true, parent: d, vlanId: 42);
+    await nm.addDevice(deviceType: 11, hasVlan: true, parent: d, vlanId: 42);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
     addTearDown(() async => await client.close());
@@ -2391,12 +2398,13 @@ void main() {
 
     expect(client.devices, hasLength(2));
     var device = client.devices[1];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.vlan));
     expect(device.vlan, isNotNull);
     expect(device.vlan!.vlanId, equals(42));
     expect(device.vlan!.parent.hwAddress, equals('DE:71:CE:00:00:01'));
   });
 
-  test('wired device', () async {
+  test('ethernet device', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());
     var clientAddress =
@@ -2406,7 +2414,10 @@ void main() {
     addTearDown(() async => await nm.close());
     await nm.start();
     await nm.addDevice(
-        hasWired: true, permHwAddress: 'DE:71:CE:00:00:01', speed: 100);
+        deviceType: 1,
+        hasWired: true,
+        permHwAddress: 'DE:71:CE:00:00:01',
+        speed: 100);
 
     var client = NetworkManagerClient(bus: DBusClient(clientAddress));
     addTearDown(() async => await client.close());
@@ -2414,12 +2425,13 @@ void main() {
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.ethernet));
     expect(device.wired, isNotNull);
     expect(device.wired!.permHwAddress, equals('DE:71:CE:00:00:01'));
     expect(device.wired!.speed, equals(100));
   });
 
-  test('wireless device', () async {
+  test('wifi device', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());
     var clientAddress =
@@ -2442,6 +2454,7 @@ void main() {
     var ap2 = await nm.addAccessPoint(hwAddress: 'AC:CE:55:00:00:02');
     var ap3 = await nm.addAccessPoint(hwAddress: 'AC:CE:55:00:00:03');
     await nm.addDevice(
+        deviceType: 2,
         hasWireless: true,
         accessPoints: [ap1, ap2, ap3],
         activeAccessPoint: ap1,
@@ -2457,6 +2470,7 @@ void main() {
 
     expect(client.devices, hasLength(1));
     var device = client.devices[0];
+    expect(device.deviceType, equals(NetworkManagerDeviceType.wifi));
     expect(device.wireless, isNotNull);
     expect(device.wireless!.accessPoints, hasLength(3));
     expect(device.wireless!.accessPoints[0].hwAddress,
@@ -2544,6 +2558,86 @@ void main() {
             DBusArray.byte([119, 111, 114, 108, 100])
           ])
         }));
+  });
+
+  test('other device types', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addDevice(deviceType: 6, permHwAddress: 'DE:71:CE:00:00:01');
+    await nm.addDevice(deviceType: 7, permHwAddress: 'DE:71:CE:00:00:02');
+    await nm.addDevice(deviceType: 8, permHwAddress: 'DE:71:CE:00:00:03');
+    await nm.addDevice(deviceType: 9, permHwAddress: 'DE:71:CE:00:00:04');
+    await nm.addDevice(deviceType: 10, permHwAddress: 'DE:71:CE:00:00:05');
+    await nm.addDevice(deviceType: 11, permHwAddress: 'DE:71:CE:00:00:06');
+    await nm.addDevice(deviceType: 12, permHwAddress: 'DE:71:CE:00:00:07');
+    await nm.addDevice(deviceType: 15, permHwAddress: 'DE:71:CE:00:00:08');
+    await nm.addDevice(deviceType: 17, permHwAddress: 'DE:71:CE:00:00:09');
+    await nm.addDevice(deviceType: 18, permHwAddress: 'DE:71:CE:00:00:10');
+    await nm.addDevice(deviceType: 19, permHwAddress: 'DE:71:CE:00:00:11');
+    await nm.addDevice(deviceType: 20, permHwAddress: 'DE:71:CE:00:00:12');
+    await nm.addDevice(deviceType: 21, permHwAddress: 'DE:71:CE:00:00:13');
+    await nm.addDevice(deviceType: 22, permHwAddress: 'DE:71:CE:00:00:14');
+    await nm.addDevice(deviceType: 23, permHwAddress: 'DE:71:CE:00:00:15');
+    await nm.addDevice(deviceType: 24, permHwAddress: 'DE:71:CE:00:00:16');
+    await nm.addDevice(deviceType: 25, permHwAddress: 'DE:71:CE:00:00:17');
+    await nm.addDevice(deviceType: 26, permHwAddress: 'DE:71:CE:00:00:18');
+    await nm.addDevice(deviceType: 27, permHwAddress: 'DE:71:CE:00:00:19');
+    await nm.addDevice(deviceType: 28, permHwAddress: 'DE:71:CE:00:00:20');
+    await nm.addDevice(deviceType: 29, permHwAddress: 'DE:71:CE:00:00:21');
+    await nm.addDevice(deviceType: 30, permHwAddress: 'DE:71:CE:00:00:22');
+    await nm.addDevice(deviceType: 31, permHwAddress: 'DE:71:CE:00:00:23');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(23));
+    expect(client.devices[0].deviceType,
+        equals(NetworkManagerDeviceType.olpcMesh));
+    expect(
+        client.devices[1].deviceType, equals(NetworkManagerDeviceType.wimax));
+    expect(
+        client.devices[2].deviceType, equals(NetworkManagerDeviceType.modem));
+    expect(client.devices[3].deviceType,
+        equals(NetworkManagerDeviceType.infiniband));
+    expect(client.devices[4].deviceType, equals(NetworkManagerDeviceType.bond));
+    expect(client.devices[5].deviceType, equals(NetworkManagerDeviceType.vlan));
+    expect(client.devices[6].deviceType, equals(NetworkManagerDeviceType.adsl));
+    expect(client.devices[7].deviceType, equals(NetworkManagerDeviceType.team));
+    expect(client.devices[8].deviceType,
+        equals(NetworkManagerDeviceType.ipTunnel));
+    expect(
+        client.devices[9].deviceType, equals(NetworkManagerDeviceType.macVlan));
+    expect(
+        client.devices[10].deviceType, equals(NetworkManagerDeviceType.vxlan));
+    expect(
+        client.devices[11].deviceType, equals(NetworkManagerDeviceType.veth));
+    expect(
+        client.devices[12].deviceType, equals(NetworkManagerDeviceType.macsec));
+    expect(
+        client.devices[13].deviceType, equals(NetworkManagerDeviceType.dummy));
+    expect(client.devices[14].deviceType, equals(NetworkManagerDeviceType.ppp));
+    expect(client.devices[15].deviceType,
+        equals(NetworkManagerDeviceType.ovsInterface));
+    expect(client.devices[16].deviceType,
+        equals(NetworkManagerDeviceType.ovsPort));
+    expect(client.devices[17].deviceType,
+        equals(NetworkManagerDeviceType.ovsBridge));
+    expect(
+        client.devices[18].deviceType, equals(NetworkManagerDeviceType.wpan));
+    expect(client.devices[19].deviceType,
+        equals(NetworkManagerDeviceType.sixLoWpan));
+    expect(client.devices[20].deviceType,
+        equals(NetworkManagerDeviceType.wireguard));
+    expect(client.devices[21].deviceType,
+        equals(NetworkManagerDeviceType.wifiP2p));
+    expect(client.devices[22].deviceType, equals(NetworkManagerDeviceType.vrf));
   });
 
   test('device statistics', () async {

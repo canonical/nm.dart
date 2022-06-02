@@ -35,10 +35,13 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
               DBusSignature('o'), server.devices.map((device) => device.path)),
           'Metered': DBusUint32(server.metered),
           'NetworkingEnabled': DBusBoolean(server.networkingEnabled),
-          'PrimaryConnection':
-              server.primaryConnection?.path ?? DBusObjectPath('/'),
-          'PrimaryConnectionType':
-              DBusString(server.primaryConnection?.type ?? ''),
+          'PrimaryConnection': server.activeConnections.isNotEmpty
+              ? server.activeConnections[0].path
+              : DBusObjectPath('/'),
+          'PrimaryConnectionType': DBusString(
+              server.activeConnections.isNotEmpty
+                  ? server.activeConnections[0].type
+                  : ''),
           'Startup': DBusBoolean(server.startup),
           'State': DBusUint32(server.state),
           'Version': DBusString(server.version),
@@ -861,7 +864,6 @@ class MockNetworkManagerServer extends DBusClient {
   final devices = <MockNetworkManagerDevice>[];
   MockNetworkManagerActiveConnection? activatingConnection;
   final activeConnections = <MockNetworkManagerActiveConnection>[];
-  MockNetworkManagerActiveConnection? primaryConnection;
   final connectionSettings = <MockNetworkManagerConnectionSettings>[];
 
   MockNetworkManagerServer(DBusAddress clientAddress,
@@ -3048,6 +3050,27 @@ void main() {
     expect(connection.type, equals('802-3-ethernet'));
     expect(connection.uuid, equals('123e4567-e89b-12d3-a456-426614174000'));
     expect(connection.vpn, isTrue);
+  });
+
+  test('primary connection', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addActiveConnection(id: 'connection', type: '802-3-ethernet');
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.primaryConnection, isNotNull);
+    expect(client.primaryConnection!.id, equals('connection'));
+    expect(client.primaryConnection!.type, equals('802-3-ethernet'));
+    expect(client.primaryConnectionType, equals('802-3-ethernet'));
   });
 
   test('add connection', () async {

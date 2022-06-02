@@ -2525,6 +2525,112 @@ void main() {
         }));
   });
 
+  test('wifi modes', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    await nm.addDevice(hasWireless: true, wirelessMode: 1);
+    await nm.addDevice(hasWireless: true, wirelessMode: 2);
+    await nm.addDevice(hasWireless: true, wirelessMode: 3);
+    await nm.addDevice(hasWireless: true, wirelessMode: 4);
+    await nm.addDevice(hasWireless: true, wirelessMode: 999);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(5));
+    expect(
+        client.devices[0].wireless!.mode, equals(NetworkManagerWifiMode.adhoc));
+    expect(
+        client.devices[1].wireless!.mode, equals(NetworkManagerWifiMode.infra));
+    expect(client.devices[2].wireless!.mode, equals(NetworkManagerWifiMode.ap));
+    expect(
+        client.devices[3].wireless!.mode, equals(NetworkManagerWifiMode.mesh));
+    expect(client.devices[4].wireless!.mode,
+        equals(NetworkManagerWifiMode.unknown));
+  });
+
+  test('wifi security flags', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+    var ap1 = await nm.addAccessPoint(wpaFlags: 0x0001);
+    var ap2 = await nm.addAccessPoint(wpaFlags: 0x0002);
+    var ap3 = await nm.addAccessPoint(wpaFlags: 0x0004);
+    var ap4 = await nm.addAccessPoint(wpaFlags: 0x0008);
+    var ap5 = await nm.addAccessPoint(wpaFlags: 0x0010);
+    var ap6 = await nm.addAccessPoint(wpaFlags: 0x0020);
+    var ap7 = await nm.addAccessPoint(wpaFlags: 0x0040);
+    var ap8 = await nm.addAccessPoint(wpaFlags: 0x0080);
+    var ap9 = await nm.addAccessPoint(wpaFlags: 0x0100);
+    var ap10 = await nm.addAccessPoint(wpaFlags: 0x0200);
+    var ap11 = await nm.addAccessPoint(wpaFlags: 0x0400);
+    var ap12 = await nm.addAccessPoint(wpaFlags: 0x0800);
+    var ap13 = await nm.addAccessPoint(wpaFlags: 0x1000);
+    await nm.addDevice(hasWireless: true, accessPoints: [
+      ap1,
+      ap2,
+      ap3,
+      ap4,
+      ap5,
+      ap6,
+      ap7,
+      ap8,
+      ap9,
+      ap10,
+      ap11,
+      ap12,
+      ap13
+    ]);
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.devices, hasLength(1));
+    var accessPoints = client.devices[0].wireless!.accessPoints;
+    expect(accessPoints, hasLength(13));
+    expect(accessPoints[0].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.pairWep40}));
+    expect(accessPoints[1].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.pairWep104}));
+    expect(accessPoints[2].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.pairTkip}));
+    expect(accessPoints[3].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.pairCcmp}));
+    expect(accessPoints[4].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.groupWep40}));
+    expect(accessPoints[5].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.groupWep104}));
+    expect(accessPoints[6].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.groupTkip}));
+    expect(accessPoints[7].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.groupCcmp}));
+    expect(accessPoints[8].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.keyManagementPsk}));
+    expect(
+        accessPoints[9].wpaFlags,
+        equals(
+            {NetworkManagerWifiAccessPointSecurityFlag.keyManagement802_1X}));
+    expect(accessPoints[10].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.keyManagementSae}));
+    expect(accessPoints[11].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.keyManagementOwe}));
+    expect(accessPoints[12].wpaFlags,
+        equals({NetworkManagerWifiAccessPointSecurityFlag.keyManagementOweTm}));
+  });
+
   test('wireless device - request scan', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());

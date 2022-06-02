@@ -831,7 +831,7 @@ class MockNetworkManagerServer extends DBusClient {
   final String dnsMode;
   final String dnsRcManager;
   final String hostname;
-  final int metered;
+  int metered;
   final bool networkingEnabled;
   final bool settingsCanModify;
   bool startup;
@@ -1208,6 +1208,15 @@ class MockNetworkManagerServer extends DBusClient {
         changedProperties: {'Startup': DBusBoolean(startup)});
   }
 
+  Future<void> setMetered(int metered) async {
+    if (this.metered == metered) {
+      return;
+    }
+    this.metered = metered;
+    await _manager.emitPropertiesChanged('org.freedesktop.NetworkManager',
+        changedProperties: {'Metered': DBusUint32(this.metered)});
+  }
+
   Future<void> setState(int state) async {
     if (this.state == state) {
       return;
@@ -1316,7 +1325,7 @@ void main() {
     expect(client.state, equals(NetworkManagerState.unknown));
   });
 
-  test('metered - networking enabled', () async {
+  test('networking enabled', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());
     var clientAddress =
@@ -1333,7 +1342,7 @@ void main() {
     expect(client.networkingEnabled, isTrue);
   });
 
-  test('metered - yes', () async {
+  test('metered', () async {
     var server = DBusServer();
     addTearDown(() async => await server.close());
     var clientAddress =
@@ -1348,73 +1357,17 @@ void main() {
     await client.connect();
 
     expect(client.metered, equals(NetworkManagerMetered.yes));
-  });
-
-  test('metered - no', () async {
-    var server = DBusServer();
-    addTearDown(() async => await server.close());
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress, metered: 2);
-    addTearDown(() async => await nm.close());
-    await nm.start();
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    addTearDown(() async => await client.close());
-    await client.connect();
-
+    await nm.setMetered(2);
+    await expectLater(client.propertiesChanged, emits(['Metered']));
     expect(client.metered, equals(NetworkManagerMetered.no));
-  });
-
-  test('metered guess yes', () async {
-    var server = DBusServer();
-    addTearDown(() async => await server.close());
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress, metered: 3);
-    addTearDown(() async => await nm.close());
-    await nm.start();
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    addTearDown(() async => await client.close());
-    await client.connect();
-
+    await nm.setMetered(3);
+    await expectLater(client.propertiesChanged, emits(['Metered']));
     expect(client.metered, equals(NetworkManagerMetered.guessYes));
-  });
-
-  test('metered guess no', () async {
-    var server = DBusServer();
-    addTearDown(() async => await server.close());
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress, metered: 4);
-    addTearDown(() async => await nm.close());
-    await nm.start();
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    addTearDown(() async => await client.close());
-    await client.connect();
-
+    await nm.setMetered(4);
+    await expectLater(client.propertiesChanged, emits(['Metered']));
     expect(client.metered, equals(NetworkManagerMetered.guessNo));
-  });
-
-  test('metered - unknown', () async {
-    var server = DBusServer();
-    addTearDown(() async => await server.close());
-    var clientAddress =
-        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
-
-    var nm = MockNetworkManagerServer(clientAddress, metered: 0);
-    addTearDown(() async => await nm.close());
-    await nm.start();
-
-    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
-    addTearDown(() async => await client.close());
-    await client.connect();
-
+    await nm.setMetered(999);
+    await expectLater(client.propertiesChanged, emits(['Metered']));
     expect(client.metered, equals(NetworkManagerMetered.unknown));
   });
 

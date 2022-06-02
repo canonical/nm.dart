@@ -388,6 +388,11 @@ enum NetworkManagerDeviceType {
 /// Traffic limitations.
 enum NetworkManagerMetered { unknown, yes, no, guessYes, guessNo }
 
+NetworkManagerMetered _decodeMetered(int value) =>
+    value < NetworkManagerMetered.values.length
+        ? NetworkManagerMetered.values[value]
+        : NetworkManagerMetered.unknown;
+
 /// State of a [NetworkManagerActiveConnection].
 enum NetworkManagerActiveConnectionState {
   unknown,
@@ -1100,8 +1105,8 @@ class NetworkManagerDevice {
   int get mtu => _object.getUint32Property(_deviceInterfaceName, 'Mtu') ?? 0;
 
   /// True if the device has traffic limitations.
-  NetworkManagerMetered get metered => NetworkManagerMetered
-      .values[_object.getUint32Property(_deviceInterfaceName, 'Metered') ?? 0];
+  NetworkManagerMetered get metered => _decodeMetered(
+      _object.getUint32Property(_deviceInterfaceName, 'Metered') ?? 0);
 
   // FIXME: LldpNeighbors
 
@@ -2480,10 +2485,8 @@ class NetworkManagerClient {
   }
 
   /// True if the primary connection has traffic limitations.
-  NetworkManagerMetered get metered {
-    return NetworkManagerMetered.values[
-        _manager?.getUint32Property(_managerInterfaceName, 'Metered') ?? 0];
-  }
+  NetworkManagerMetered get metered => _decodeMetered(
+      _manager?.getUint32Property(_managerInterfaceName, 'Metered') ?? 0);
 
   // FIXME: ActivatingConnection
 

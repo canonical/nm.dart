@@ -56,7 +56,7 @@ void connectToWifiNetwork(NetworkManagerClient manager,
             accessPoint: accessPoint,
             connection: {
               "802-11-wireless-security": {
-                "key-mgmt": DBusString('wpa-psk'),
+                "key-mgmt": DBusString("wpa-psk"),
                 "psk": DBusString(password)
               }
             });

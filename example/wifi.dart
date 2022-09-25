@@ -49,15 +49,16 @@ void connectToWifiNetwork(NetworkManagerClient manager,
   try {
     // Has password
     if (accessPoint.rsnFlags.isNotEmpty) {
-      var password = stdin.readLineSync(encoding: utf8);
-      if (password != null) {
+      var psk = await getSavedWifiPsk(device, accessPoint);
+      psk ??= stdin.readLineSync(encoding: utf8);
+      if (psk != null) {
         await manager.addAndActivateConnection(
             device: device,
             accessPoint: accessPoint,
             connection: {
               "802-11-wireless-security": {
                 "key-mgmt": DBusString("wpa-psk"),
-                "psk": DBusString(password)
+                "psk": DBusString(psk)
               }
             });
       }
@@ -68,4 +69,49 @@ void connectToWifiNetwork(NetworkManagerClient manager,
   } catch (e) {
     print(e);
   }
+}
+
+Future<NetworkManagerSettingsConnection?> getAccessPointConnectionSettings(
+    NetworkManagerDevice device, NetworkManagerAccessPoint accessPoint) async {
+  var ssid = utf8.decode(accessPoint.ssid);
+
+  var settings = await Future.wait(device.availableConnections
+      .map((e) async => {"settings": await e.getSettings(), "connection": e}));
+  NetworkManagerSettingsConnection? accessPointSettings;
+  for (var element in settings) {
+    var s = element["settings"] as dynamic;
+    if (s != null) {
+      var connection = s["connection"] as Map<String, DBusValue>?;
+      if (connection != null) {
+        var id = connection["id"];
+        if (id != null) {
+          if (id.toNative() == ssid) {
+            accessPointSettings =
+                element["connection"] as NetworkManagerSettingsConnection;
+          }
+        }
+      }
+    }
+  }
+  return accessPointSettings;
+}
+
+Future<String?> getSavedWifiPsk(
+    NetworkManagerDevice device, NetworkManagerAccessPoint accessPoint) async {
+  var settingsConnection =
+      await getAccessPointConnectionSettings(device, accessPoint);
+  if (settingsConnection != null) {
+    var secrets =
+        await settingsConnection.getSecrets("802-11-wireless-security");
+    if (secrets.isNotEmpty) {
+      var security = secrets["802-11-wireless-security"];
+      if (security != null) {
+        var psk = security["psk"];
+        if (psk != null) {
+          return psk.toNative();
+        }
+      }
+    }
+  }
+  return null;
 }

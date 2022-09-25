@@ -88,6 +88,7 @@ Future<NetworkManagerSettingsConnection?> getAccessPointConnectionSettings(
           if (id.toNative() == ssid) {
             accessPointSettings =
                 element["connection"] as NetworkManagerSettingsConnection;
+            break;
           }
         }
       }

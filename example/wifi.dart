@@ -56,9 +56,9 @@ void connectToWifiNetwork(NetworkManagerClient manager,
             device: device,
             accessPoint: accessPoint,
             connection: {
-              "802-11-wireless-security": {
-                "key-mgmt": DBusString("wpa-psk"),
-                "psk": DBusString(psk)
+              '802-11-wireless-security': {
+                'key-mgmt': DBusString('wpa-psk'),
+                'psk': DBusString(psk)
               }
             });
       }
@@ -76,18 +76,18 @@ Future<NetworkManagerSettingsConnection?> getAccessPointConnectionSettings(
   var ssid = utf8.decode(accessPoint.ssid);
 
   var settings = await Future.wait(device.availableConnections
-      .map((e) async => {"settings": await e.getSettings(), "connection": e}));
+      .map((e) async => {'settings': await e.getSettings(), 'connection': e}));
   NetworkManagerSettingsConnection? accessPointSettings;
   for (var element in settings) {
-    var s = element["settings"] as dynamic;
+    var s = element['settings'] as dynamic;
     if (s != null) {
-      var connection = s["connection"] as Map<String, DBusValue>?;
+      var connection = s['connection'] as Map<String, DBusValue>?;
       if (connection != null) {
-        var id = connection["id"];
+        var id = connection['id'];
         if (id != null) {
           if (id.toNative() == ssid) {
             accessPointSettings =
-                element["connection"] as NetworkManagerSettingsConnection;
+                element['connection'] as NetworkManagerSettingsConnection;
             break;
           }
         }
@@ -103,11 +103,11 @@ Future<String?> getSavedWifiPsk(
       await getAccessPointConnectionSettings(device, accessPoint);
   if (settingsConnection != null) {
     var secrets =
-        await settingsConnection.getSecrets("802-11-wireless-security");
+        await settingsConnection.getSecrets('802-11-wireless-security');
     if (secrets.isNotEmpty) {
-      var security = secrets["802-11-wireless-security"];
+      var security = secrets['802-11-wireless-security'];
       if (security != null) {
-        var psk = security["psk"];
+        var psk = security['psk'];
         if (psk != null) {
           return psk.toNative();
         }

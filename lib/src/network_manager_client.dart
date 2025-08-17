@@ -2239,6 +2239,11 @@ class _NetworkManagerObject extends DBusRemoteObject {
   }
 }
 
+/// Configuration information of multiple domains.
+///
+/// [searches] is a list of search domains.
+/// [options] is a list of resolver options.
+/// [domains] is a map of [String] domain name associated to a [DomainConfiguration].
 class DnsConfiguration {
   final List<String> searches;
   final List<String> options;
@@ -2246,6 +2251,10 @@ class DnsConfiguration {
   DnsConfiguration(this.searches, this.options, this.domains);
 }
 
+/// Configuration information of a specific domain.
+///
+/// [servers] is a list of DNS servers.
+/// [options] is a list of domain-specific options.
 class DomainConfiguration {
   final List<String> servers;
   final List<String> options;

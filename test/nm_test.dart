@@ -8,6 +8,43 @@ class MockNetworkManagerObject extends DBusObject {
   MockNetworkManagerObject(DBusObjectPath path) : super(path);
 }
 
+// Helper functions to convert to and from DBusDict, to avoid too much boilerplate
+extension on GlobalDnsConfiguration {
+  /// Helper functions to convert DnsConfiguration to a DBusDict
+  DBusDict toDBusDict() => DBusDict.stringVariant({
+        'searches': DBusArray.string(searches),
+        'options': DBusArray.string(options),
+        'domains': DBusDict(
+            DBusSignature.string,
+            DBusSignature.dict(DBusSignature.string,
+                DBusSignature.array(DBusSignature.string)),
+            domains.map<DBusValue, DBusValue>((key, value) {
+          return MapEntry(
+              DBusString(key),
+              DBusDict(DBusSignature.string,
+                  DBusSignature.array(DBusSignature.string), {
+                DBusString('options'): DBusArray.string(value.options),
+                DBusString('servers'): DBusArray.string(value.servers),
+              }));
+        }))
+      });
+
+  /// Helper function to convert DBusDict to DnsConfiguration
+  static GlobalDnsConfiguration fromDBusDict(DBusDict dict) {
+    final children = dict.children;
+    final searches = children[DBusString('searches')]!.asStringArray().toList();
+    final options = children[DBusString('options')]!.asStringArray().toList();
+    final domains = children[DBusString('domains')]!
+        .asStringVariantDict()
+        .map<String, DomainConfiguration>((domainName, value) {
+      final servers = value.asDict()['servers']!.asStringArray().toList();
+      final options = value.asDict()['options']!.asStringArray().toList();
+      return MapEntry(domainName, DomainConfiguration(servers, options));
+    });
+    return GlobalDnsConfiguration(searches, options, domains);
+  }
+}
+
 class MockNetworkManagerManager extends MockNetworkManagerObject {
   final MockNetworkManagerServer server;
 
@@ -33,6 +70,7 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
           'ConnectivityCheckUri': DBusString(server.connectivityCheckUri),
           'Devices': DBusArray(
               DBusSignature('o'), server.devices.map((device) => device.path)),
+          'GlobalDnsConfiguration': server.globalDnsConfiguration.toDBusDict(),
           'Metered': DBusUint32(server.metered),
           'NetworkingEnabled': DBusBoolean(server.networkingEnabled),
           'PrimaryConnection': server.activeConnections.isNotEmpty
@@ -84,6 +122,7 @@ class MockNetworkManagerManager extends MockNetworkManagerObject {
               'WwanEnabled': DBusBoolean(server.wwanEnabled)
             });
         return DBusMethodSuccessResponse();
+      // FIXME Add case for GlobalDnsConfiguration
       default:
         return DBusMethodErrorResponse.unknownProperty();
     }
@@ -833,6 +872,7 @@ class MockNetworkManagerServer extends DBusClient {
   final List<Map<String, DBusValue>> dnsConfiguration;
   final String dnsMode;
   final String dnsRcManager;
+  GlobalDnsConfiguration globalDnsConfiguration;
   final String hostname;
   int metered;
   final bool networkingEnabled;
@@ -875,6 +915,7 @@ class MockNetworkManagerServer extends DBusClient {
       this.dnsConfiguration = const [],
       this.dnsMode = '',
       this.dnsRcManager = '',
+      this.globalDnsConfiguration = const GlobalDnsConfiguration.empty(),
       this.hostname = '',
       this.metered = 0,
       this.networkingEnabled = true,
@@ -1249,6 +1290,16 @@ class MockNetworkManagerServer extends DBusClient {
           'WwanHardwareEnabled': DBusBoolean(wwanHardwareEnabled)
         });
   }
+
+  Future<void> setGlobalDnsConfiguration(
+      GlobalDnsConfiguration configuration) async {
+    // FIXME if (globalDnsConfiguration == configuration) { return; }
+    globalDnsConfiguration = configuration;
+    await _manager.emitPropertiesChanged('org.freedesktop.NetworkManager',
+        changedProperties: {
+          'GlobalDnsConfiguration': configuration.toDBusDict()
+        });
+  }
 }
 
 void main() {
@@ -1325,6 +1376,56 @@ void main() {
     await nm.setState(0);
     await expectLater(client.propertiesChanged, emits(['State']));
     expect(client.state, equals(NetworkManagerState.unknown));
+  });
+
+  test('global dns configuration', () async {
+    var server = DBusServer();
+    addTearDown(() async => await server.close());
+    var clientAddress =
+        await server.listenAddress(DBusAddress.unix(dir: Directory.systemTemp));
+
+    var nm = MockNetworkManagerServer(clientAddress);
+    addTearDown(() async => await nm.close());
+    await nm.start();
+
+    var client = NetworkManagerClient(bus: DBusClient(clientAddress));
+    addTearDown(() async => await client.close());
+    await client.connect();
+
+    expect(client.globalDnsConfiguration.searches, equals([]));
+    expect(client.globalDnsConfiguration.options, equals([]));
+    expect(client.globalDnsConfiguration.domains, equals({}));
+
+    // Sample for a test case
+    await nm.setGlobalDnsConfiguration(
+        GlobalDnsConfiguration(['1.2.3.4', '5.6.7.8'], [], {}));
+    await expectLater(
+        client.propertiesChanged, emits(['GlobalDnsConfiguration']));
+    expect(
+        client.globalDnsConfiguration.searches, equals(['1.2.3.4', '5.6.7.8']));
+    expect(client.globalDnsConfiguration.options, equals([]));
+    expect(client.globalDnsConfiguration.domains, equals({}));
+
+    await nm.setGlobalDnsConfiguration(
+        GlobalDnsConfiguration([], ['debug', 'rotate'], {}));
+    await expectLater(
+        client.propertiesChanged, emits(['GlobalDnsConfiguration']));
+    expect(client.globalDnsConfiguration.searches, equals([]));
+    expect(client.globalDnsConfiguration.options, equals(['debug', 'rotate']));
+    expect(client.globalDnsConfiguration.domains, equals({}));
+
+    await nm.setGlobalDnsConfiguration(GlobalDnsConfiguration([], [], {
+      'google.com': DomainConfiguration(['8.8.8.8'], [])
+    }));
+    await expectLater(
+        client.propertiesChanged, emits(['GlobalDnsConfiguration']));
+    expect(client.globalDnsConfiguration.searches, equals([]));
+    expect(client.globalDnsConfiguration.options, equals(['debug', 'rotate']));
+    expect(
+        client.globalDnsConfiguration.domains,
+        equals({
+          'google.com': DomainConfiguration(['8.8.8.8'], [])
+        }));
   });
 
   test('networking enabled', () async {

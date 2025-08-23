@@ -2244,11 +2244,15 @@ class _NetworkManagerObject extends DBusRemoteObject {
 /// [searches] is a list of search domains.
 /// [options] is a list of resolver options.
 /// [domains] is a map of [String] domain name associated to a [DomainConfiguration].
-class DnsConfiguration {
+class GlobalDnsConfiguration {
   final List<String> searches;
   final List<String> options;
   final Map<String, DomainConfiguration> domains;
-  DnsConfiguration(this.searches, this.options, this.domains);
+  GlobalDnsConfiguration(this.searches, this.options, this.domains);
+  const GlobalDnsConfiguration.empty()
+      : searches = const [],
+        options = const [],
+        domains = const {};
 }
 
 /// Configuration information of a specific domain.
@@ -2576,14 +2580,14 @@ class NetworkManagerClient {
   }
 
   /// Gets the GlobalDnsConfiguration
-  DnsConfiguration get globalDnsConfiguration {
+  GlobalDnsConfiguration get globalDnsConfiguration {
     var value = _manager?.getCachedProperty(
         _managerInterfaceName, 'GlobalDnsConfiguration');
     if (value == null) {
-      return DnsConfiguration([], [], {});
+      return GlobalDnsConfiguration([], [], {});
     }
     if (value.signature != DBusSignature('a{sv}')) {
-      return DnsConfiguration([], [], {});
+      return GlobalDnsConfiguration([], [], {});
     }
 
     var firstLevelDict = value.asStringVariantDict();
@@ -2598,11 +2602,12 @@ class NetworkManagerClient {
           return MapEntry(key, DomainConfiguration(servers, options));
         }) ??
         <String, DomainConfiguration>{};
-    return DnsConfiguration(searches, options, domains);
+    return GlobalDnsConfiguration(searches, options, domains);
   }
 
   /// Sets the GlobalDnsConfiguration
-  Future<void> setGlobalDnsConfiguration(DnsConfiguration configuration) async {
+  Future<void> setGlobalDnsConfiguration(
+      GlobalDnsConfiguration configuration) async {
     var dictionary = DBusDict.stringVariant({
       'searches': DBusArray.string(configuration.searches),
       'options': DBusArray.string(configuration.options),

@@ -2594,12 +2594,13 @@ class NetworkManagerClient {
     var searches = firstLevelDict['searches']?.asStringArray().toList() ?? [];
     var options = firstLevelDict['options']?.asStringArray().toList() ?? [];
     var domains = firstLevelDict['domains']
-            ?.asStringVariantDict()
+            ?.asDict()
             .map<String, DomainConfiguration>((key, value) {
           var config = value.asDict();
           var servers = config['servers']?.asStringArray().toList() ?? [];
           var options = config['options']?.asStringArray().toList() ?? [];
-          return MapEntry(key, DomainConfiguration(servers, options));
+          return MapEntry(
+              key.asString(), DomainConfiguration(servers, options));
         }) ??
         <String, DomainConfiguration>{};
     return GlobalDnsConfiguration(searches, options, domains);

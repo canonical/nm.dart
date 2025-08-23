@@ -29,6 +29,18 @@ extension on GlobalDnsConfiguration {
         }))
       });
 
+  /// Helper function to convert GlobalDnsConfiguration into a Map
+  /// Also converts [domains] into a Map<String, Map<String, List<String>>>
+  Map<String, dynamic> toMap() => <String, dynamic>{
+        'searches': searches,
+        'options': options,
+        'domains': domains.map<String, Map<String, List<String>>>(
+            (key, value) => MapEntry(key, <String, List<String>>{
+                  'servers': value.servers,
+                  'options': value.options
+                }))
+      };
+
   /// Helper function to convert DBusDict to DnsConfiguration
   static GlobalDnsConfiguration fromDBusDict(DBusDict dict) {
     final children = dict.children;
@@ -1392,41 +1404,34 @@ void main() {
     addTearDown(() async => await client.close());
     await client.connect();
 
-    expect(client.globalDnsConfiguration.searches, equals([]));
-    expect(client.globalDnsConfiguration.options, equals([]));
-    expect(client.globalDnsConfiguration.domains, equals({}));
+    expect(client.globalDnsConfiguration.toMap(),
+        equals(GlobalDnsConfiguration.empty().toMap()));
 
-    // Sample for a test case
     await nm.setGlobalDnsConfiguration(
         GlobalDnsConfiguration(['1.2.3.4', '5.6.7.8'], [], {}));
     await expectLater(
         client.propertiesChanged, emits(['GlobalDnsConfiguration']));
-    expect(
-        client.globalDnsConfiguration.searches, equals(['1.2.3.4', '5.6.7.8']));
-    expect(client.globalDnsConfiguration.options, equals([]));
-    expect(client.globalDnsConfiguration.domains, equals({}));
+    expect(client.globalDnsConfiguration.toMap(),
+        equals(GlobalDnsConfiguration(['1.2.3.4', '5.6.7.8'], [], {}).toMap()));
 
     await nm.setGlobalDnsConfiguration(
         GlobalDnsConfiguration([], ['debug', 'rotate'], {}));
     await expectLater(
         client.propertiesChanged, emits(['GlobalDnsConfiguration']));
-    expect(client.globalDnsConfiguration.searches, equals([]));
-    expect(client.globalDnsConfiguration.options, equals(['debug', 'rotate']));
-    expect(client.globalDnsConfiguration.domains, equals({}));
+    expect(client.globalDnsConfiguration.toMap(),
+        equals(GlobalDnsConfiguration([], ['debug', 'rotate'], {}).toMap()));
 
     await nm.setGlobalDnsConfiguration(GlobalDnsConfiguration([], [], {
       'google.com': DomainConfiguration(['8.8.8.8'], [])
     }));
     await expectLater(
         client.propertiesChanged, emits(['GlobalDnsConfiguration']));
-    expect(client.globalDnsConfiguration.searches, equals([]));
-    expect(client.globalDnsConfiguration.options, equals(['debug', 'rotate']));
     expect(
-        client.globalDnsConfiguration.domains,
-        equals({
+        client.globalDnsConfiguration.toMap(),
+        equals(GlobalDnsConfiguration([], [], {
           'google.com': DomainConfiguration(['8.8.8.8'], [])
-        }));
-  });
+        }).toMap()));
+  }, timeout: Timeout.none);
 
   test('networking enabled', () async {
     var server = DBusServer();

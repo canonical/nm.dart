@@ -2239,6 +2239,32 @@ class _NetworkManagerObject extends DBusRemoteObject {
   }
 }
 
+/// Configuration information of multiple domains.
+///
+/// [searches] is a list of search domains.
+/// [options] is a list of resolver options.
+/// [domains] is a map of [String] domain name associated to a [DomainConfiguration].
+class GlobalDnsConfiguration {
+  final List<String> searches;
+  final List<String> options;
+  final Map<String, DomainConfiguration> domains;
+  GlobalDnsConfiguration(this.searches, this.options, this.domains);
+  const GlobalDnsConfiguration.empty()
+      : searches = const [],
+        options = const [],
+        domains = const {};
+}
+
+/// Configuration information of a specific domain.
+///
+/// [servers] is a list of DNS servers.
+/// [options] is a list of domain-specific options.
+class DomainConfiguration {
+  final List<String> servers;
+  final List<String> options;
+  DomainConfiguration(this.servers, this.options);
+}
+
 /// A client that connects to NetworkManager.
 class NetworkManagerClient {
   /// Stream of devices as they are added.
@@ -2553,7 +2579,56 @@ class NetworkManagerClient {
     return _decodeState(value);
   }
 
-  // FIXME: GlobalDnsConfiguration
+  /// Gets the GlobalDnsConfiguration
+  GlobalDnsConfiguration get globalDnsConfiguration {
+    var value = _manager?.getCachedProperty(
+        _managerInterfaceName, 'GlobalDnsConfiguration');
+    if (value == null) {
+      return GlobalDnsConfiguration([], [], {});
+    }
+    if (value.signature != DBusSignature('a{sv}')) {
+      return GlobalDnsConfiguration([], [], {});
+    }
+
+    var firstLevelDict = value.asStringVariantDict();
+    var searches = firstLevelDict['searches']?.asStringArray().toList() ?? [];
+    var options = firstLevelDict['options']?.asStringArray().toList() ?? [];
+    var domains = firstLevelDict['domains']
+            ?.asDict()
+            .map<String, DomainConfiguration>((key, value) {
+          var config = value.asDict();
+          var servers = config['servers']?.asStringArray().toList() ?? [];
+          var options = config['options']?.asStringArray().toList() ?? [];
+          return MapEntry(
+              key.asString(), DomainConfiguration(servers, options));
+        }) ??
+        <String, DomainConfiguration>{};
+    return GlobalDnsConfiguration(searches, options, domains);
+  }
+
+  /// Sets the GlobalDnsConfiguration
+  Future<void> setGlobalDnsConfiguration(
+      GlobalDnsConfiguration configuration) async {
+    var dictionary = DBusDict.stringVariant({
+      'searches': DBusArray.string(configuration.searches),
+      'options': DBusArray.string(configuration.options),
+      'domains': DBusDict(
+          DBusSignature.string,
+          DBusSignature.dict(
+              DBusSignature.string, DBusSignature.array(DBusSignature.string)),
+          configuration.domains.map<DBusString, DBusDict>((key, value) {
+        return MapEntry(
+            DBusString(key),
+            DBusDict(DBusSignature.string,
+                DBusSignature.array(DBusSignature.string), {
+              DBusString('servers'): DBusArray.string(value.servers),
+              DBusString('options'): DBusArray.string(value.options)
+            }));
+      }))
+    });
+    await _manager?.setProperty(
+        _managerInterfaceName, 'GlobalDnsConfiguration', dictionary);
+  }
 
   _NetworkManagerObject? get _manager =>
       _objects[DBusObjectPath('/org/freedesktop/NetworkManager')];

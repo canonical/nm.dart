@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.0
+
+* Require dbus 0.8.
+* Require Dart 3.
+
 ## 0.5.0
 
 * Fix constants not in camel case form.

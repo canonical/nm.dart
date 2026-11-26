@@ -8,6 +8,10 @@ on:
 
 jobs:
   build:
+    strategy:
+      fail-fast: false
+      matrix:
+        dbus: ["0.7.10", "0.8.0"]
     runs-on: ubuntu-24.04
 
     container:
@@ -20,7 +24,10 @@ jobs:
         run: dart --version
 
       - name: Install dependencies
-        run: dart pub get
+        run: dart pub add "dbus:${{ matrix.dbus }}"
+
+      - name: Analyze selected dbus version
+        run: dart analyze --fatal-infos --fatal-warnings .
 
       - name: Run regression tests
         run: dart test
